@@ -1,4 +1,4 @@
-package com.mediSync.project;
+package com.mediSync.project.controller;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
