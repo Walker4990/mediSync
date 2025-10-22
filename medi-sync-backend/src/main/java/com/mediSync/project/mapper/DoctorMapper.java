@@ -10,4 +10,6 @@ public interface DoctorMapper {
     int insertDoctor(Doctor doctor);
     List<Doctor> doctorSelectAll();
     Doctor doctorSelectById(Long doctorId);
+    void editDoctor(Doctor doctor);
+    void delDoctor(int doctorId);
 }

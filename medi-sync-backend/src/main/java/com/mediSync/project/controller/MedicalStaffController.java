@@ -1,13 +1,8 @@
 package com.mediSync.project.controller;
 
-import com.mediSync.project.service.DoctorService;
-import com.mediSync.project.vo.Doctor;
+import com.mediSync.project.service.MedicalStaffService;
+import com.mediSync.project.vo.MedicalStaff;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,42 +12,41 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/doctors")
+@RequestMapping("/api/staffs")
 @RequiredArgsConstructor
-public class DoctorController {
-    private final DoctorService doctorService;
+public class MedicalStaffController {
+
+    private final MedicalStaffService medicalStaffService;
 
     @GetMapping
-    public List<Doctor> selectDoctorAll() {
-        return doctorService.selectAllDoctor();
-
-    private final DoctorService doctorService;
-
+    public List<MedicalStaff> findAllStaff() {
+        return medicalStaffService.findAllStaff();
+    }
 
     @PostMapping
-    public ResponseEntity<?> addDoctor(@RequestBody Doctor doctor) {
+    public ResponseEntity<?> addStaff(@RequestBody MedicalStaff staff) {
         try {
-            doctorService.addDoctor(doctor);
+            medicalStaffService.addStaff(staff);
             return ResponseEntity
-                    .status(HttpStatus.CREATED) // HTTP 201 Created는 생성 성공의 표준 응답 코드입니다.
-                    .body(Map.of("success", true, "message", "의사 등록 완료"));
+                    .status(HttpStatus.CREATED)
+                    .body(Map.of("success", true, "message", "의료진 등록 완료"));
         } catch (DuplicateKeyException e) {
             e.printStackTrace();
             return ResponseEntity
-                    .status(HttpStatus.CONFLICT) // HTTP 409 Conflict
-                    .body(Map.of("success", false, "message", "이미 등록된 정보입니다"));
+                    .status(HttpStatus.CONFLICT)
+                    .body(Map.of("success", false, "message", "이미 등록된 면허/자격 정보입니다"));
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity
-                    .status(HttpStatus.INTERNAL_SERVER_ERROR) // HTTP 500
-                    .body(Map.of("success", false, "message", "서버 오류 발생"));
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("success", false, "message", "의료진 등록 중 서버 오류 발생"));
         }
     }
 
     @PutMapping
-    public ResponseEntity<?> editDoctor(@RequestBody Doctor doctor) {
+    public ResponseEntity<?> updateStaff(@RequestBody MedicalStaff staff) {
         try {
-            doctorService.editDoctor(doctor);
+            medicalStaffService.updateStaff(staff);
             return ResponseEntity
                     .ok(Map.of("success", true, "message", "정보 수정 완료"));
         } catch (Exception e) {
@@ -63,10 +57,10 @@ public class DoctorController {
         }
     }
 
-    @DeleteMapping("/{doctorId}")
-    public ResponseEntity<?> delDoctor(@PathVariable int doctorId) {
+    @DeleteMapping("/{staffId}")
+    public ResponseEntity<?> deleteStaff(@PathVariable Long staffId) {
         try {
-            doctorService.delDoctor(doctorId);
+            medicalStaffService.deleteStaff(staffId);
             return ResponseEntity
                     .ok(Map.of("success", true, "message", "삭제 완료"));
         } catch (Exception e) {

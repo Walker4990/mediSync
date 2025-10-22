@@ -21,4 +21,16 @@ public class DoctorService {
     public Doctor selectDoctorById(Long doctorId){
         return doctorMapper.doctorSelectById(doctorId);
     }
+
+    public void editDoctor(Doctor doctor) {
+        doctorMapper.editDoctor(doctor);
+    }
+
+    public void delDoctor(int doctorId) {
+        doctorMapper.delDoctor(doctorId);
+    }
 }
+
+
+
+
