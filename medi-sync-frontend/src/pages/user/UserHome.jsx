@@ -1,9 +1,12 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import Footer from "../../component/Footer";
+import Navbar from "../../component/Navbar";
 
 export default function UserHome() {
     return (
         <div className="font-pretendard mt-20">
+            <Navbar />
             {/* Hero Section */}
             <section className="flex flex-col md:flex-row justify-between items-center px-8 md:px-20 py-16 bg-gradient-to-r from-blue-500 to-sky-400 text-white rounded-2xl shadow-lg max-w-6xl mx-auto">
                 <div className="space-y-6 md:w-1/2">
@@ -53,6 +56,7 @@ export default function UserHome() {
                     지금 시작하기
                 </Link>
             </section>
+            <Footer />
         </div>
     );
 }

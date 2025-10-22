@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import PatientList from "./pages/admin/PatientList";
 import Register from "./pages/user/Register";
 import UserHome from "./pages/user/UserHome";
+import MedicalRecordPage from "./pages/admin/MedicalRecordPage";
 
 function App() {
    return ( <BrowserRouter>
@@ -11,9 +12,10 @@ function App() {
             {/*관리자 페이지*/}
             <Route path="/admin" element={<Home />} />
             <Route path="/admin/patients" element={<PatientList />} />
+            <Route path="/admin/medicalRecord" element={<MedicalRecordPage />} />
             {/*유저페이지*/}
             <Route path={"/"} element={<UserHome />} />/
-            <Route path={"user/register"} element={<Register />} />
+            <Route path={"/register"} element={<Register />} />
         </Routes>
     </BrowserRouter>
 );

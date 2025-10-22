@@ -2,7 +2,9 @@ package com.mediSync.project.controller;
 
 import com.mediSync.project.dto.PatientDTO;
 import com.mediSync.project.service.PatientService;
+import com.mediSync.project.service.PrescriptionService;
 import com.mediSync.project.vo.Patient;
+import com.mediSync.project.vo.Prescription;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
@@ -19,6 +21,7 @@ import java.util.Map;
 public class PatientController {
 
     private final PatientService patientService;
+    private final PrescriptionService prescriptionService;
 
     @GetMapping
     public List<Patient> allPatient() {
@@ -42,5 +45,10 @@ public class PatientController {
                     .body(Map.of("success", false, "message", "서버 오류 발생"));
         }
     }
+    @GetMapping("/patient/{patientId}")
+    public List<Prescription> selectPrescriptionByPatientId(@PathVariable Long patientId) {
+        return prescriptionService.selectPrescriptionsById(patientId);
+    }
+
 
 }
