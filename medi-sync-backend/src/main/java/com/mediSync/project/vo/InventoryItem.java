@@ -7,10 +7,10 @@ import lombok.NoArgsConstructor;
 import org.apache.ibatis.type.Alias;
 
 @Data
-@NoArgsConstructor
+@NoArgsConstructor(force = true)
 @AllArgsConstructor
 @Alias("inven")
 public class InventoryItem {
-
+    private Integer item_id;
 
 }
