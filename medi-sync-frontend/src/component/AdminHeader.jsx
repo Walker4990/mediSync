@@ -1,6 +1,5 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { DropdownMenu } from './DropdownMenu';
 
 export default function AdminHeader() {
   return (
