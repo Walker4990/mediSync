@@ -13,7 +13,6 @@ import MediHistory from "./pages/admin/MediHistory";
 import MedicalRecordPage from "./pages/admin/MedicalRecordPage";
 import DrugPage from "./pages/admin/DrugPage";
 import Reservation from "./pages/user/Reservation";
-//import StaffList from "";
 
 function App() {
   return (
@@ -30,8 +29,8 @@ function App() {
         <Route path="/admin/drug" element={<DrugPage />} />
         {/*유저페이지*/}
         <Route path={"/"} element={<UserHome />} />/
-        <Route path={"user/register"} element={<Register />} />
-        <Route path={"user/login"} element={<LoginPage />} />
+        <Route path={"/user/register"} element={<Register />} />
+        <Route path={"/user/login"} element={<LoginPage />} />
         <Route path={"/consult"} element={<MedicalConsult />} />
         <Route path="/user/reservation" element={<Reservation />} />
       </Routes>
