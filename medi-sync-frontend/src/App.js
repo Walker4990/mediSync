@@ -8,6 +8,7 @@ import MediHistory from "./pages/admin/MediHistory";
 import Register from "./pages/user/Register";
 import LoginPage from "./pages/user/LoginPage";
 import UserHome from "./pages/user/UserHome";
+import MediHistory from "./pages/admin/MediHistory";
 import MedicalRecordPage from "./pages/admin/MedicalRecordPage";
 
 function App() {
