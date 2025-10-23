@@ -7,9 +7,9 @@ export default function AdminHeader() {
     <header className="bg-blue-600 text-white shadow-md fixed top-0 left-0 w-full z-50 font-pretendard">
       <div className="max-w-7xl mx-auto flex justify-between items-center px-8 py-3">
         {/* 로고 / 타이틀 */}
-        <h1 className="text-xl font-bold tracking-wide">
+        <Link to="/admin/dashboard" className="text-xl font-bold tracking-wide">
           MediSync <span className="text-blue-200">Admin</span>
-        </h1>
+        </Link>
 
         {/* 네비게이션 */}
         <nav className="flex gap-6 text-sm">
