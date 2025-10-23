@@ -58,7 +58,9 @@ export default function DashBoard() {
 
       {/* 컨텐츠 영역 */}
       <main className="max-w-7xl mx-auto pt-24 pb-12 px-8">
-        <h1 className="text-3xl font-bold text-blue-600 mb-8">대시보드</h1>
+        <h1 className="text-3xl font-bold text-blue-600 mb-8">
+          admin님 안녕하세요!
+        </h1>
 
         {/* 2x2 그리드 레이아웃 */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">

@@ -8,7 +8,7 @@ import DoctorList from "./pages/admin/DoctorList";
 import Register from "./pages/user/Register";
 import LoginPage from "./pages/user/LoginPage";
 import UserHome from "./pages/user/UserHome";
-import MedicalConsult from "./pages/user/MedicalConsult"; //
+import MedicalConsult from "./pages/user/MedicalConsult";
 import MediHistory from "./pages/admin/MediHistory";
 import MedicalRecordPage from "./pages/admin/MedicalRecordPage";
 import DrugPage from "./pages/admin/DrugPage";
