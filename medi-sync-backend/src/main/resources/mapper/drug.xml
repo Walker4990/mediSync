@@ -6,7 +6,88 @@
 <mapper namespace="com.mediSync.project.mapper.DrugMapper">
 
     <select id="selectAllDrug" resultType="drug">
-        SELECT * FROM drug
+        SELECT
+        d.drug_code,
+        d.drug_name,
+        d.unit_price,
+        COALESCE(i.quantity, 0) AS quantity,
+        COALESCE(i.location, '-') AS location,
+        i.expiry_date AS expiration_date,
+        i.supplier AS supplier,
+        i.updated_at AS updated_at,
+        COALESCE(ins.insurer_code, '-') AS insurer_code,
+        COALESCE(ins.insurer_name, '-') AS insurer_name,
+        d.created_at
+        FROM drug d
+        LEFT JOIN inventory_item i
+        ON TRIM(d.drug_name) = TRIM(i.item_name)
+        LEFT JOIN insurer ins
+        ON d.insurance_code = ins.insurer_code
+    </select>
+
+    <!-- 약품등록 -->
+    <insert id="insertDrug" parameterType="drug">
+        INSERT INTO drug (drug_code, drug_name, unit, unit_price, quantity, expiration_date, insurance_code, supplier, inventory_id, created_at)
+        VALUES (#{drugCode}, #{drugName}, #{unit}, #{unitPrice}, #{quantity}, #{expirationDate}, #{insuranceCode}, #{supplier}, #{inventoryId}, now())
+    </insert>
+
+    <select id="selectDrugByDrugCode" parameterType="string" resultType="drug">
+        SELECT * FROM drug WHERE drug_code = #{drugCode}
+    </select>
+    <!-- 약품 재고 등록 -->
+    <insert id="insertInventoryItem" parameterType="drug">
+        INSERT INTO inventory_item (
+        item_name, unit, quantity, price, supplier,
+        expiry_date, location, drug_code, updated_at
+        ) VALUES (
+        #{drugName}, #{unit}, #{quantity}, #{unitPrice}, #{supplier},
+        #{expirationDate}, '약품창고-1', #{drugCode}, NOW()
+        )
+    </insert>
+    <!-- 약품 수정 -->
+    <update id="editDrug" parameterType="drug">
+        UPDATE drug SET
+               drug_name = #{drugName},
+               unit=#{unit},
+               unit_price=#{unitPrice},
+               quantity=#{quantity},
+               expiration_date=#{expirationDate},
+               insurance_code=#{insuranceCode},
+               supplier=#{supplier}
+        WHERE drug_code=#{drugCode}
+    </update>
+
+    <!-- 약 재고 수정 -->
+    <update id="updateInventoryItem" parameterType="drug">
+        UPDATE inventory_item
+        SET
+        item_name = #{drugName},
+        unit = #{unit},
+        quantity = #{quantity},
+        price = #{unitPrice},
+        supplier = #{supplier},
+        expiry_date = #{expirationDate}
+        WHERE drug_code = #{drugCode}
+    </update>
+    <!-- 약 정보 삭제 -->
+    <delete id="deleteDrug" parameterType="string">
+        DELETE FROM drug WHERE drug_code=#{drugCode}
+    </delete>
+    <delete id="deleteDrugInventory" parameterType="string">
+        DELETE FROM inventory_item WHERE drug_code=#{drugCode}
+    </delete>
+    <!--  자동완성 검색 (약품명 or 코드) -->
+    <select id="searchDrugsByKeyword" parameterType="string" resultType="drug">
+        SELECT
+        drug_code AS drugCode,
+        drug_name AS drugName,
+        unit,
+        unit_price AS unitPrice
+        FROM drug
+        WHERE drug_name LIKE CONCAT('%', #{keyword}, '%')
+        OR drug_code LIKE CONCAT('%', #{keyword}, '%')
+        ORDER BY drug_name
+        LIMIT 20
     </select>
 
 </mapper>

@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import debounce from "lodash.debounce";
+import AdminHeader from "../../component/AdminHeader"; // ✅ npm install lodash.debounce
 
 export default function MedicalRecordPage() {
     const [form, setForm] = useState({
@@ -16,8 +18,23 @@ export default function MedicalRecordPage() {
 
     // 💊 이번 진료의 처방 입력 리스트
     const [newPrescriptions, setNewPrescriptions] = useState([
-        { drugName: "", dosage: "", duration: "", type: "DRUG" },
+        { drugName: "", dosage: "", duration: "", type: "DRUG", form: "", unitPrice: "" },
     ]);
+
+    // 자동완성 관련 상태
+    const [drugSuggestions, setDrugSuggestions] = useState([]);
+    const [activeIndex, setActiveIndex] = useState(null);
+
+    // ✅ 디바운스된 약품 검색 함수
+    const searchDrug = debounce(async (keyword) => {
+        if (!keyword || keyword.trim() === "") return setDrugSuggestions([]);
+        try {
+            const res = await axios.get(`http://192.168.0.24:8080/api/drug/search?keyword=${keyword}`);
+            setDrugSuggestions(res.data);
+        } catch {
+            setDrugSuggestions([]);
+        }
+    }, 300);
 
     // 초기 데이터 로드
     useEffect(() => {
@@ -47,7 +64,7 @@ export default function MedicalRecordPage() {
         try {
             const payload = {
                 ...form,
-                prescriptions: newPrescriptions, // 처방 리스트 통합 전송
+                prescriptions: newPrescriptions,
             };
 
             const res = await axios.post("http://192.168.0.24:8080/api/records", payload, {
@@ -85,6 +102,12 @@ export default function MedicalRecordPage() {
         const updated = [...newPrescriptions];
         updated[i][name] = value;
         setNewPrescriptions(updated);
+
+        // 약품명 입력 시 자동검색
+        if (name === "drugName") {
+            setActiveIndex(i);
+            searchDrug(value);
+        }
     };
 
     const addPrescriptionRow = () =>
@@ -95,10 +118,9 @@ export default function MedicalRecordPage() {
 
     // 🩺 UI
     return (
-        <div className="p-8 bg-gray-50 min-h-screen font-pretendard">
-            <h1 className="text-2xl font-bold text-blue-700 mb-6 text-center">
-                진료 통합 관리
-            </h1>
+        <div className="p-20 bg-gray-50 min-h-screen font-pretendard">
+            <AdminHeader />
+            <h1 className="text-2xl font-bold text-blue-700 mb-6 text-center">진료 통합 관리</h1>
 
             <div className="grid grid-cols-2 gap-6">
                 {/* ① 진료 등록 */}
@@ -108,11 +130,18 @@ export default function MedicalRecordPage() {
                         {/* 환자 선택 */}
                         <div>
                             <label className="block text-gray-700 mb-1 font-medium">환자 선택</label>
-                            <select name="patientId" value={form.patientId} onChange={handleChange}
-                                    className="w-full border rounded p-2 focus:ring-2 focus:ring-blue-400" required>
+                            <select
+                                name="patientId"
+                                value={form.patientId}
+                                onChange={handleChange}
+                                className="w-full border rounded p-2 focus:ring-2 focus:ring-blue-400"
+                                required
+                            >
                                 <option value="">-- 환자 선택 --</option>
-                                {patients.map(p => (
-                                    <option key={p.patientId} value={p.patientId}>{p.name}</option>
+                                {patients.map((p) => (
+                                    <option key={p.patientId} value={p.patientId}>
+                                        {p.name}
+                                    </option>
                                 ))}
                             </select>
                         </div>
@@ -120,10 +149,15 @@ export default function MedicalRecordPage() {
                         {/* 의사 선택 */}
                         <div>
                             <label className="block text-gray-700 mb-1 font-medium">담당의 선택</label>
-                            <select name="doctorId" value={form.doctorId} onChange={handleChange}
-                                    className="w-full border rounded p-2 focus:ring-2 focus:ring-blue-400" required>
+                            <select
+                                name="doctorId"
+                                value={form.doctorId}
+                                onChange={handleChange}
+                                className="w-full border rounded p-2 focus:ring-2 focus:ring-blue-400"
+                                required
+                            >
                                 <option value="">-- 담당의 선택 --</option>
-                                {doctors.map(d => (
+                                {doctors.map((d) => (
                                     <option key={d.doctorId} value={d.doctorId}>
                                         {d.doctorName} ({d.department})
                                     </option>
@@ -134,31 +168,46 @@ export default function MedicalRecordPage() {
                         {/* 진단 */}
                         <div>
                             <label className="block text-gray-700 mb-1 font-medium">진단명 / 소견</label>
-                            <textarea name="diagnosis" value={form.diagnosis} onChange={handleChange}
-                                      placeholder="예: 위염, 약물치료 권장" rows="3"
-                                      className="w-full border rounded p-2 focus:ring-2 focus:ring-blue-400 resize-none" required />
+                            <textarea
+                                name="diagnosis"
+                                value={form.diagnosis}
+                                onChange={handleChange}
+                                placeholder="예: 위염, 약물치료 권장"
+                                rows="3"
+                                className="w-full border rounded p-2 focus:ring-2 focus:ring-blue-400 resize-none"
+                                required
+                            />
                         </div>
 
                         {/* 진료비 */}
                         <div>
                             <label className="block text-gray-700 mb-1 font-medium">총 진료비 (원)</label>
-                            <input type="number" name="totalCost" value={form.totalCost} onChange={handleChange}
-                                   placeholder="예: 50000"
-                                   className="w-full border rounded p-2 focus:ring-2 focus:ring-blue-400" required />
+                            <input
+                                type="number"
+                                name="totalCost"
+                                value={form.totalCost}
+                                onChange={handleChange}
+                                placeholder="예: 50000"
+                                className="w-full border rounded p-2 focus:ring-2 focus:ring-blue-400"
+                                required
+                            />
                         </div>
 
-                        <button type="submit"
-                                className="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-md font-semibold">
+                        <button
+                            type="submit"
+                            className="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-md font-semibold"
+                        >
                             진료 및 처방 등록
                         </button>
                     </form>
                 </div>
 
                 {/* ② 처방 입력 */}
-                <div className="bg-white p-6 rounded-lg shadow">
+                <div className="bg-white p-6 rounded-lg shadow relative">
                     <h2 className="text-lg font-bold text-blue-600 mb-3">💊 이번 진료 처방</h2>
+
                     {newPrescriptions.map((p, i) => (
-                        <div key={i} className="flex flex-wrap items-center gap-2 mb-3 border-b pb-2">
+                        <div key={i} className="flex flex-wrap items-center gap-2 mb-3 border-b pb-2 relative">
                             {/* 타입 선택 */}
                             <select
                                 name="type"
@@ -174,14 +223,66 @@ export default function MedicalRecordPage() {
                             {/* 💊 약일 경우 */}
                             {p.type === "DRUG" && (
                                 <>
+                                    <div className="relative w-40">
+                                        <input
+                                            type="text"
+                                            name="drugName"
+                                            placeholder="약품명 검색"
+                                            value={p.drugName}
+                                            onChange={(e) => handlePrescriptionChange(i, e)}
+                                            className="border p-2 rounded w-full"
+                                            autoComplete="off"
+                                        />
+                                        {activeIndex === i && drugSuggestions.length > 0 && (
+                                            <ul className="absolute bg-white border rounded w-full shadow max-h-40 overflow-y-auto z-10">
+                                                {drugSuggestions.map((drug) => (
+                                                    <li
+                                                        key={drug.drugCode}
+                                                        onClick={async () => {
+                                                            try {
+                                                                const res = await axios.get(`http://192.168.0.24:8080/api/drug/${drug.drugCode}`);
+                                                                const detail = res.data;
+
+                                                                const updated = [...newPrescriptions];
+                                                                updated[i].drugName = detail.drugName;
+                                                                updated[i].unit = detail.unit;
+                                                                updated[i].unitPrice = detail.unitPrice;
+                                                                setNewPrescriptions(updated);
+
+                                                                setDrugSuggestions([]); // 자동완성 닫기
+                                                            } catch (err) {
+                                                                console.error("약품 상세조회 실패:", err);
+                                                            }
+                                                        }}
+                                                        className="px-2 py-1 hover:bg-blue-100 cursor-pointer text-sm"
+                                                    >
+                                                        {drug.drugName} ({drug.unit})
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        )}
+                                    </div>
+
+                                    {/* ✅ 제형 표시 (읽기전용) */}
                                     <input
                                         type="text"
-                                        name="drugName"
-                                        placeholder="약품명"
-                                        value={p.drugName}
-                                        onChange={(e) => handlePrescriptionChange(i, e)}
-                                        className="border p-2 rounded w-32"
+                                        name="unit"
+                                        placeholder="제형"
+                                        value={p.unit || ""}
+                                        readOnly
+                                        className="border p-2 rounded w-20 bg-gray-50 text-gray-600"
                                     />
+
+                                    {/* ✅ 단가 표시 (읽기전용) */}
+                                    <input
+                                        type="number"
+                                        name="unitPrice"
+                                        placeholder="단가"
+                                        value={p.unitPrice || ""}
+                                        readOnly
+                                        className="border p-2 rounded w-24 bg-gray-50 text-gray-600 text-right"
+                                    />
+
                                     <input
                                         type="text"
                                         name="dosage"
@@ -201,65 +302,6 @@ export default function MedicalRecordPage() {
                                 </>
                             )}
 
-                            {/* 🔬 검사일 경우 */}
-                            {p.type === "TEST" && (
-                                <>
-                                    <input
-                                        type="text"
-                                        name="testName"
-                                        placeholder="검사명"
-                                        value={p.testName || ""}
-                                        onChange={(e) => handlePrescriptionChange(i, e)}
-                                        className="border p-2 rounded w-32"
-                                    />
-                                    <input
-                                        type="text"
-                                        name="testArea"
-                                        placeholder="검사 부위"
-                                        value={p.testArea || ""}
-                                        onChange={(e) => handlePrescriptionChange(i, e)}
-                                        className="border p-2 rounded w-28"
-                                    />
-                                    <input
-                                        type="date"
-                                        name="testDate"
-                                        value={p.testDate || ""}
-                                        onChange={(e) => handlePrescriptionChange(i, e)}
-                                        className="border p-2 rounded w-40"
-                                    />
-                                </>
-                            )}
-
-                            {/* 💉 주사일 경우 */}
-                            {p.type === "INJECTION" && (
-                                <>
-                                    <input
-                                        type="text"
-                                        name="injectionName"
-                                        placeholder="주사명"
-                                        value={p.injectionName || ""}
-                                        onChange={(e) => handlePrescriptionChange(i, e)}
-                                        className="border p-2 rounded w-32"
-                                    />
-                                    <input
-                                        type="number"
-                                        name="injectionCount"
-                                        placeholder="횟수"
-                                        value={p.injectionCount || ""}
-                                        onChange={(e) => handlePrescriptionChange(i, e)}
-                                        className="border p-2 rounded w-20"
-                                    />
-                                    <input
-                                        type="text"
-                                        name="injectionArea"
-                                        placeholder="주사 부위"
-                                        value={p.injectionArea || ""}
-                                        onChange={(e) => handlePrescriptionChange(i, e)}
-                                        className="border p-2 rounded w-28"
-                                    />
-                                </>
-                            )}
-
                             {/* 삭제 버튼 */}
                             {newPrescriptions.length > 1 && (
                                 <button
@@ -273,8 +315,13 @@ export default function MedicalRecordPage() {
                         </div>
                     ))}
 
-                    <button type="button" onClick={addPrescriptionRow}
-                            className="bg-gray-200 px-3 py-1 rounded-md mt-2 text-sm">+ 추가</button>
+                    <button
+                        type="button"
+                        onClick={addPrescriptionRow}
+                        className="bg-gray-200 px-3 py-1 rounded-md mt-2 text-sm"
+                    >
+                        + 추가
+                    </button>
                 </div>
 
                 {/* (3) 과거 진료 내역 */}
@@ -407,6 +454,7 @@ export default function MedicalRecordPage() {
                 </div>
 
             </div>
+
         </div>
     );
 }

@@ -8,6 +8,7 @@ import Register from "./pages/user/Register";
 import UserHome from "./pages/user/UserHome";
 import MediHistory from "./pages/admin/MediHistory";
 import MedicalRecordPage from "./pages/admin/MedicalRecordPage";
+import DrugPage from "./pages/admin/DrugPage";
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
         <Route path="/admin/doctor" element={<DoctorList />} />
         <Route path="/admin/history" element={<MediHistory />} />
         <Route path="/admin/medicalRecord" element={<MedicalRecordPage />} />
+        <Route path="/admin/drug" element={<DrugPage />} />
         {/*유저페이지*/}
         <Route path={"/"} element={<UserHome />} />/
         <Route path={"user/register"} element={<Register />} />
