@@ -6,7 +6,6 @@ import com.mediSync.project.vo.MedicalRecord;
 import com.mediSync.project.vo.Prescription;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 

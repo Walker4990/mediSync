@@ -11,10 +11,7 @@ import com.itextpdf.text.*;
 import com.itextpdf.text.pdf.*;
 import java.io.ByteArrayOutputStream;
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.function.BiConsumer;
-import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
