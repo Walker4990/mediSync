@@ -16,20 +16,33 @@ export default function MedicalRecordPage() {
     const [prescriptions, setPrescriptions] = useState([]);
     const [selectedRecord, setSelectedRecord] = useState(null);
 
-    // 💊 이번 진료의 처방 입력 리스트
+    //  이번 진료의 처방 입력 리스트
     const [newPrescriptions, setNewPrescriptions] = useState([
-        { drugName: "", dosage: "", duration: "", type: "DRUG", form: "", unitPrice: "" },
+        {
+            type: "DRUG",
+            drugName: "",
+            dosage: "",
+            duration: "",
+            unit: "",
+            unitPrice: "",
+            injectionName: "",
+            testName: "",
+            testArea: "",
+            testDate: "",
+        },
     ]);
 
     // 자동완성 관련 상태
     const [drugSuggestions, setDrugSuggestions] = useState([]);
     const [activeIndex, setActiveIndex] = useState(null);
 
-    // ✅ 디바운스된 약품 검색 함수
-    const searchDrug = debounce(async (keyword) => {
+    //  디바운스된 약품/주사 검색 함수
+    const searchDrug = debounce(async (keyword, type = null) => {
         if (!keyword || keyword.trim() === "") return setDrugSuggestions([]);
         try {
-            const res = await axios.get(`http://192.168.0.24:8080/api/drug/search?keyword=${keyword}`);
+            const res = await axios.get(`http://192.168.0.24:8080/api/drug/search`, {
+                params: { keyword, type }, // ✅ type=null(기본: 일반약), or INJECTION
+            });
             setDrugSuggestions(res.data);
         } catch {
             setDrugSuggestions([]);
@@ -58,25 +71,72 @@ export default function MedicalRecordPage() {
         }
     };
 
-    // ✅ 통합 진료 + 처방 등록
     const handleSubmit = async (e) => {
         e.preventDefault();
+
         try {
+            // ① 처방 데이터 정제
+            const cleanPrescriptions = newPrescriptions.map((p) => {
+                const base = { ...p };
+
+                // 빈 문자열 → null 변환
+                Object.keys(base).forEach((k) => {
+                    if (base[k] === "") base[k] = null;
+                });
+
+                // unitPrice를 숫자형으로 변환
+                if (base.unitPrice !== null && base.unitPrice !== undefined) {
+                    base.unitPrice = Number(base.unitPrice);
+                }
+
+                // type별 불필요한 필드 정리
+                if (base.type === "DRUG") {
+                    delete base.injectionName;
+                    delete base.testName;
+                    delete base.testArea;
+                    delete base.testDate;
+                } else if (base.type === "INJECTION") {
+                    delete base.drugName;
+                    delete base.duration;
+                    delete base.testName;
+                    delete base.testArea;
+                    delete base.testDate;
+                } else if (base.type === "TEST") {
+                    delete base.drugName;
+                    delete base.dosage;
+                    delete base.duration;
+                    delete base.injectionName;
+                }
+
+                return base;
+            });
+
+            // ② 전체 payload 구성
             const payload = {
-                ...form,
-                prescriptions: newPrescriptions,
+                patientId: Number(form.patientId),
+                doctorId: Number(form.doctorId),
+                diagnosis: form.diagnosis,
+                totalCost: Number(form.totalCost),
+                prescriptions: cleanPrescriptions,
             };
 
+            console.log("📤 최종 전송 payload:", payload);
+
+            // ③ 전송
             const res = await axios.post("http://192.168.0.24:8080/api/records", payload, {
                 headers: { "Content-Type": "application/json" },
             });
 
+            // ④ 결과 처리
             if (res.data.success) {
                 alert("✅ 진료 및 처방 등록 완료");
+
+                // 목록 갱신
                 const recordRes = await axios.get(
                     `http://192.168.0.24:8080/api/records/patient/${form.patientId}`
                 );
                 setRecords(recordRes.data);
+
                 // 입력 초기화
                 setForm({ ...form, diagnosis: "", totalCost: "" });
                 setNewPrescriptions([{ drugName: "", dosage: "", duration: "", type: "DRUG" }]);
@@ -96,7 +156,7 @@ export default function MedicalRecordPage() {
         setPrescriptions(res.data);
     };
 
-    // 💊 처방 입력 관련 함수
+    //  처방 입력 관련 함수
     const handlePrescriptionChange = (i, e) => {
         const { name, value } = e.target;
         const updated = [...newPrescriptions];
@@ -204,7 +264,7 @@ export default function MedicalRecordPage() {
 
                 {/* ② 처방 입력 */}
                 <div className="bg-white p-6 rounded-lg shadow relative">
-                    <h2 className="text-lg font-bold text-blue-600 mb-3">💊 이번 진료 처방</h2>
+                    <h2 className="text-lg font-bold text-blue-600 mb-3">이번 진료 처방</h2>
 
                     {newPrescriptions.map((p, i) => (
                         <div key={i} className="flex flex-wrap items-center gap-2 mb-3 border-b pb-2 relative">
@@ -220,7 +280,7 @@ export default function MedicalRecordPage() {
                                 <option value="INJECTION">주사</option>
                             </select>
 
-                            {/* 💊 약일 경우 */}
+                            {/* 약일 경우 */}
                             {p.type === "DRUG" && (
                                 <>
                                     <div className="relative w-40">
@@ -263,7 +323,7 @@ export default function MedicalRecordPage() {
                                         )}
                                     </div>
 
-                                    {/* ✅ 제형 표시 (읽기전용) */}
+                                    {/*  제형 표시 (읽기전용) */}
                                     <input
                                         type="text"
                                         name="unit"
@@ -273,7 +333,7 @@ export default function MedicalRecordPage() {
                                         className="border p-2 rounded w-20 bg-gray-50 text-gray-600"
                                     />
 
-                                    {/* ✅ 단가 표시 (읽기전용) */}
+                                    {/*  단가 표시 (읽기전용) */}
                                     <input
                                         type="number"
                                         name="unitPrice"
@@ -301,6 +361,118 @@ export default function MedicalRecordPage() {
                                     />
                                 </>
                             )}
+                            {/*  주사일 경우 */}
+                            {p.type === "INJECTION" && (
+                                <>
+                                    <div className="relative w-40">
+                                        <input
+                                            type="text"
+                                            name="injectionName"
+                                            placeholder="주사명 검색"
+                                            value={p.injectionName || ""}
+                                            onChange={(e) => {
+                                                handlePrescriptionChange(i, e);
+                                                setActiveIndex(i);
+                                                searchDrug(e.target.value, "INJECTION"); // ✅ type 파라미터 전달
+                                            }}
+                                            className="border p-2 rounded w-full"
+                                            autoComplete="off"
+                                        />
+                                        {activeIndex === i && drugSuggestions.length > 0 && (
+                                            <ul className="absolute bg-white border rounded w-full shadow max-h-40 overflow-y-auto z-10">
+                                                {drugSuggestions.map((drug) => (
+                                                    <li
+                                                        key={drug.drugCode}
+                                                        onClick={async () => {
+                                                            try {
+                                                                const res = await axios.get(
+                                                                    `http://192.168.0.24:8080/api/drug/${drug.drugCode}`
+                                                                );
+                                                                const detail = res.data;
+
+                                                                const updated = [...newPrescriptions];
+                                                                updated[i].injectionName = detail.drugName;
+                                                                updated[i].unit = detail.unit;
+                                                                updated[i].unitPrice = detail.unitPrice;
+                                                                setNewPrescriptions(updated);
+                                                                setDrugSuggestions([]);
+                                                            } catch (err) {
+                                                                console.error("💉 주사 상세조회 실패:", err);
+                                                            }
+                                                        }}
+                                                        className="px-2 py-1 hover:bg-blue-100 cursor-pointer text-sm"
+                                                    >
+                                                        {drug.drugName} ({drug.unit})
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        )}
+                                    </div>
+
+                                    {/*  단위 (읽기전용) */}
+                                    <input
+                                        type="text"
+                                        name="unit"
+                                        placeholder="단위"
+                                        value={p.unit || ""}
+                                        readOnly
+                                        className="border p-2 rounded w-20 bg-gray-50 text-gray-600"
+                                    />
+
+                                    {/*  단가 (읽기전용) */}
+                                    <input
+                                        type="number"
+                                        name="unitPrice"
+                                        placeholder="단가"
+                                        value={p.unitPrice || ""}
+                                        readOnly
+                                        className="border p-2 rounded w-24 bg-gray-50 text-gray-600 text-right"
+                                    />
+
+                                    {/*  용량 입력 */}
+                                    <input
+                                        type="text"
+                                        name="dosage"
+                                        placeholder="용량 (예: 5ml)"
+                                        value={p.dosage || ""}
+                                        onChange={(e) => handlePrescriptionChange(i, e)}
+                                        className="border p-2 rounded w-24"
+                                    />
+                                </>
+                            )}
+                            {p.type === "TEST" && (
+                                <>
+                                    {/* 검사명 */}
+                                    <input
+                                        type="text"
+                                        name="testName"
+                                        placeholder="검사명 입력 (예: 혈액검사)"
+                                        value={p.testName || ""}
+                                        onChange={(e) => handlePrescriptionChange(i, e)}
+                                        className="border p-2 rounded w-40"
+                                    />
+
+                                    {/* 검사 부위 */}
+                                    <input
+                                        type="text"
+                                        name="testArea"
+                                        placeholder="검사 부위 (예: 간, 위, 심장)"
+                                        value={p.testArea || ""}
+                                        onChange={(e) => handlePrescriptionChange(i, e)}
+                                        className="border p-2 rounded w-40"
+                                    />
+
+                                    {/* 검사 예정일 */}
+                                    <input
+                                        type="date"
+                                        name="testDate"
+                                        value={p.testDate || ""}
+                                        onChange={(e) => handlePrescriptionChange(i, e)}
+                                        className="border p-2 rounded w-40"
+                                    />
+                                </>
+                            )}
+
 
                             {/* 삭제 버튼 */}
                             {newPrescriptions.length > 1 && (
@@ -420,8 +592,8 @@ export default function MedicalRecordPage() {
                                     {p.type === "DRUG" && (
                                         <>
                                             <td className="p-2 border-b text-gray-700">{p.drugName}</td>
-                                            <td className="p-2 border-b text-gray-700">{p.dosage}</td>
-                                            <td className="p-2 border-b text-gray-700">{p.duration}</td>
+                                            <td className="p-2 border-b text-gray-700">{p.dosage}정</td>
+                                            <td className="p-2 border-b text-gray-700">{p.duration}일</td>
                                         </>
                                     )}
 
@@ -439,10 +611,10 @@ export default function MedicalRecordPage() {
                                         <>
                                             <td className="p-2 border-b text-gray-700">{p.injectionName}</td>
                                             <td className="p-2 border-b text-gray-700">
-                                                {p.injectionCount}회
+                                                {p.dosage}
                                             </td>
                                             <td className="p-2 border-b text-gray-700">
-                                                {p.injectionArea}
+                                                주사실
                                             </td>
                                         </>
                                     )}
