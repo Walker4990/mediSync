@@ -2,39 +2,11 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { format } from "date-fns";
 import AdminHeader from "../../component/AdminHeader";
-import ConfirmModal from "../admin/ConfirmModal";
-import { FaEdit, FaTrashAlt, FaSearch } from "react-icons/fa";
+import ConfirmModal from "../../component/ConfirmModal";
+import { FaEdit, FaTrashAlt, FaSearch, FaPlusCircle } from "react-icons/fa";
 
 // API 기본 URL
 const API_BASE_URL = "http://192.168.0.24:8080/api/doctors";
-
-// API 연결 실패 시 사용할 모의 데이터 (Mock Data)
-const MOCK_DOCTORS = [
-  {
-    doctorId: 1,
-    doctorName: "김현우",
-    department: "내과",
-    licenseNo: "M2023-001",
-    phone: "010-2345-1111",
-    createdAt: "2025-10-22T12:20:40",
-  },
-  {
-    doctorId: 2,
-    doctorName: "이서연",
-    department: "정형외과",
-    licenseNo: "M2022-112",
-    phone: "010-8475-2288",
-    createdAt: "2025-10-22T12:20:40",
-  },
-  {
-    doctorId: 3,
-    doctorName: "박지훈",
-    department: "소아청소년과",
-    licenseNo: "M2021-092",
-    phone: "010-3399-4477",
-    createdAt: "2025-10-22T12:20:40",
-  },
-];
 
 export default function DoctorList() {
   const [doctors, setDoctors] = useState([]);
@@ -219,6 +191,11 @@ export default function DoctorList() {
     );
   };
 
+  const DoctorDetail = (id) => {
+    alert(id);
+    return <div>인사정보 페이지</div>;
+  };
+
   // 초기 데이터 불러오기
   useEffect(() => {
     fetchDoctors();
@@ -235,7 +212,6 @@ export default function DoctorList() {
       if (axios.isAxiosError(err) && !err.response) {
         console.warn("API 연결에 실패했습니다. 모의 데이터를 로드합니다.");
         setApiError(true);
-        setDoctors(MOCK_DOCTORS);
       } else {
         setApiError(true);
       }
@@ -370,13 +346,7 @@ export default function DoctorList() {
               }}
               className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors shadow-md"
             >
-              + 의사 추가
-            </button>
-            <button
-              onClick={fetchDoctors}
-              className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors shadow-md"
-            >
-              새로고침
+              추가
             </button>
           </div>
         </div>
@@ -403,7 +373,14 @@ export default function DoctorList() {
                   className="border-b hover:bg-gray-50 text-gray-700"
                 >
                   <td className="py-2 px-4">{d.doctorId}</td>
-                  <td className="py-2 px-4 font-medium">{d.doctorName}</td>
+                  <td
+                    className="py-2 px-4 font-semibold"
+                    onClick={() => {
+                      DoctorDetail(d.doctorId);
+                    }}
+                  >
+                    {d.doctorName}
+                  </td>
                   <td className="py-2 px-4">{d.department}</td>
                   <td className="py-2 px-4">{d.licenseNo}</td>
                   <td className="py-2 px-4">{d.phone}</td>

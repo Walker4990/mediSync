@@ -3,7 +3,7 @@ import axios from "axios";
 import { format } from "date-fns";
 import AdminHeader from "../../component/AdminHeader";
 import { FaEdit, FaTrashAlt, FaSearch } from "react-icons/fa";
-import ConfirmModal from "../admin/ConfirmModal";
+import ConfirmModal from "../../component/ConfirmModal";
 
 // API 기본 URL (백엔드 MedicalStaffController 경로와 일치)
 const API_BASE_URL = "http://192.168.0.24:8080/api/staffs";
@@ -22,43 +22,6 @@ const STATUS_OPTIONS = [
   { value: "ACTIVE", label: "재직 중" },
   { value: "LEAVE", label: "휴직" },
   { value: "RETIRED", label: "퇴사" },
-];
-
-// API 연결 실패 시 사용할 모의 데이터 (Mock Data)
-const MOCK_STAFF = [
-  {
-    staffId: 101,
-    staffName: "김수현",
-    department: "내과",
-    position: "NURSE",
-    licenseNo: "N2019-301",
-    phone: "010-1234-5678",
-    status: "ACTIVE",
-    hiredDate: "2019-03-01",
-    createdAt: "2024-10-22T10:00:00",
-  },
-  {
-    staffId: 102,
-    staffName: "이민호",
-    department: "정형외과",
-    position: "ASSISTANT",
-    licenseNo: "A2022-112",
-    phone: "010-8475-2288",
-    status: "LEAVE",
-    hiredDate: "2022-05-15",
-    createdAt: "2024-10-22T12:20:40",
-  },
-  {
-    staffId: 103,
-    staffName: "박지은",
-    department: "영상의학과",
-    position: "RADIOLOGIST",
-    licenseNo: "R2021-092",
-    phone: "010-3399-4477",
-    status: "ACTIVE",
-    hiredDate: "2021-01-20",
-    createdAt: "2024-10-22T15:30:10",
-  },
 ];
 
 // 날짜 포맷 함수
@@ -386,7 +349,6 @@ export default function MedicalStaffList() {
           `API 연결(${API_BASE_URL})에 실패했습니다. 모의 데이터를 로드합니다.`
         );
         setApiError(true);
-        setStaffList(MOCK_STAFF);
       } else {
         setApiError(true); // 기타 오류 시에도 오류 상태 표시
       }
@@ -511,27 +473,15 @@ export default function MedicalStaffList() {
                 setViewMode("add");
                 setEditingStaff(null);
               }}
-              className="px-4 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors shadow-md transform hover:scale-[1.02]"
+              className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors shadow-md transform hover:scale-[1.02]"
             >
-              + 새 의료진 등록
+              신규 등록
             </button>
             <button
               onClick={fetchStaff}
               className="px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-colors shadow-md transform hover:scale-[1.02]"
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5 inline mr-1"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.9 7.078V5a1 1 0 012 0v2a1 1 0 001-1V3a1 1 0 012 0v2a1 1 0 001-1V3a1 1 0 012 0v1.078a7.002 7.002 0 01-3.6 5.862 1 1 0 11-1.04 1.64A9.002 9.002 0 002 11V3a1 1 0 011-1h1z"
-                  clipRule="evenodd"
-                />
-              </svg>
-              새로고침
+              ♻
             </button>
           </div>
         </div>
@@ -595,7 +545,7 @@ export default function MedicalStaffList() {
                       {getStatusLabel(s.status)}
                     </span>
                   </td>
-                  <td className="py-2 px-4">{s.phone || "-"}</td>
+                  <td className="py-2 px-4 text-xs">{s.phone || "-"}</td>
                   <td className="py-2 px-4 text-gray-500 text-xs">
                     {formatDateTime(s.createdAt)}
                   </td>
@@ -605,15 +555,15 @@ export default function MedicalStaffList() {
                         setEditingStaff(s);
                         setViewMode("edit");
                       }}
-                      className="text-indigo-600 hover:text-indigo-800 text-xs font-bold transition-colors"
+                      className="text-blue-600 hover:text-blue-800 p-1 rounded-md transition duration-150 ease-in-out"
                     >
-                      수정
+                      <FaEdit className="w-5 h-5" />{" "}
                     </button>
                     <button
                       onClick={() => confirmDelete(s)}
                       className="text-red-600 hover:text-red-800 text-xs font-bold transition-colors"
                     >
-                      삭제
+                      <FaTrashAlt className="w-5 h-5" />{" "}
                     </button>
                   </td>
                 </tr>
