@@ -21,18 +21,17 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class DoctorController {
     private final DoctorService doctorService;
-
     @GetMapping
     public List<Doctor> selectDoctorAll() {
         return doctorService.selectAllDoctor();
 
-    private final DoctorService doctorService;
+    }
 
 
     @PostMapping
     public ResponseEntity<?> addDoctor(@RequestBody Doctor doctor) {
         try {
-            doctorService.addDoctor(doctor);
+            doctorService.insertDoctor(doctor);
             return ResponseEntity
                     .status(HttpStatus.CREATED) // HTTP 201 Created는 생성 성공의 표준 응답 코드입니다.
                     .body(Map.of("success", true, "message", "의사 등록 완료"));

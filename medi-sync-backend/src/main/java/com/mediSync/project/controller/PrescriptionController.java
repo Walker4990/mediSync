@@ -1,6 +1,8 @@
 package com.mediSync.project.controller;
 
+import com.mediSync.project.mapper.MedicalRecordMapper;
 import com.mediSync.project.service.PrescriptionService;
+import com.mediSync.project.vo.MedicalRecord;
 import com.mediSync.project.vo.Prescription;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
@@ -8,6 +10,8 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 @RestController
@@ -16,6 +20,7 @@ import java.util.List;
 public class PrescriptionController {
 
     private final PrescriptionService prescriptionService;
+    private final MedicalRecordMapper medicalRecordMapper;
 
     @GetMapping
     public List<Prescription> selectPrescriptions(){
@@ -31,13 +36,22 @@ public class PrescriptionController {
         return "success";
     }
     @GetMapping("/pdf/{recordId}")
-    public ResponseEntity<byte[]> generatePrescriptionPdf(@PathVariable Long recordId){
-        byte[] pdfBytes = prescriptionService.generatePrescriptionPdf(recordId);
+    public ResponseEntity<byte[]> generatePrescriptionPdf(@PathVariable Long recordId) {
+        byte[] pdfData = prescriptionService.generatePrescriptionPdf(recordId);
+        MedicalRecord record = medicalRecordMapper.selectRecordById(recordId); // ✅ 환자 정보 조회
 
+        // ✅ 파일명: yyyy-MM-dd_이름_처방전.pdf
+        String today = java.time.LocalDate.now().toString();
+        String rawFileName = today + "_" + record.getPatientName() + "_처방전.pdf";
+        String fileName = URLEncoder.encode(rawFileName, StandardCharsets.UTF_8);
+
+        // ✅ 헤더 설정
         HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_PDF);
-        headers.setContentDispositionFormData("attachment", "prescription_" + recordId + ".pdf");
+        headers.add(HttpHeaders.CONTENT_TYPE, "application/pdf");
+        headers.add(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + fileName + "\"");
 
-        return ResponseEntity.ok().headers(headers).body(pdfBytes);
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(pdfData);
     }
 }

@@ -12,7 +12,7 @@
     </insert>
     <!--  의사 조회  -->
     <select id="doctorSelectAll" resultType="doctor">
-        SELECT * FROM doctor
+        SELECT doctor_id, doctor_name, department, license_no, phone, created_at FROM doctor
     </select>
     <!--  의사 검색(의사)  -->
     <select id="selectRecordAllById" parameterType="long" resultType="doctor">

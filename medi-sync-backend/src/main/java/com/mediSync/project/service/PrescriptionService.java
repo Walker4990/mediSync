@@ -59,17 +59,25 @@ public class PrescriptionService {
             float h = PageSize.A4.getHeight();
 
             // ───────────── 상단 ─────────────
-            ColumnText.showTextAligned(text, Element.ALIGN_LEFT, new Phrase(record.getPatientName(), font), 240, h - 195, 0); // 환자명
-            ColumnText.showTextAligned(text, Element.ALIGN_LEFT, new Phrase("900101-*******", font), 210, h - 220, 0); // ✅ 전화번호 칸 → 주민번호 표시
-            ColumnText.showTextAligned(text, Element.ALIGN_LEFT, new Phrase(record.getDoctorName(), font), 465, h - 167, 0); // 의사명
+            ColumnText.showTextAligned(text, Element.ALIGN_LEFT, new Phrase(record.getPatientName(), font), 238, h - 194, 0); // 환자명
+            ColumnText.showTextAligned(text, Element.ALIGN_LEFT, new Phrase("900101-*******", font), 215, h - 221, 0); // 주민번호 표시
+            ColumnText.showTextAligned(text, Element.ALIGN_LEFT, new Phrase("MediSync", font), 458, h - 168, 0); // 의사명
+            ColumnText.showTextAligned(text, Element.ALIGN_LEFT, new Phrase("02-1234-1234", font), 445, h - 188, 0); // 병원 전화번호
+            ColumnText.showTextAligned(text, Element.ALIGN_LEFT, new Phrase(record.getDoctorName(), font), 237, h - 257, 0); // 의사명
 
-
+            // ✅ 서명 이미지 삽입 (의사 서명)
+            Image signature = Image.getInstance(
+                    new ClassPathResource("static/images/signature.png").getInputStream().readAllBytes()
+            );
+            signature.scaleAbsolute(70, 40);
+            signature.setAbsolutePosition(337, h - 277); // 하단 "의사명(서명)" 위치 근처
+            writer.getDirectContent().addImage(signature); // 텍스트 위에 표시
 
             // ───────────── 약품 목록 ─────────────
             int y = (int) (h - 340); // 전체 ↓35
             for (Prescription p : prescriptions) {
-                ColumnText.showTextAligned(text, Element.ALIGN_LEFT, new Phrase(p.getDrugName(), font), 110, y, 0);
-                ColumnText.showTextAligned(text, Element.ALIGN_LEFT, new Phrase(p.getDosage(), font), 275, y, 0);
+                ColumnText.showTextAligned(text, Element.ALIGN_LEFT, new Phrase(p.getDrugName(), font), 111, y, 0);
+                ColumnText.showTextAligned(text, Element.ALIGN_LEFT, new Phrase(p.getDosage(), font), 276, y, 0);
                 ColumnText.showTextAligned(text, Element.ALIGN_LEFT, new Phrase("3회", font), 330, y, 0);
                 ColumnText.showTextAligned(text, Element.ALIGN_LEFT, new Phrase(p.getDuration(), font), 385, y, 0);
                 ColumnText.showTextAligned(text, Element.ALIGN_LEFT, new Phrase("식후 30분", font), 460, y, 0);
