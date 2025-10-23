@@ -15,7 +15,7 @@ export default function Navbar() {
           <Link to="/insurance" className="hover:text-blue-500 transition">
             보험청구
           </Link>
-          <Link to="/consult" className="hover:text-blue-500 transition">
+          <Link to="/user/consult" className="hover:text-blue-500 transition">
             의료상담
           </Link>
           <Link to="/mypage" className="hover:text-blue-500 transition">
