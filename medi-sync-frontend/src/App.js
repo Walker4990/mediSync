@@ -4,7 +4,6 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import PatientList from "./pages/admin/PatientList";
 import StaffList from "./pages/admin/StaffList";
 import DoctorList from "./pages/admin/DoctorList";
-import MediHistory from "./pages/admin/MediHistory";
 import Register from "./pages/user/Register";
 import LoginPage from "./pages/user/LoginPage";
 import UserHome from "./pages/user/UserHome";
