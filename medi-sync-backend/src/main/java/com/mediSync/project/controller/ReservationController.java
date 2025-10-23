@@ -1,6 +1,7 @@
 package com.mediSync.project.controller;
 
 import com.mediSync.project.service.ReservationService;
+import com.mediSync.project.vo.Doctor;
 import com.mediSync.project.vo.Reservation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -18,7 +19,9 @@ public class ReservationController {
     
     
     //의사 정보 가져오기
-    
+    public List<Doctor> getDoctorInfo(String date){
+        return null;
+    }
     
     //해당 날짜에 잡힌 예약 날짜 가져오기
     @GetMapping("/getReservationList")
