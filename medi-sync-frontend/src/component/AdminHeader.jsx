@@ -41,9 +41,12 @@ export default function AdminHeader() {
         {/* 우측 사용자 섹션 */}
         <div className="flex items-center gap-4">
           <span className="text-sm text-blue-100">관리자</span>
-          <button className="bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded-md text-sm">
+          <Link
+            to="/admin"
+            className="bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded-md text-sm inline-block"
+          >
             로그아웃
-          </button>
+          </Link>
         </div>
       </div>
     </header>

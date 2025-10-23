@@ -3,11 +3,6 @@ package com.mediSync.project.controller;
 import com.mediSync.project.service.DoctorService;
 import com.mediSync.project.vo.Doctor;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,16 +15,15 @@ import java.util.Map;
 @RequestMapping("/api/doctors")
 @RequiredArgsConstructor
 public class DoctorController {
+
     private final DoctorService doctorService;
     @GetMapping
-    public List<Doctor> selectDoctorAll() {
+    public List<Doctor> findAllDoctor() {
         return doctorService.selectAllDoctor();
-
     }
 
-
     @PostMapping
-    public ResponseEntity<?> addDoctor(@RequestBody Doctor doctor) {
+    public ResponseEntity<?> insertDoctor(@RequestBody Doctor doctor) {
         try {
             doctorService.insertDoctor(doctor);
             return ResponseEntity
@@ -63,7 +57,7 @@ public class DoctorController {
     }
 
     @DeleteMapping("/{doctorId}")
-    public ResponseEntity<?> delDoctor(@PathVariable int doctorId) {
+    public ResponseEntity<?> delDoctor(@PathVariable Long doctorId) {
         try {
             doctorService.delDoctor(doctorId);
             return ResponseEntity
