@@ -97,6 +97,7 @@ export default function MedicalRecordPage() {
                     delete base.testDate;
                 } else if (base.type === "INJECTION") {
                     delete base.drugName;
+                    delete base.duration;
                     delete base.testName;
                     delete base.testArea;
                     delete base.testDate;
@@ -591,8 +592,8 @@ export default function MedicalRecordPage() {
                                     {p.type === "DRUG" && (
                                         <>
                                             <td className="p-2 border-b text-gray-700">{p.drugName}</td>
-                                            <td className="p-2 border-b text-gray-700">{p.dosage}</td>
-                                            <td className="p-2 border-b text-gray-700">{p.duration}</td>
+                                            <td className="p-2 border-b text-gray-700">{p.dosage}정</td>
+                                            <td className="p-2 border-b text-gray-700">{p.duration}일</td>
                                         </>
                                     )}
 
@@ -610,10 +611,10 @@ export default function MedicalRecordPage() {
                                         <>
                                             <td className="p-2 border-b text-gray-700">{p.injectionName}</td>
                                             <td className="p-2 border-b text-gray-700">
-                                                {p.injectionCount}회
+                                                {p.dosage}
                                             </td>
                                             <td className="p-2 border-b text-gray-700">
-                                                {p.injectionArea}
+                                                주사실
                                             </td>
                                         </>
                                     )}
