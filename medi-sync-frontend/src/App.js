@@ -28,10 +28,10 @@ function App() {
         <Route path="/admin/medicalRecord" element={<MedicalRecordPage />} />
         <Route path="/admin/drug" element={<DrugPage />} />
         {/*유저페이지*/}
-        <Route path={"/"} element={<UserHome />} />/
-        <Route path={"/user/register"} element={<Register />} />
-        <Route path={"/user/login"} element={<LoginPage />} />
-        <Route path={"/consult"} element={<MedicalConsult />} />
+        <Route path="/" element={<UserHome />} />/
+        <Route path="/user/register" element={<Register />} />
+        <Route path="/user/login" element={<LoginPage />} />
+        <Route path="/user/consult" element={<MedicalConsult />} />
         <Route path="/user/reservation" element={<Reservation />} />
       </Routes>
     </BrowserRouter>
