@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.mediSync.project.mapper.InsurerMapper">
+
+    <update id="updateInsurer" parameterType="drug">
+        UPDATE insurer
+        SET
+        insurer_name = #{insurerName}
+        WHERE insurer_code = #{insuranceCode}
+    </update>
+
+</mapper>
