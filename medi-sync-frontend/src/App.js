@@ -6,6 +6,7 @@ import StaffList from "./pages/admin/StaffList";
 import DoctorList from "./pages/admin/DoctorList";
 import Register from "./pages/user/Register";
 import UserHome from "./pages/user/UserHome";
+import MediHistory from "./pages/admin/MediHistory";
 import MedicalRecordPage from "./pages/admin/MedicalRecordPage";
 import MediHistory from "./pages/admin/MediHistory";
 
