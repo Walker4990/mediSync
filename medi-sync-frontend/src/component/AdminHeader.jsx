@@ -13,7 +13,7 @@ export default function AdminHeader() {
 
         {/* 네비게이션 */}
         <nav className="flex gap-6 text-sm">
-          <Link to="/admin/dashboard" className="hover:text-blue-200">
+          <Link to="/admin" className="hover:text-blue-200">
             대시보드
           </Link>
           <DropdownMenu

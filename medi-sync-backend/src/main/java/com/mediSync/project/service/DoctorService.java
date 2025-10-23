@@ -12,21 +12,18 @@ import java.util.List;
 public class DoctorService {
     private final DoctorMapper doctorMapper;
 
-    public int insertDoctor(Doctor doctor){
-        return doctorMapper.insertDoctor(doctor);
-    }
     public List<Doctor> selectAllDoctor(){
         return doctorMapper.doctorSelectAll();
     }
     public Doctor selectDoctorById(Long doctorId){
         return doctorMapper.doctorSelectById(doctorId);
     }
-
+    public void insertDoctor(Doctor doctor){ doctorMapper.insertDoctor(doctor);
+    }
     public void editDoctor(Doctor doctor) {
         doctorMapper.editDoctor(doctor);
     }
-
-    public void delDoctor(int doctorId) {
+    public void delDoctor(Long doctorId) {
         doctorMapper.delDoctor(doctorId);
     }
 }

@@ -5,17 +5,33 @@
 
 <mapper namespace="com.mediSync.project.mapper.DoctorMapper">
 
-    <!--  의사 등록  -->
-    <insert id="insertDoctor" parameterType="doctor">
-        INSERT INTO doctor (doctor_name, department, license_no, phone, created_at)
-        VALUES (#{doctorName}, #{department}, #{licenseNo}, #{phone}, now())
-    </insert>
-    <!--  의사 조회  -->
+    <!-- 의사 목록 조회 -->
     <select id="doctorSelectAll" resultType="doctor">
-        SELECT * FROM doctor
+        SELECT doctor_id, doctor_name, department, licence_no, phone, created_at FROM doctor
     </select>
-    <!--  의사 검색(의사)  -->
-    <select id="selectRecordAllById" parameterType="long" resultType="doctor">
+
+    <!-- 의사 검색 -->
+    <select id="selectRecordAllById" parameterType="Long" resultType="doctor">
         SELECT * FROM doctor WHERE doctor_id = #{doctorId}
     </select>
+
+    <!-- 의사 정보 등록 -->
+    <insert id="insertDoctor" parameterType="doctor" useGeneratedKeys="true" keyProperty="doctorId">
+        INSERT INTO doctor
+        (doctor_name, department, license_no, phone, created_at)
+        VALUES
+        (#{doctorName}, #{department}, #{licenseNo}, #{phone}, NOW())
+    </insert>
+
+    <!-- 의사 정보 수정 -->
+    <update id="editDoctor" parameterType="doctor">
+        UPDATE doctor SET doctor_name= #{doctorName}, department= #{department}, phone= #{phone}
+        WHERE doctor_id= #{doctorId}
+    </update>
+
+    <!-- 의사 정보 삭제 -->
+    <delete id="delDoctor" parameterType="Long">
+        DELETE from doctor WHERE doctor_id= #{doctorId}
+    </delete>
+
 </mapper>

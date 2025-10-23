@@ -7,6 +7,7 @@ export default function UserHome() {
   return (
     <div className="font-pretendard mt-20">
       {/* Hero Section */}
+      <Navbar />
       <section className="flex flex-col md:flex-row justify-between items-center px-8 md:px-20 py-16 bg-gradient-to-r from-blue-500 to-sky-400 text-white rounded-2xl shadow-lg max-w-6xl mx-auto">
         <div className="space-y-6 md:w-1/2">
           <h1 className="text-4xl font-bold leading-tight">
@@ -78,6 +79,7 @@ export default function UserHome() {
           지금 시작하기
         </Link>
       </section>
+      <Footer />
     </div>
   );
 }

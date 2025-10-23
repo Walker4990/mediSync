@@ -15,7 +15,7 @@ public class Doctor {
     private Long doctorId;
     private String doctorName;
     private String department;
-    private String licenceNo;
+    private String licenseNo;
     private String phone;
     private LocalDateTime createdAt;
 }

@@ -31,7 +31,7 @@
     </update>
 
     <!-- 의료진 정보 삭제 -->
-    <delete id="deleteStaff" parameterType="int">
+    <delete id="deleteStaff" parameterType="Long">
         DELETE from medical_staff WHERE staff_id = #{staffId}
     </delete>
 
