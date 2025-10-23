@@ -24,8 +24,17 @@ public class DrugController {
     }
     //  자동완성 검색용 (GET)
     @GetMapping("/search")
-    public ResponseEntity<List<Drug>> searchDrugs(@RequestParam("keyword") String keyword) {
-        List<Drug> result = drugService.searchDrugsByKeyword(keyword);
+    public ResponseEntity<List<Drug>> searchDrugs(@RequestParam("keyword") String keyword,
+                                                  @RequestParam(value = "type", required = false) String type) {
+        List<Drug> result;
+
+        // 주사 검색이면 unit='주사'만
+        if ("INJECTION".equalsIgnoreCase(type)) {
+            result = drugService.searchInjectionByKeyword(keyword);
+        } else {
+            result = drugService.searchDrugsByKeyword(keyword);
+        }
+
         return ResponseEntity.ok(result);
     }
     //  단일 조회용 (GET /api/drug/{drugCode})

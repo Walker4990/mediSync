@@ -50,11 +50,16 @@ public class DrugService {
         drugMapper.deleteDrugInventory(drugCode);
         return result;
     }
+    // 약 자동 완성 검색
     public List<Drug> searchDrugsByKeyword(String keyword) {
         if (keyword == null || keyword.trim().isEmpty()) {
             return List.of();
         }
         return drugMapper.searchDrugsByKeyword(keyword.trim());
     }
-
+    // 주사 자동 완성 검색
+    public List<Drug> searchInjectionByKeyword(String keyword) {
+        if (keyword == null || keyword.trim().isEmpty()) return List.of();
+        return drugMapper.searchInjectionByKeyword(keyword.trim());
+    }
 }

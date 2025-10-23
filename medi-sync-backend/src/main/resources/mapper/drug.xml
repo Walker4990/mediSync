@@ -78,14 +78,25 @@
     </delete>
     <!--  자동완성 검색 (약품명 or 코드) -->
     <select id="searchDrugsByKeyword" parameterType="string" resultType="drug">
-        SELECT
-        drug_code AS drugCode,
+        SELECT drug_code AS drugCode,
         drug_name AS drugName,
         unit,
         unit_price AS unitPrice
         FROM drug
-        WHERE drug_name LIKE CONCAT('%', #{keyword}, '%')
-        OR drug_code LIKE CONCAT('%', #{keyword}, '%')
+        WHERE (drug_name LIKE CONCAT('%', #{keyword}, '%') OR drug_code LIKE CONCAT('%', #{keyword}, '%'))
+        AND unit != '주사'
+        ORDER BY drug_name
+        LIMIT 20
+    </select>
+    <!-- 주사검색 -->
+    <select id="searchInjectionByKeyword" parameterType="string" resultType="drug">
+        SELECT drug_code AS drugCode,
+        drug_name AS drugName,
+        unit,
+        unit_price AS unitPrice
+        FROM drug
+        WHERE (drug_name LIKE CONCAT('%', #{keyword}, '%') OR drug_code LIKE CONCAT('%', #{keyword}, '%'))
+        AND unit = '주사'
         ORDER BY drug_name
         LIMIT 20
     </select>
