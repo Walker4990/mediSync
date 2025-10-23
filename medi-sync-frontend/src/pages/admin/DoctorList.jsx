@@ -12,7 +12,7 @@ const API_BASE_URL = "http://192.168.0.24:8080/api/doctors";
 const MOCK_DOCTORS = [
   {
     doctorId: 1,
-    name: "김현우",
+    doctorName: "김현우",
     department: "내과",
     licenseNo: "M2023-001",
     phone: "010-2345-1111",
@@ -20,7 +20,7 @@ const MOCK_DOCTORS = [
   },
   {
     doctorId: 2,
-    name: "이서연",
+    doctorName: "이서연",
     department: "정형외과",
     licenseNo: "M2022-112",
     phone: "010-8475-2288",
@@ -28,7 +28,7 @@ const MOCK_DOCTORS = [
   },
   {
     doctorId: 3,
-    name: "박지훈",
+    doctorName: "박지훈",
     department: "소아청소년과",
     licenseNo: "M2021-092",
     phone: "010-3399-4477",
