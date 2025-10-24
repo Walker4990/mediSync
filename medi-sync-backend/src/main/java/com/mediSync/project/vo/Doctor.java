@@ -14,8 +14,9 @@ import java.time.LocalDateTime;
 public class Doctor {
     private Long doctorId;
     private String doctorName;
-    private String department;
+    private String deptName;
     private String licenseNo;
     private String phone;
     private LocalDateTime createdAt;
+    private Long deptId;
 }

@@ -6,7 +6,7 @@ import org.apache.ibatis.annotations.Param;
 @Mapper
 public interface InventoryItemMapper {
 
-    int decreaseQuantityByItem(@Param("itemName") String itemName,
+    int decreaseQuantityByInven(@Param("itemName") String itemName,
                                @Param("usedQty") double usedQty);
 
 }

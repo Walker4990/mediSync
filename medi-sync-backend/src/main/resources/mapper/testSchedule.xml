@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.mediSync.project.mapper.TestScheduleMapper">
+    <!-- 검사 예약 존재 여부 -->
+    <select id="findByCodeAndDate" parameterType="map" resultType="com.mediSync.project.vo.TestSchedule">
+        SELECT * FROM test_schedule
+        WHERE test_code = #{testCode} AND test_date = #{testDate} AND test_time = #{testTime}
+    </select>
+
+    <!-- 예약 신규 생성 -->
+    <insert id="insertSchedule" parameterType="map">
+        INSERT INTO test_schedule (test_code, test_name, test_date, test_time, capacity, reserved, status, created_at, updated_at)
+        VALUES (
+        #{testCode},
+        (SELECT test_name FROM test_fee WHERE test_code = #{testCode}),
+        #{testDate},
+        #{testTime},
+        1,
+        0,
+        'AVAILABLE',
+        NOW(),
+        NOW()
+        )
+    </insert>
+
+    <!-- 예약 슬롯 확보 -->
+    <update id="reserveSlot" parameterType="map">
+        UPDATE test_schedule
+        SET reserved = reserved + 1,
+        status = CASE
+        WHEN reserved + 1 >= capacity THEN 'FULL'
+        ELSE 'AVAILABLE'
+        END,
+        updated_at = NOW()
+        WHERE test_code = #{testCode}
+        AND test_date = #{testDate}
+        AND test_time = #{testTime}
+        AND reserved &lt; capacity
+    </update>
+
+</mapper>

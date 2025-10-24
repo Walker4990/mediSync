@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.mediSync.project.mapper.FinanceTransactionMapper">
+    <select id="selectAll" resultType="finance">
+        SELECT * FROM finance_transaction
+    </select>
+
+    <insert id="insertFinance" parameterType="finance">
+        INSERT INTO finance_transaction(ref_type, ref_id, patient_id, doctor_id, type, category, amount, description, status, created_at, updated_at)
+        VALUES (#{refType}, #{refId}, #{patientId}, #{doctorId}, #{type}, #{category}, #{amount}, #{description}, #{status}, now(), now())
+    </insert>
+</mapper>

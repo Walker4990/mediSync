@@ -29,6 +29,7 @@ public class MedicalRecordController {
     public ResponseEntity<Map<String, Object>> insertRecord(@RequestBody MedicalRecord mr) {
         int result = medicalRecordService.insertRecord(mr);
 
+
         Map<String,Object> map = new HashMap<>();
         map.put( "success", result > 0 );
         map.put( "message", result > 0 ? "진료 등록 완료" : "등록 실패" );
