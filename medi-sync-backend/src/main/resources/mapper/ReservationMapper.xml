@@ -17,13 +17,23 @@
 
     </select>
 
-
     <!--  예약하기  -->
     <insert id="addReservation" parameterType="reservation">
         insert into reservation(patient_id,doctor_id,reservation_date,status,created_at)
         values(#{patient_id},#{doctor_id},#{reservation_date}, 'WAIT', now())
     </insert>
 
-
+    <!-- 예약 취소하기 -->
+    <delete id="deleteReservation" parameterType="reservation">
+        delete from reservation
+        where
+        reservation_id = #{reservation_id}
+        AND
+        patient_id=#{patient_id}
+        AND
+        doctor_id = #{doctor_id}
+        AND
+        reservation_date = #{reservation_date}
+    </delete>
 
 </mapper>

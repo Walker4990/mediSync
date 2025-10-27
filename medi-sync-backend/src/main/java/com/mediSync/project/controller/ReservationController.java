@@ -44,6 +44,14 @@ public class ReservationController {
         return res;
     }
 
+    //병원 예약 취소하기
+    @DeleteMapping("/deleteReservation")
+    public int deleteReservation(@RequestBody Reservation reservation){
+        System.out.println("넘어온 삭제 정보 : "+ reservation);
+        int res = reservationService.deleteReservation(reservation);
+        return res;
+    }
+
 
 
 }

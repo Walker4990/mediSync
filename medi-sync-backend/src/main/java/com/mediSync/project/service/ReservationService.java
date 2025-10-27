@@ -28,4 +28,7 @@ public class ReservationService {
     public int addReservation(Reservation reservation){
         return reservationMapper.addReservation(reservation);
     }
+
+    //예약 취소하기
+    public int deleteReservation(Reservation reservation){return  reservationMapper.deleteReservation(reservation);}
 }

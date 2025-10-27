@@ -191,16 +191,17 @@ const TimeModal = ({
   // 2. 가상의 예약 시간
 
   useEffect(() => {
-    console.log("보내는 시간대" + selectedDate);
     setLocalReservedTimes(reservedTimes);
   }, [reservedTimes]);
 
+  //모달 열릴 때 이전 선택 초기화
   useEffect(() => {
     if (isVisible) {
-      setSelectedTime(null); //모달 열릴 때 이전 선택 초기화
+      setSelectedTime(null);
     }
   }, [isVisible]);
 
+  //예약 시간대 설정
   const availableTimes = useMemo(() => {
     return [
       "09:00~10:00",
@@ -226,9 +227,10 @@ const TimeModal = ({
       alert("진료 시간을 선택해주세요.");
       return;
     }
-    alert(
-      `담당자 : ${selectedDoctor.department} / ${selectedDoctor.doctorName} 의사 \n일정 : ${selectedDate} ${selectedTime} 을 선택하였습니다.`
-    );
+    // alert(
+    //   `담당자 : ${selectedDoctor.department} / ${selectedDoctor.doctorName} 의사 \n일정 : ${selectedDate} ${selectedTime} 을 선택하였습니다.`
+    // );
+
     // "11:00~12:00" → "11:00"
     const startTime = selectedTime.split("~")[0];
     const dataToSend = {
