@@ -19,10 +19,16 @@ public class DoctorController {
 
     private final DoctorService doctorService;
     @GetMapping
-    public List<Doctor> findAllDoctor() {
-        return doctorService.selectAllDoctor();
+    public List<Doctor> findAllDoctor(@RequestParam(required = false) String department){
+        System.out.println("department 넘어온 값 : "+department);
+        if(department != null && !department.equals("전체 과목")){
+            return doctorService.selectDoctorByDepartment(department);
+        }
+        else {
+            return doctorService.selectAllDoctor();
+        }
     }
-
+ 
     @PostMapping
     public ResponseEntity<?> insertDoctor(@RequestBody Doctor doctor) {
         try {

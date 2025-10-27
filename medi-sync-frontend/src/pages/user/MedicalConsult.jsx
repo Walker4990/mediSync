@@ -387,18 +387,23 @@ export default function MedicalConsult() {
     reservationTime: "",
   });
 
-  // 데이터 조회
-  const fetchDoctors = async () => {
+  //의사 데이터 조회
+  const fetchDoctors = async (selectedDept) => {
     setIsLoading(true);
     setApiError(false);
 
-    const res = await axios.get(API_BASE_URL);
+    // const res = await axios.get(API_BASE_URL);
+    let url = API_BASE_URL;
+    if (selectedDept !== "전체 과목") {
+      url += `?department=${encodeURIComponent(selectedDept)}`;
+    }
+    const res = await axios.get(url);
     try {
       setDoctors(res.data);
     } catch (err) {
       console.error("의사 조회 실패:", err);
       setApiError(true);
-      setDoctors(res.data);
+      setDoctors([]);
     } finally {
       setIsLoading(false);
     }
@@ -464,6 +469,9 @@ export default function MedicalConsult() {
   const handleSelectDept = (dept) => {
     setSelectedDept(dept);
     setIsDeptDropdownOpen(false);
+
+    //선택된 과목에 따라 의사 리스트 다시 불러오기
+    fetchDoctors(dept);
   };
 
   const handleCloseModal = () => {

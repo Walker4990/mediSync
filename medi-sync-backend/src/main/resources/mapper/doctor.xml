@@ -15,6 +15,12 @@
     <select id="selectRecordAllById" parameterType="Long" resultType="doctor">
         SELECT * FROM doctor WHERE doctor_id = #{doctorId}
     </select>
+    <!-- 의사 토글검색 -->
+   <select id="doctorSelectByDepartment" parameterType="String">
+       select * from doctor WHERE dept_id = #{department}
+   </select>
+    
+    
 
     <!-- 의사 정보 등록 -->
     <insert id="insertDoctor" parameterType="doctor" useGeneratedKeys="true" keyProperty="doctorId">

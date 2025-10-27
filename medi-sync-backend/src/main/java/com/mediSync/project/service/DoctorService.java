@@ -30,6 +30,10 @@ public class DoctorService {
     public Map<String, Object> getConsultFeeByDoctorId(Long doctorId) {
         return doctorMapper.getConsultFeeByDoctorId(doctorId);
     }
+    //의사 서치
+    public List<Doctor> selectDoctorByDepartment(String department){
+        return doctorMapper.doctorSelectByDepartment(department);
+    }
 }
 
 
