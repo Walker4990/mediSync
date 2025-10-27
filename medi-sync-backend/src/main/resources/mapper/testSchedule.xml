@@ -7,7 +7,7 @@
     <!-- 검사 예약 존재 여부 -->
     <select id="findByCodeAndDate" parameterType="map" resultType="com.mediSync.project.vo.TestSchedule">
         SELECT * FROM test_schedule
-        WHERE test_code = #{testCode} AND test_date = #{testDate} AND test_time = #{testTime}
+        WHERE test_code = #{testCode} AND test_date = #{testDate} AND test_time LIKE CONCAT(#{testTime}, '%')
     </select>
 
     <!-- 예약 신규 생성 -->
@@ -41,4 +41,23 @@
         AND reserved &lt; capacity
     </update>
 
+    <update id="updateTestSchedule" parameterType="testSchedule">
+        UPDATE test_schedule
+        SET test_date =#{testDate}, test_time=#{testTime}
+        WHERE schedule_id = #{scheduleId}
+    </update>
+
+    <!-- 예약 카운트 증가 -->
+    <update id="increaseReservedCount" parameterType="long">
+        UPDATE test_schedule
+        SET reserved = reserved + 1
+        WHERE schedule_id = #{scheduleId}
+    </update>
+
+    <!-- 예약 카운트 감소 -->
+    <update id="decreaseReservedCount" parameterType="long">
+        UPDATE test_schedule
+        SET reserved = CASE WHEN reserved > 0 THEN reserved - 1 ELSE 0 END
+        WHERE schedule_id = #{scheduleId}
+    </update>
 </mapper>

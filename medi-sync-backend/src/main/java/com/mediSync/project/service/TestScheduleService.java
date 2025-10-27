@@ -25,6 +25,8 @@ public class TestScheduleService {
             return true;
         }
 
+        if ("FULL".equals(schedule.getStatus())) return false;
+
         // ✅ reserved < capacity면 예약 가능
         return schedule.getReserved() < schedule.getCapacity();
     }
@@ -45,6 +47,10 @@ public class TestScheduleService {
         }
 
         return updated;
+    }
+
+    public int updateTestSchedule(TestSchedule testSchedule) {
+        return testScheduleMapper.updateTestSchedule(testSchedule);
     }
 }
 

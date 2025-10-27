@@ -1,6 +1,5 @@
 package com.mediSync.project.vo;
 
-import com.itextpdf.text.pdf.PdfPCell;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -12,22 +11,23 @@ import java.time.LocalDateTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Alias("testResult")
-public class TestResult {
-    private Long testResultId;
-    private Long recordId;
-    private Long patientId;
-    private Long doctorId;
-    private String testCode;
-    private String testName;
-    private String testArea;
-    private LocalDate testDate;
-    private String resultValue;
-    private String resultNote;
-    private String status;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
+@Alias("testReservation")
+public class TestReservation {
 
+    private Long reservationId;
+    private Long scheduleId;
+    private Long patientId;
+    private Long recordId;
+    private Long doctorId;
+    private String status;
+    private LocalDateTime reservedAt;
+
+    // 조인 컬럼
+    private String testGroup;
+    private String testCode;
     private String patientName;
-    private String doctorName;
+    private String testName;
+    private LocalDate testDate;
+    private String testTime;
+
 }

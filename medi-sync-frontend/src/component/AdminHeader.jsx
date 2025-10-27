@@ -16,9 +16,18 @@ export default function AdminHeader() {
           <Link to="/admin/drug" className="hover:text-blue-200">
             약품관리
           </Link>
-          <Link to="/admin/medicalRecord" className="hover:text-blue-200">
-            진료관리
-          </Link>
+            <Link to="/admin/medicalRecord" className="hover:text-blue-200">
+                진료관리
+            </Link>
+            <DropdownMenu
+                title="검사관리"
+                items={[
+                    { name: "영상 검사", href: "/admin/test/imaging" },
+                    { name: "내시경/초음파 검사", href: "/admin/test/endoscope" },
+                    { name: "기초 검사", href: "/admin/test/basic" },
+                    { name: "기타 검사", href: "/admin/test/other" },
+                ]}
+            />
           <DropdownMenu
             title="고객관리"
             items={[

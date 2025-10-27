@@ -21,6 +21,7 @@ public class MedicalRecordService {
     private final DoctorMapper doctorMapper;
     private final TestResultMapper testResultMapper;
     private final TestScheduleMapper testScheduleMapper;
+    private final TestReservationMapper testReservationMapper;
 
     // 1. 진료비 계산 (정상)
     private void calculateCost(MedicalRecord mr) {
@@ -86,7 +87,6 @@ public class MedicalRecordService {
 
         Long recordId = mr.getRecordId();
 
-        // 처방 삽입 + 연동
         if (mr.getPrescriptions() != null) {
             for (Prescription p : mr.getPrescriptions()) {
                 p.setRecordId(recordId);
@@ -99,23 +99,23 @@ public class MedicalRecordService {
                 patientFt.setPatientId(mr.getPatientId());
                 patientFt.setDoctorId(mr.getDoctorId());
                 patientFt.setType("INCOME");
-                patientFt.setCategory(p.getType()); //
+                patientFt.setCategory(p.getType());
                 patientFt.setAmount(mr.getPatientPay());
                 patientFt.setDescription("진료비 (본인 부담금)");
                 patientFt.setStatus("COMPLETED");
                 financeTransactionMapper.insertFinance(patientFt);
 
-                FinanceTransaction insuracneFt = new FinanceTransaction();
-                insuracneFt.setRefType("RECORD");
-                insuracneFt.setRefId(recordId);
-                insuracneFt.setPatientId(mr.getPatientId());
-                insuracneFt.setDoctorId(mr.getDoctorId());
-                insuracneFt.setType("CLAIM");
-                insuracneFt.setCategory("INSURANCE_CLAIM");
-                insuracneFt.setAmount(mr.getInsuranceAmount());
-                insuracneFt.setDescription("보험금 청구 예정");
-                insuracneFt.setStatus("PENDING");
-                financeTransactionMapper.insertFinance(insuracneFt);
+                FinanceTransaction insuranceFt = new FinanceTransaction();
+                insuranceFt.setRefType("RECORD");
+                insuranceFt.setRefId(recordId);
+                insuranceFt.setPatientId(mr.getPatientId());
+                insuranceFt.setDoctorId(mr.getDoctorId());
+                insuranceFt.setType("CLAIM");
+                insuranceFt.setCategory("INSURANCE_CLAIM");
+                insuranceFt.setAmount(mr.getInsuranceAmount());
+                insuranceFt.setDescription("보험금 청구 예정");
+                insuranceFt.setStatus("PENDING");
+                financeTransactionMapper.insertFinance(insuranceFt);
 
                 // (2) 약/주사 → 재고 차감
                 if ("DRUG".equalsIgnoreCase(p.getType()) || "INJECTION".equalsIgnoreCase(p.getType())) {
@@ -131,35 +131,55 @@ public class MedicalRecordService {
                         String itemName = (p.getDrugName() != null && !p.getDrugName().isEmpty())
                                 ? p.getDrugName()
                                 : p.getInjectionName();
-
                         inventoryItemMapper.decreaseQuantityByInven(itemName, usedQty);
                     }
                 }
-                // 예약 가능여부 체크
-                if (p.getType().equals("TEST")) {
+
+                // ✅ (3) 검사(TEST) → 스케줄 & 예약 자동 등록
+                if ("TEST".equalsIgnoreCase(p.getType())) {
+
+                    // 스케줄 존재 확인
                     TestSchedule schedule = testScheduleMapper.findByCodeAndDate(
                             p.getTestCode(),
                             p.getTestDate().toString(),
                             p.getTestTime()
                     );
 
-                }
-                    TestResult tr = new TestResult();
-                    tr.setRecordId(recordId);
-                    tr.setPatientId(mr.getPatientId());
-                    tr.setDoctorId(mr.getDoctorId());
-                    tr.setTestCode(p.getTestCode());
-                    tr.setTestName(p.getTestName());
-                    tr.setTestArea(p.getTestArea());
-                    tr.setTestDate(p.getTestDate());
-                    testResultMapper.insertTestResult(tr);
+                    // 없으면 새로 생성
+                    if (schedule == null) {
+                        testScheduleMapper.insertSchedule(
+                                p.getTestCode(),
+                                p.getTestDate().toString(),
+                                p.getTestTime()
+                        );
+
+                        // 다시 조회해서 schedule_id 가져오기
+                        schedule = testScheduleMapper.findByCodeAndDate(
+                                p.getTestCode(),
+                                p.getTestDate().toString(),
+                                p.getTestTime()
+                        );
+                    }
+
+                    // 예약 등록
+                    TestReservation reservation = new TestReservation();
+                    reservation.setScheduleId(schedule.getScheduleId());
+                    reservation.setPatientId(mr.getPatientId());
+                    reservation.setDoctorId(mr.getDoctorId());
+                    reservation.setStatus("RESERVED");
+                    reservation.setReservedAt(p.getTestDate().atTime(9, 0));
+                    testReservationMapper.insertTestReservation(reservation);
+
+                    // 예약 수 증가
+                    testScheduleMapper.increaseReservedCount(schedule.getScheduleId());
 
                 }
             }
-
+        }
 
         return result;
     }
+
 
     // 3. 조회 로직
     public List<MedicalRecord> selectRecordAll() {
