@@ -2,7 +2,9 @@ package com.mediSync.project.controller;
 
 
 import com.mediSync.project.dto.TestScheduleDTO;
+import com.mediSync.project.service.TestReservationService;
 import com.mediSync.project.service.TestScheduleService;
+import com.mediSync.project.vo.TestSchedule;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,7 +20,7 @@ public class TestScheduleController {
     private final TestScheduleService testScheduleService;
 
     @GetMapping("/check")
-    public ResponseEntity<?> checkAvailability(@RequestParam String testCode, @RequestParam String testDate, @RequestParam String testTime){
+    public ResponseEntity<?> checkAvailability(@RequestParam(required = false) String testCode, @RequestParam String testDate, @RequestParam String testTime){
         boolean available = testScheduleService.checkAvailability(testCode, testDate, testTime);
         return ResponseEntity.ok(Map.of("available", available));
     }
@@ -34,4 +36,11 @@ public class TestScheduleController {
         res.put("message", result > 0 ? "예약 성공" : "예약 실패 (정원 초과)");
         return ResponseEntity.ok(res);
     }
+    @PutMapping("/{scheduleId}")
+    public ResponseEntity<?> updateTestSchedule(@PathVariable Long scheduleId, @RequestBody TestSchedule schedule) {
+        schedule.setScheduleId(scheduleId);
+        testScheduleService.updateTestSchedule(schedule);
+        return ResponseEntity.ok(Map.of("success", true, "message", "일정 수정 완료"));
+    }
+
 }

@@ -13,6 +13,12 @@ import MediHistory from "./pages/admin/MediHistory";
 import MedicalRecordPage from "./pages/admin/MedicalRecordPage";
 import DrugPage from "./pages/admin/DrugPage";
 import Reservation from "./pages/user/Reservation";
+import TestReservationPage from "./pages/admin/TestReservationPage";
+import TestGroupPage from "./component/TestGroupPage";
+import ImagingTestPage from "./pages/admin/ImagingTestPage";
+import EndoscopeTestPage from "./pages/admin/EndoscopeTestPage";
+import BasicTestPage from "./pages/admin/BasicTestPage";
+import OtherTestPage from "./pages/admin/OtherTestPage";
 
 function App() {
   return (
@@ -27,6 +33,12 @@ function App() {
         <Route path="/admin/history" element={<MediHistory />} />
         <Route path="/admin/medicalRecord" element={<MedicalRecordPage />} />
         <Route path="/admin/drug" element={<DrugPage />} />
+        <Route path="/admin/test/reservation" element={<TestReservationPage />} />
+        <Route path="/admin/test/imaging" element={<ImagingTestPage />} />
+        <Route path="/admin/test/endoscope" element={<EndoscopeTestPage />} />
+        <Route path="/admin/test/basic" element={<BasicTestPage />} />
+        <Route path="/admin/test/other" element={<OtherTestPage />} />
+
         {/*유저페이지*/}
         <Route path="/" element={<UserHome />} />/
         <Route path="/user/register" element={<Register />} />
