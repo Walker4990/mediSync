@@ -191,6 +191,7 @@ const TimeModal = ({
   // 2. 가상의 예약 시간
 
   useEffect(() => {
+    console.log("보내는 시간대" + selectedDate);
     setLocalReservedTimes(reservedTimes);
   }, [reservedTimes]);
 
@@ -424,7 +425,7 @@ export default function MedicalConsult() {
       try {
         const response = await axios.get(
           //http://192.168.0.24:8080
-          `http://localhost:8080/api/reservation/getReservationList?date=${selectedDate}`
+          `http://localhost:8080/api/reservation/getReservationList?date=${selectedDate}&doctor_id=${selectedDoctor.doctorId}`
         );
 
         console.log(

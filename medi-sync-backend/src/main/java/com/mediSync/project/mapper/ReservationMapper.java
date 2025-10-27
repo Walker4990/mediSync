@@ -15,7 +15,7 @@ public interface ReservationMapper {
     
     
     //해당 날짜에 예약된 시간 리스트 가져오기
-    List<String> getReservedTimesByDate(String date);
+    List<String> getReservedTimesByDate(Reservation reservation);
     
     //예약 하기
     int addReservation(Reservation reservation);
