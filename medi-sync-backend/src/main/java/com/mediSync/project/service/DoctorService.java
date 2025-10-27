@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -25,6 +26,9 @@ public class DoctorService {
     }
     public void delDoctor(Long doctorId) {
         doctorMapper.delDoctor(doctorId);
+    }
+    public Map<String, Object> getConsultFeeByDoctorId(Long doctorId) {
+        return doctorMapper.getConsultFeeByDoctorId(doctorId);
     }
 }
 

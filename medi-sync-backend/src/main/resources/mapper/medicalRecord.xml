@@ -11,8 +11,8 @@
             useGeneratedKeys="true"
             keyProperty="recordId">
 
-        INSERT INTO medical_record ( patient_id, doctor_id, diagnosis, total_cost, status, created_at )
-        VALUES ( #{patientId}, #{doctorId}, #{diagnosis}, #{totalCost}, 'COMPLETED', NOW() )
+        INSERT INTO medical_record ( patient_id, doctor_id, diagnosis, total_cost, insurance_amount, patient_pay, status, created_at )
+        VALUES ( #{patientId}, #{doctorId}, #{diagnosis}, #{totalCost}, #{insuranceAmount}, #{patientPay}, 'COMPLETED', NOW() )
     </insert>
     <!--  진료기록 전체 조회  -->
     <select id="selectRecordAll" resultType="MedicalRecord">
@@ -27,7 +27,7 @@
         mr.patient_id,
         mr.doctor_id,
         d.doctor_name AS doctorName,
-        d.department,
+        dept.dept_name AS deptName,
         mr.diagnosis,
         mr.total_cost,
         mr.status,
@@ -35,6 +35,7 @@
         COUNT(p.prescription_id) AS prescriptionCount
         FROM medical_record mr
         JOIN doctor d ON mr.doctor_id = d.doctor_id
+        JOIN department dept ON d.dept_id = dept.dept_id
         LEFT JOIN prescription p ON mr.record_id = p.record_id
         WHERE mr.patient_id = #{patientId}
         GROUP BY mr.record_id

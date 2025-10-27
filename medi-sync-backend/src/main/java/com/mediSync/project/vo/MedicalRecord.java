@@ -20,9 +20,13 @@ public class MedicalRecord {
     private BigDecimal totalCost;
     private String status;
     private LocalDateTime createdAt;
+    private BigDecimal insuranceAmount;
+    private BigDecimal patientPay;
 
     private List<Prescription> prescriptions;
 
     private String doctorName;
     private String department;
+
+
 }

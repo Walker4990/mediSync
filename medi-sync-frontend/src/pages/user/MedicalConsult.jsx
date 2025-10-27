@@ -168,13 +168,40 @@ const getNextSevenDays = () => {
   return days;
 };
 
-const TimeModal = ({ isVisible, onClose, selectedDoctor }) => {
+const TimeModal = ({
+  isVisible,
+  onClose,
+  selectedDoctor,
+  selectedDate,
+  setSelectedDate,
+  reservedTimes,
+  sevenDays,
+  setReservedTimes, // 추가
+}) => {
   // 1. 상태 관리
-  const sevenDays = useMemo(() => getNextSevenDays(), []);
-  const [selectedDate, setSelectedDate] = useState(sevenDays[0].dateValue);
+  //const sevenDays = useMemo(() => getNextSevenDays(), []);
+  //const [selectedDate, setSelectedDate] = useState(sevenDays[0].dateValue);
   const [selectedTime, setSelectedTime] = useState(null);
-
+  const [localreservedTimes, setLocalReservedTimes] = useState(reservedTimes);
+  //예약된 시간을 가져오는 리스트
+  // const [reservedTimes, setReservedTimes] = useState([]);
+  // const [selectedDate, setSelectedDate] = useState(
+  //   new Date().toISOString().split("T")[0]
+  // );
   // 2. 가상의 예약 시간
+
+  useEffect(() => {
+    setLocalReservedTimes(reservedTimes);
+  }, [reservedTimes]);
+
+  //모달 열릴 때 이전 선택 초기화
+  useEffect(() => {
+    if (isVisible) {
+      setSelectedTime(null);
+    }
+  }, [isVisible]);
+
+  //예약 시간대 설정
   const availableTimes = useMemo(() => {
     return [
       "09:00~10:00",
@@ -194,19 +221,45 @@ const TimeModal = ({ isVisible, onClose, selectedDoctor }) => {
   // 3. 이벤트 핸들러
   const handleSelectTime = (time) => setSelectedTime(time);
 
-  const handleNextStep = () => {
-    // if (selectedDeptFromParent === departments[0]) {
-    //   alert("진료 과목을 선택해주세요.");
-    //   return;
-    // }
+  // 예약하기 버튼 클릭 시 이벤트 발생
+  const handleNextStep = async (e) => {
     if (!selectedTime) {
       alert("진료 시간을 선택해주세요.");
       return;
     }
-    alert(
-      `담당자 : ${selectedDoctor.department} / ${selectedDoctor.doctorName} 의사 \n일정 : ${selectedDate} ${selectedTime} 을 선택하였습니다.`
-    );
-    onClose();
+    // alert(
+    //   `담당자 : ${selectedDoctor.department} / ${selectedDoctor.doctorName} 의사 \n일정 : ${selectedDate} ${selectedTime} 을 선택하였습니다.`
+    // );
+
+    // "11:00~12:00" → "11:00"
+    const startTime = selectedTime.split("~")[0];
+    const dataToSend = {
+      patient_id: 1,
+      doctor_id: selectedDoctor.doctorId,
+      reservation_date: `${selectedDate} ${startTime}:00`,
+    };
+    console.log("📤 보내는 데이터:", JSON.stringify(dataToSend, null, 2));
+    try {
+      const res = await axios.post(
+        "http://localhost:8080/api/reservation/addReservation",
+        dataToSend,
+        { headers: { "Content-Type": "application/json" } }
+      );
+      console.log(dataToSend);
+      // 백엔드가 숫자를 반환하는 경우
+      if (res.data === 1) {
+        alert("✅ 예약이 성공적으로 등록되었습니다!");
+        const startTime = selectedTime.split("~")[0];
+        setReservedTimes((prev) => [...prev, startTime]);
+        setSelectedTime(null);
+        onClose();
+      } else {
+        alert("⚠️ 예약 등록에 실패했습니다.");
+      }
+    } catch (err) {
+      console.error("❌ 네트워크 오류:", err);
+      alert("❌ 네트워크 오류: " + err.message);
+    }
   };
 
   const handleClose = () => {
@@ -270,24 +323,35 @@ const TimeModal = ({ isVisible, onClose, selectedDoctor }) => {
 
         {/* 예약 시간 그리드 */}
         <div className="grid grid-cols-3 gap-3 mb-8">
-          {availableTimes.map((time) => (
-            <button
-              key={time}
-              onClick={() => handleSelectTime(time)}
-              className={`py-3 px-1 rounded-lg text-sm transition-all duration-200 
+          {availableTimes.map((time) => {
+            const isReserved = reservedTimes.some(
+              (reserved) =>
+                reserved.replace(/'/g, "").trim() === time.split("~")[0]
+            );
+            return (
+              <button
+                key={time}
+                onClick={() => !isReserved && handleSelectTime(time)}
+                disabled={isReserved}
+                className={`py-3 px-1 rounded-lg text-sm transition-all duration-200 
                                 ${
                                   selectedTime === time
                                     ? "bg-blue-500 text-white font-bold shadow-md"
+                                    : isReserved
+                                    ? "bg-gray-300 text-gray-500 cursor-not-allowed opacity-70"
                                     : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                                 }
                                 border border-gray-200
                             `}
-            >
-              {time.split("~")[0]}
-              <br />
-              <span className="text-xs opacity-80">~{time.split("~")[1]}</span>
-            </button>
-          ))}
+              >
+                {time.split("~")[0]}
+                <br />
+                <span className="text-xs opacity-80">
+                  ~{time.split("~")[1]}
+                </span>
+              </button>
+            );
+          })}
         </div>
 
         {/* 하단 버튼 */}
@@ -303,6 +367,7 @@ const TimeModal = ({ isVisible, onClose, selectedDoctor }) => {
 };
 
 export default function MedicalConsult() {
+  const sevenDays = getNextSevenDays();
   const [doctors, setDoctors] = useState([]);
   const [isLoading, setIsLoading] = useState(true); // 로딩 상태 추가
   const [apiError, setApiError] = useState(false); // API 오류 상태 추가
@@ -312,6 +377,15 @@ export default function MedicalConsult() {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedDoctor, setSelectedDoctor] = useState(null);
+
+  // 🔹 추가해야 하는 부분
+  const [reservedTimes, setReservedTimes] = useState([]); // ✅ 이거 추가
+  const [selectedDate, setSelectedDate] = useState(sevenDays[0].dateValue); // 부모에서 관리
+  //등록할 때 보내는 폼
+  const [form, setForm] = useState({
+    reservationDate: "",
+    reservationTime: "",
+  });
 
   // 데이터 조회
   const fetchDoctors = async () => {
@@ -330,10 +404,45 @@ export default function MedicalConsult() {
     }
   };
 
+  // 예약 날짜 선택 (간단히 텍스트로 넣는 예시)
+  const handleDateChange = (e) => {
+    setForm({ ...form, reservationDate: e.target.value });
+  };
+
   // 초기 로딩
   useEffect(() => {
     fetchDoctors();
   }, []);
+
+  //예약 날짜가 바뀔때마다 해당 날짜 시간 목록 백에서 가져오기
+  useEffect(() => {
+    //값이 없으면 리스트 비워두기
+    if (!isModalOpen || !selectedDate) {
+      setReservedTimes([]);
+      return;
+    }
+
+    //보내기
+    const fetchReservedTimes = async () => {
+      try {
+        const response = await axios.get(
+          //http://192.168.0.24:8080
+          `http://localhost:8080/api/reservation/getReservationList?date=${selectedDate}&doctor_id=${selectedDoctor.doctorId}`
+        );
+
+        console.log(
+          reservedTimes,
+          reservedTimes.map((t) => `'${t}'`)
+        );
+        setReservedTimes(response.data);
+      } catch (error) {
+        //실패시 리스트 비워두기
+        console.error("예약한 시간 불러오기 싷패", error);
+        setReservedTimes([]);
+      }
+    };
+    fetchReservedTimes();
+  }, [isModalOpen, selectedDate]);
 
   // 선택된 과목에 따라 의사 목록 필터링
   const filteredDoctors = useMemo(() => {
@@ -393,6 +502,12 @@ export default function MedicalConsult() {
         onClose={handleCloseModal}
         selectedDeptFromParent={selectedDept}
         selectedDoctor={selectedDoctor}
+        setReservedTimes={setReservedTimes} // 추가
+        //날짜 선택
+        reservedTimes={reservedTimes}
+        selectedDate={selectedDate}
+        setSelectedDate={setSelectedDate}
+        sevenDays={sevenDays}
       />
       <Footer />
     </div>

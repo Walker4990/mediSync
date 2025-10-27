@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -69,4 +70,14 @@ public class DoctorController {
                     .body(Map.of("success", false, "message", "삭제 중 서버 오류 발생"));
         }
     }
-}
+    @GetMapping("/fee/{doctorId}")
+    public ResponseEntity<Map<String, Object>> getConsultFeeByDoctorId(@PathVariable Long doctorId) {
+        Map<String, Object> feeInfo = doctorService.getConsultFeeByDoctorId(doctorId);
+        if (feeInfo == null || feeInfo.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("success", false, "message", "해당 의사의 진료비 정보 없음"));
+        }
+        return ResponseEntity.ok(feeInfo);
+        }
+    }
+

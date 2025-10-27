@@ -1,5 +1,6 @@
 package com.mediSync.project.vo;
 
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -14,10 +15,17 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Alias("inven")
 public class InventoryItem {
+
     private Long itemId;
-    private String itemName, unit, supplier, location, drugCode;
-    private int quantity, minStock;
+    private String itemName;
+    private String unit;
+    private Long quantity;
     private BigDecimal price;
+    private String supplier;
     private LocalDate expiryDate;
+    private String location;
+    private int minStock;
     private LocalDateTime updatedAt;
+    private String drugCode;
+
 }

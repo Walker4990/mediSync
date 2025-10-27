@@ -6,12 +6,16 @@
 <mapper namespace="com.mediSync.project.mapper.ReservationMapper">
 
     <!--  선택한 날짜의 예약 정보 가져오기  -->
-    <select id="getReservedTimesByDate" resultType="String" parameterType="String">
-        <![CDATA[ SELECT TIME(reservation_date) FROM reservation
-        WHERE reservation_date >= #{date}
-        AND reservation_date < DATE_ADD(#{date}, INTERVAL 1 DAY); ]]>
-    </select>
+    <select id="getReservedTimesByDate" resultType="String" parameterType="reservation">
+        <![CDATA[
+        SELECT TIME(reservation_date)
+        FROM reservation
+        WHERE reservation_date >= #{reservation_date}
+        AND reservation_date < DATE_ADD(#{reservation_date}, INTERVAL 1 DAY)
+        AND doctor_id = #{doctor_id}
+        ]]>
 
+    </select>
 
     <!--  예약하기  -->
     <insert id="addReservation" parameterType="reservation">
@@ -19,6 +23,17 @@
         values(#{patient_id},#{doctor_id},#{reservation_date}, 'WAIT', now())
     </insert>
 
-
+    <!-- 예약 취소하기 -->
+    <delete id="deleteReservation" parameterType="reservation">
+        delete from reservation
+        where
+        reservation_id = #{reservation_id}
+        AND
+        patient_id=#{patient_id}
+        AND
+        doctor_id = #{doctor_id}
+        AND
+        reservation_date = #{reservation_date}
+    </delete>
 
 </mapper>

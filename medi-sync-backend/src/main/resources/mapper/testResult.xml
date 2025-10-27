@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.mediSync.project.mapper.TestResultMapper">
+    <insert id="insertTestResult" parameterType="testResult">
+        INSERT INTO test_result
+            (record_id, patient_id, doctor_id, test_code, test_name, test_area, test_date, result_value, result_note, status, created_at, updated_at)
+        VALUES
+        ( #{recordId}, #{patientId}, #{doctorId}, #{testCode}, #{testName}, #{testArea}, #{testDate}, #{resultValue}, #{resultNote}, #{status}, now(), now() )
+    </insert>
+
+    <update id="updateResult" parameterType="testResult">
+        UPDATE test_result
+        SET result_value = #{resultValue},
+            result_note = #{resultNote},
+            status = "COMPLETED",
+            updated_at = now()
+        WHERE test_result_id = #{testResultId}
+    </update>
+    <!-- 검사 결과 출력 -->
+    <select id="findByReservationId" parameterType="long" resultType="testResult">
+        SELECT
+        tr.test_result_id,
+        tr.record_id,
+        tr.patient_id,
+        p.name AS patientName,
+        tr.doctor_id,
+        d.doctor_name,
+        tr.test_code,
+        tr.test_name,
+        tr.test_area,
+        tr.test_date,
+        tr.result_value,
+        tr.result_note,
+        tr.status,
+        tr.created_at,
+        tr.updated_at
+        FROM test_result tr
+        JOIN test_reservation r ON tr.patient_id = r.patient_id
+        JOIN patient p ON tr.patient_id = p.patient_id
+        JOIN doctor d ON tr.doctor_id = d.doctor_id
+        WHERE r.reservation_id = #{reservationId}
+    </select>
+</mapper>

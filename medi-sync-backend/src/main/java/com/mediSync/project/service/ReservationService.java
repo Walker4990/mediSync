@@ -20,12 +20,15 @@ public class ReservationService {
 
     
     //해당 날짜의 예약 정보 가져오기
-    public List<String> getReservedTimesByDate(String date){
-        return reservationMapper.getReservedTimesByDate(date);
+    public List<String> getReservedTimesByDate(Reservation reservation){
+        return reservationMapper.getReservedTimesByDate(reservation);
     }
 
     //예약 추가하기
     public int addReservation(Reservation reservation){
         return reservationMapper.addReservation(reservation);
     }
+
+    //예약 취소하기
+    public int deleteReservation(Reservation reservation){return  reservationMapper.deleteReservation(reservation);}
 }
