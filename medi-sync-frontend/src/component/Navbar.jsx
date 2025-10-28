@@ -18,7 +18,7 @@ export default function Navbar() {
           <Link to="/user/consult" className="hover:text-blue-500 transition">
             의료상담
           </Link>
-          <Link to="/mypage" className="hover:text-blue-500 transition">
+          <Link to="/user/mypage" className="hover:text-blue-500 transition">
             마이페이지
           </Link>
 

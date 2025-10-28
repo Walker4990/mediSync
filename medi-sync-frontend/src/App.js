@@ -7,6 +7,7 @@ import DashBoard from "./pages/admin/DashBoard";
 import PatientList from "./pages/admin/PatientList";
 import StaffList from "./pages/admin/StaffList";
 import DoctorList from "./pages/admin/DoctorList";
+import MyPage from "./pages/user/MyPage";
 import Register from "./pages/user/Register";
 import LoginPage from "./pages/user/LoginPage";
 import UserHome from "./pages/user/UserHome";
@@ -57,6 +58,7 @@ function App() {
         <Route path="/" element={<UserHome />} />/
         <Route path="/user/register" element={<Register />} />
         <Route path="/user/login" element={<LoginPage />} />
+        <Route path="/user/mypage" element={<MyPage />} />
         <Route path="/user/consult" element={<MedicalConsult />} />
         <Route path="/user/reservation" element={<Reservation />} />
       </Routes>
