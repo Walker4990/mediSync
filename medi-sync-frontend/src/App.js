@@ -1,6 +1,8 @@
 import Home from "./pages/admin/Home";
 import React from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import AccountRegiForm from "./pages/admin/AccountRegiForm";
+import AccountList from "./pages/admin/AccountList";
 import DashBoard from "./pages/admin/DashBoard";
 import PatientList from "./pages/admin/PatientList";
 import StaffList from "./pages/admin/StaffList";
@@ -26,6 +28,8 @@ function App() {
       <Routes>
         {/*관리자 페이지*/}
         <Route path="/admin" element={<Home />} />
+        <Route path="/admin/register" element={<AccountRegiForm />} />
+        <Route path="/admin/acclist" element={<AccountList />} />
         <Route path="/admin/dashboard" element={<DashBoard />} />
         <Route path="/admin/patients" element={<PatientList />} />
         <Route path="/admin/staff" element={<StaffList />} />
@@ -33,12 +37,14 @@ function App() {
         <Route path="/admin/history" element={<MediHistory />} />
         <Route path="/admin/medicalRecord" element={<MedicalRecordPage />} />
         <Route path="/admin/drug" element={<DrugPage />} />
-        <Route path="/admin/test/reservation" element={<TestReservationPage />} />
+        <Route
+          path="/admin/test/reservation"
+          element={<TestReservationPage />}
+        />
         <Route path="/admin/test/imaging" element={<ImagingTestPage />} />
         <Route path="/admin/test/endoscope" element={<EndoscopeTestPage />} />
         <Route path="/admin/test/basic" element={<BasicTestPage />} />
         <Route path="/admin/test/other" element={<OtherTestPage />} />
-
         {/*유저페이지*/}
         <Route path="/" element={<UserHome />} />/
         <Route path="/user/register" element={<Register />} />

@@ -3,10 +3,17 @@ import axios from "axios";
 import { format } from "date-fns";
 import AdminHeader from "../../component/AdminHeader";
 import ConfirmModal from "../../component/ConfirmModal";
-import { FaEdit, FaTrashAlt, FaSearch, FaPlusCircle } from "react-icons/fa";
+import {
+  FaEdit,
+  FaTrashAlt,
+  FaSearch,
+  FaPlusCircle,
+  FaSpinner,
+} from "react-icons/fa";
 
 // API 기본 URL
 const API_BASE_URL = "http://192.168.0.24:8080/api/doctors";
+// const DEPT_API_URL = "http://192.168.0.24:8080/api/departments";
 
 export default function DoctorList() {
   const [doctors, setDoctors] = useState([]);
@@ -15,21 +22,27 @@ export default function DoctorList() {
   const [viewMode, setViewMode] = useState("list");
   const [editingDoctor, setEditingDoctor] = useState(null);
   const [deletingDoctor, setDeletingDoctor] = useState(null);
+  const [uniqueDepartments, setUniqueDepartments] = useState([]);
 
-  const DoctorForm = ({ doctorData, onClose }) => {
-    const isEditing = !!doctorData;
-    const initialData = doctorData || {
-      doctorName: "",
-      department: "",
-      licenseNo: "",
-      phone: "",
-    };
+  const DoctorForm = ({ doctorData, onClose, departments }) => {
+    const isEditing = !!doctorData?.doctorId; // doctorData가 있고 doctorId가 있을 때 수정 모드
+    const initialDeptId = doctorData?.deptId ? String(doctorData.deptId) : ""; // 백엔드로부터 받은 데이터에 deptId : Long -> 문자열로 변환
+    const initialDeptName = doctorData?.deptName
+      ? String(doctorData.deptName)
+      : "";
+    const deptOptions = departments || [];
 
-    const [formData, setFormData] = useState(initialData);
+    const [formData, setFormData] = useState({
+      doctorId: doctorData?.doctorId || null,
+      doctorName: doctorData?.doctorName || "",
+      deptId: initialDeptId,
+      deptName: initialDeptName,
+      licenseNo: doctorData?.licenseNo || "",
+      phone: doctorData?.phone || "",
+    });
+
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
-
-    const API_URL = API_BASE_URL;
 
     const handleChange = (e) => {
       const { name, value } = e.target;
@@ -41,25 +54,30 @@ export default function DoctorList() {
       setLoading(true);
       setError(null);
 
+      if (!formData.deptId) {
+        setError("진료과는 필수 선택 항목입니다.");
+        setLoading(false);
+        return;
+      }
+
       try {
         let res;
         if (isEditing) {
-          res = await axios.put(API_URL, formData);
-          alert(
-            res.data.message ||
-              `${formData.doctorName} 의사 정보가 수정되었습니다.`
-          );
+          // 수정: doctorId 포함하여 PUT 요청
+          res = await axios.put(API_BASE_URL, formData);
         } else {
-          // 등록 시 doctorId는 백엔드에서 자동 생성되므로 폼 데이터에서 제거
+          // 등록: doctorId 필드 제거 (백엔드에서 자동 생성)
           const postData = { ...formData };
           delete postData.doctorId;
-
-          res = await axios.post(API_URL, postData);
-          alert(
-            res.data.message || `${formData.doctorName} 의사가 등록되었습니다.`
-          );
+          res = await axios.post(API_BASE_URL, postData);
         }
-        onClose && onClose(true);
+        console.log(
+          `✅ ${isEditing ? "수정" : "등록"} 성공:`,
+          res.data.message
+        );
+
+        // 성공 후 목록 새로고침 및 모달 닫기
+        onClose(true); // onRefresh 호출을 위해 true 전달
       } catch (err) {
         console.error(
           "저장/수정 실패:",
@@ -68,6 +86,7 @@ export default function DoctorList() {
         const errorMessage =
           err.response?.data?.message ||
           (isEditing ? "수정 실패" : "등록 실패");
+
         setError(
           `${errorMessage}: 필수 항목을 확인하거나 중복된 정보(면허번호)가 아닌지 확인해주세요.`
         );
@@ -77,7 +96,7 @@ export default function DoctorList() {
     };
 
     return (
-      <div className="bg-white p-8 rounded-xl shadow-2xl w-full max-w-lg mx-auto">
+      <div className="bg-white p-8 rounded-xl shadow-2xl w-full max-w-lg mx-auto transform transition-all duration-300">
         <h2 className="text-2xl font-bold mb-6 text-blue-600">
           {isEditing ? "의사 정보 수정" : "새 의사 등록"}
         </h2>
@@ -112,19 +131,26 @@ export default function DoctorList() {
 
           <div>
             <label
-              htmlFor="department"
+              htmlFor="deptId"
               className="block text-sm font-medium text-gray-700"
             >
-              진료과명
+              진료과명 *
             </label>
-            <input
-              type="text"
-              id="department"
-              name="department"
-              value={formData.department}
+            <select
+              id="deptId"
+              name="deptId"
+              value={formData.deptId}
               onChange={handleChange}
+              required
               className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-blue-500 focus:border-blue-500"
-            />
+            >
+              <option value="">진료과를 선택하세요</option>
+              {deptOptions.map((dept) => (
+                <option key={dept.deptId} value={dept.deptId}>
+                  {dept.deptName}
+                </option>
+              ))}
+            </select>
           </div>
 
           {/* 등록 시에만 면허번호 입력 가능, 수정 시에는 변경 불가 */}
@@ -200,6 +226,27 @@ export default function DoctorList() {
   useEffect(() => {
     fetchDoctors();
   }, []);
+
+  // 의사 목록이 업데이트될 때마다 고유한 부서 목록 추출
+  useEffect(() => {
+    if (doctors.length > 0) {
+      const deptMap = new Map();
+      doctors.forEach((doctor) => {
+        // deptId와 deptName이 모두 존재하고 유효한 값일 때만 추가
+        if (doctor.deptId && doctor.deptName) {
+          // deptId를 키로 사용하여 중복을 방지하고 고유한 부서만 저장
+          deptMap.set(doctor.deptId, {
+            deptId: doctor.deptId,
+            deptName: doctor.deptName,
+          });
+        }
+      });
+      // Map의 값(value)들을 배열로 변환하여 저장
+      setUniqueDepartments(Array.from(deptMap.values()));
+    } else {
+      setUniqueDepartments([]);
+    }
+  }, [doctors]); // doctors 배열이 변경될 때마다 실행
 
   // API 호출: 의사 목록 조회 (GET)
   const fetchDoctors = async () => {
@@ -284,7 +331,7 @@ export default function DoctorList() {
     (d) =>
       (d.doctorName || "").toLowerCase().includes(search.toLowerCase()) ||
       (d.phone || "").includes(search) ||
-      (d.department || "").toLowerCase().includes(search.toLowerCase()) ||
+      (d.deptName || "").toLowerCase().includes(search.toLowerCase()) ||
       (d.licenseNo || "").toLowerCase().includes(search.toLowerCase())
   );
 
@@ -292,7 +339,11 @@ export default function DoctorList() {
   if (viewMode === "add" || viewMode === "edit") {
     return (
       <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center p-8 z-50">
-        <DoctorForm doctorData={editingDoctor} onClose={handleCloseForm} />
+        <DoctorForm
+          doctorData={editingDoctor}
+          onClose={handleCloseForm}
+          departments={uniqueDepartments}
+        />
       </div>
     );
   }
@@ -381,7 +432,9 @@ export default function DoctorList() {
                   >
                     {d.doctorName}
                   </td>
-                  <td className="py-2 px-4">{d.department}</td>
+                  <td className="py-2 px-4">
+                    {d.deptName} / {d.deptId}
+                  </td>
                   <td className="py-2 px-4">{d.licenseNo}</td>
                   <td className="py-2 px-4">{d.phone}</td>
                   <td className="py-2 px-4 text-gray-500 text-xs">

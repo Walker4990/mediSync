@@ -16,18 +16,18 @@ export default function AdminHeader() {
           <Link to="/admin/drug" className="hover:text-blue-200">
             약품관리
           </Link>
-            <Link to="/admin/medicalRecord" className="hover:text-blue-200">
-                진료관리
-            </Link>
-            <DropdownMenu
-                title="검사관리"
-                items={[
-                    { name: "영상 검사", href: "/admin/test/imaging" },
-                    { name: "내시경/초음파 검사", href: "/admin/test/endoscope" },
-                    { name: "기초 검사", href: "/admin/test/basic" },
-                    { name: "기타 검사", href: "/admin/test/other" },
-                ]}
-            />
+          <Link to="/admin/medicalRecord" className="hover:text-blue-200">
+            진료관리
+          </Link>
+          <DropdownMenu
+            title="검사관리"
+            items={[
+              { name: "영상 검사", href: "/admin/test/imaging" },
+              { name: "내시경/초음파 검사", href: "/admin/test/endoscope" },
+              { name: "기초 검사", href: "/admin/test/basic" },
+              { name: "기타 검사", href: "/admin/test/other" },
+            ]}
+          />
           <DropdownMenu
             title="고객관리"
             items={[
@@ -52,7 +52,9 @@ export default function AdminHeader() {
 
         {/* 우측 사용자 섹션 */}
         <div className="flex items-center gap-4">
-          <span className="text-sm text-blue-100">관리자</span>
+          <Link to="/admin/register" className="text-sm text-blue-100">
+            관리자
+          </Link>
           <Link
             className="bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded-md text-sm"
             to="/admin"

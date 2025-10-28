@@ -5,19 +5,16 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.apache.ibatis.type.Alias;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Alias("doctor")
-public class Doctor {
-    private Long doctorId;
-    private String doctorName;
-    private String licenseNo;
-    private String phone;
-    private LocalDateTime createdAt;
-
+@Alias("dept")
+public class Department {
     private Long deptId;
-    private String deptName;
+    private String deptName, description;
+    private BigDecimal consultFee, insuranceRate;
+    private LocalDateTime createdAt;
 }
