@@ -16,6 +16,8 @@ import com.mediSync.project.mapper.TestReservationMapper;
 import com.mediSync.project.mapper.TestResultMapper;
 import com.mediSync.project.vo.TestResult;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -30,6 +32,9 @@ import java.util.Map;
 @Service
 @RequiredArgsConstructor
 public class TestResultService {
+    @Autowired
+    private SimpMessagingTemplate messagingTemplate;
+
     private final TestResultMapper testResultMapper;
     private final TestReservationMapper testReservationMapper;
 
@@ -64,6 +69,14 @@ public class TestResultService {
         if (dto.getReservationId() != null) {
             testReservationMapper.updateStatus(dto.getReservationId(), "COMPLETED");
         }
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("patientId",  dto.getPatientId());
+        payload.put("testName", dto.getTestName());
+        payload.put("reservationId", dto.getReservationId());
+        payload.put("patientName", dto.getPatientName());
+        System.out.println("📤 Sending WebSocket Message: " + payload);
+        // 검사 결과 실시간 전송
+        messagingTemplate.convertAndSend("/topic/testResult", payload);
     }
 
     // ✅ Mock 결과 자동 생성 로직

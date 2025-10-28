@@ -21,10 +21,18 @@ import ImagingTestPage from "./pages/admin/ImagingTestPage";
 import EndoscopeTestPage from "./pages/admin/EndoscopeTestPage";
 import BasicTestPage from "./pages/admin/BasicTestPage";
 import OtherTestPage from "./pages/admin/OtherTestPage";
+import {NotificationProvider} from "./context/NotificationContext";
+import WebSocketListener from "./component/AddNotification";
+import NotificationPanel from "./component/NotificationPanel";
 
 function App() {
   return (
+      <NotificationProvider>
+
     <BrowserRouter>
+        <WebSocketListener />
+
+        <NotificationPanel />
       <Routes>
         {/*관리자 페이지*/}
         <Route path="/admin" element={<Home />} />
@@ -53,6 +61,7 @@ function App() {
         <Route path="/user/reservation" element={<Reservation />} />
       </Routes>
     </BrowserRouter>
+      </NotificationProvider>
   );
 }
 

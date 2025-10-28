@@ -3,7 +3,11 @@ import axios from "axios";
 import debounce from "lodash.debounce";
 import AdminHeader from "../../component/AdminHeader";
 import TimeSlotModal from "../../component/TimeSlotModal";
-import {AiFillPrinter} from "react-icons/ai"; // ✅ npm install lodash.debounce
+import {AiFillPrinter} from "react-icons/ai";
+import {ToastContainer} from "react-toastify";
+import {useNotifications} from "../../context/NotificationContext";
+import SurgeryReserveModal from "../../component/SurgeryReserveModal";
+
 
 export default function MedicalRecordPage() {
     const [form, setForm] = useState({
@@ -22,6 +26,12 @@ export default function MedicalRecordPage() {
     const [modalTargetIndex, setModalTargetIndex] = useState(null);
     const [selectedDate, setSelectedDate] = useState("");
     const [reservations, setReservations] = useState([]);
+    const { notifications } = useNotifications();
+    const [selectedSurgery, setSelectedSurgery] = useState(null);
+    const [surgeryModalOpen, setSurgeryModalOpen] = useState(false);
+
+
+   
 
     // 화면 진입 시 오늘 날짜로 설정
     useEffect(() => {
@@ -367,6 +377,15 @@ export default function MedicalRecordPage() {
 
     const removePrescriptionRow = (i) =>
         setNewPrescriptions(newPrescriptions.filter((_, idx) => idx !== i));
+
+
+    const handleSurgeryReserve = (record) => {
+        if (!record) return;
+        setSelectedSurgery(record);
+        setSurgeryModalOpen(true);
+    };
+
+
 
     return (
         <div className="p-20 bg-gray-50 min-h-screen font-pretendard">
@@ -918,6 +937,7 @@ export default function MedicalRecordPage() {
                                 <th className="p-2 border-b">항목명</th>
                                 <th className="p-2 border-b">세부정보 1</th>
                                 <th className="p-2 border-b">세부정보 2</th>
+                                <th className="p-2 border-b">세부정보 3</th>
                             </tr>
                             </thead>
                             <tbody>
@@ -961,30 +981,43 @@ export default function MedicalRecordPage() {
 
                                     {p.type === "TEST" && (
                                         <>
-                                            {/* 검사 처방 */}
                                             <td className="p-2 border-b text-gray-700">{p.testName}</td>
-                                            <td className="p-2 border-b text-gray-700">
-                                                {p.testArea || "-"}
-                                            </td>
+                                            <td className="p-2 border-b text-gray-700">{p.testArea || "-"}</td>
                                             <td className="p-2 border-b text-gray-700">
                                                 {p.testDate ? p.testDate.substring(0, 10) : "-"}
+                                            </td>
+                                            <td className="p-2 border-b text-center">
+                                                <button
+                                                    onClick={() =>
+                                                        window.open(
+                                                            `http://192.168.0.24:8080/api/testResult/${p.reservationId}/pdf`,
+                                                            "_blank"
+                                                        )
+                                                    }
+                                                    className="text-blue-500 hover:text-blue-700 font-medium mr-2"
+                                                >
+                                                    🔍 결과 보기
+                                                </button>
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleSurgeryReserve({
+                                                            recordId: selectedRecord,
+                                                            doctorId: form.doctorId,
+                                                            patientId: form.patientId,
+                                                            diagnosis: p.testName, // 수술명 기본값
+                                                            patientName: p.patientName || "환자", // optional
+                                                        });
+                                                    }}
+                                                    className="text-red-500 hover:text-red-700 text-sm font-semibold"
+                                                    title="수술 예약"
+                                                >
+                                                    🏥 예약
+                                                </button>
                                             </td>
                                         </>
                                     )}
 
-                                    {p.type === "INJECTION" && (
-                                        <>
-                                            {/* 주사 처방 */}
-                                            <td className="p-2 border-b text-gray-700">{p.injectionName}</td>
-                                            <td className="p-2 border-b text-gray-700">
-                                                {/* 주사는 기본적으로 ml 단위로 표시 */}
-                                                {p.dosage ? `${p.dosage}ml` : "-"}
-                                            </td>
-                                            <td className="p-2 border-b text-gray-700">
-                                                {p.injectionArea || "주사실"}
-                                            </td>
-                                        </>
-                                    )}
 
                                 </tr>
                             ))}
@@ -992,8 +1025,61 @@ export default function MedicalRecordPage() {
                         </table>
                     )}
                 </div>
+                <div className="bg-white p-6 rounded-lg shadow border border-blue-100">
+                    <h2 className="text-lg font-bold text-blue-700 mb-3 flex items-center">
+                        🧪 검사 결과 알림
+                        <span className="ml-2 text-sm text-gray-500 font-normal">
+    ({notifications.length})
+  </span>
+                    </h2>
 
+                    {notifications.length === 0 ? (
+                        <p className="text-gray-500 text-sm text-center">
+                            아직 수신된 검사 결과가 없습니다.
+                        </p>
+                    ) : (
+                        <ul className="space-y-2 max-h-64 overflow-y-auto">
+                            {notifications.map((n) => (
+                                <li
+                                    key={n.id}
+                                    className="flex justify-between items-center border-b pb-2 text-sm hover:bg-blue-50 transition"
+                                >
+                                    <div>
+          <span className="font-semibold text-gray-800">
+            {n.patientName}
+          </span>
+                                        <span className="font-semibold text-gray-800 ml-2">
+            {n.testName}
+          </span>
+                                        <span className="text-gray-500 ml-2">{n.time}</span>
+                                    </div>
+                                    <button
+                                        onClick={() =>
+                                            window.open(
+                                                `http://192.168.0.24:8080/api/testResult/${n.reservationId}/pdf`,
+                                                "_blank"
+                                            )
+                                        }
+                                        className="text-blue-500 hover:text-blue-700 font-medium"
+                                    >
+                                        보기
+                                    </button>
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+                </div>
             </div>
+
+            <ToastContainer
+                position="top-right"
+                autoClose={3000}
+                hideProgressBar={false}
+                newestOnTop
+                closeOnClick
+                draggable
+                pauseOnHover
+            />
             <TimeSlotModal
                 testCode={modalTargetIndex !== null ? newPrescriptions[modalTargetIndex].testCode : ""}
                 testDate={modalTargetIndex !== null ? newPrescriptions[modalTargetIndex].testDate : ""}
@@ -1007,8 +1093,35 @@ export default function MedicalRecordPage() {
                         setModalOpen(false);
                         alert(`✅ ${time} 시간 예약 선택됨`);
                     }
+                }} />
+            {/*수술 시간 예약용 모달*/}
+            <SurgeryReserveModal
+                open={surgeryModalOpen}
+                testCode={selectedSurgery?.recordId || ""}
+                testDate={new Date().toISOString().split("T")[0]}
+                onClose={() => setSurgeryModalOpen(false)}
+                onSelectTime={async (time) => {
+                    try {
+                        await axios.post("http://192.168.0.24:8080/api/surgery/reserve", {
+                            recordId: selectedSurgery.recordId,
+                            doctorId: selectedSurgery.doctorId,
+                            patientId: selectedSurgery.patientId,
+                            surgeryName: selectedSurgery.diagnosis || "수술",
+                            surgeryDate: new Date().toISOString().split("T")[0],
+                            surgeryTime: time,
+                            operationRoom: "OR-1",
+                        });
+                        alert(`✅ ${selectedSurgery.patientName} 수술 예약 완료 (${time})`);
+                        setSurgeryModalOpen(false);
+                    } catch (err) {
+                        console.error("❌ 수술 예약 실패:", err);
+                        alert("❌ 수술 예약 실패: 서버 오류");
+                    }
                 }}
             />
+
+
+
         </div>
     );
 }
