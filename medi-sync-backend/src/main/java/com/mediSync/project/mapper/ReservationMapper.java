@@ -2,7 +2,9 @@ package com.mediSync.project.mapper;
 
 import com.mediSync.project.vo.Reservation;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Mapper
@@ -17,4 +19,10 @@ public interface ReservationMapper {
     //예약 취소하기
     int deleteReservation(Reservation reservation);
 
+    //내 예약 조회하기
+    List<Reservation> selectReservationByPatientId(Integer patient_id);
+
+    //오늘 예약 조회하기
+    List<Reservation> findReservationBetween(@Param("start")LocalDate start,
+                                             @Param("end")LocalDate end);
 }

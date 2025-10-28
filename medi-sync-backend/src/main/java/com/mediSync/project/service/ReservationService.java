@@ -13,12 +13,6 @@ public class ReservationService {
 
     private final ReservationMapper reservationMapper;
 
-    //로그인 중인 회원 정보 가져오기
-    
-    
-    // 의사 정보 가져오기
-
-    
     //해당 날짜의 예약 정보 가져오기
     public List<String> getReservedTimesByDate(Reservation reservation){
         return reservationMapper.getReservedTimesByDate(reservation);
@@ -31,4 +25,10 @@ public class ReservationService {
 
     //예약 취소하기
     public int deleteReservation(Reservation reservation){return  reservationMapper.deleteReservation(reservation);}
+
+    //내 예약 조회하기
+    public List<Reservation> selectReservationByPatientId(Integer patient_id){
+        return reservationMapper.selectReservationByPatientId(patient_id);
+    }
+
 }

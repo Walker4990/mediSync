@@ -19,8 +19,6 @@
    <select id="doctorSelectByDepartment" parameterType="String">
        select * from doctor WHERE dept_id = #{dept_id}
    </select>
-    
-    
 
     <!-- 의사 정보 등록 -->
     <insert id="insertDoctor" parameterType="doctor" useGeneratedKeys="true" keyProperty="doctorId">

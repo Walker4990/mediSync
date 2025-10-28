@@ -17,11 +17,7 @@ import java.util.stream.Collectors;
 public class ReservationController {
     private final ReservationService reservationService;
 
-    //현재 로그인중인 회원 정보 가져오기(페이지 이동시 바로 실행)
-    
-
-    
-    //해당 날짜에 잡힌 예약 날짜 가져오기
+    //해당 날짜에 잡힌 예약 시간 리스트 가져오기
     @GetMapping("/getReservationList")
     public List<String> getReservationList(@RequestParam String date, @RequestParam Integer doctor_id) {
         System.out.println(date + doctor_id);
@@ -52,6 +48,12 @@ public class ReservationController {
         return res;
     }
 
+    //내 예약 조회하기
+    @GetMapping("/viewReservation")
+    public List<Reservation> viewMyReservation(@RequestParam Integer patient_id){
+        List<Reservation> list = reservationService.selectReservationByPatientId(patient_id);
+        return  list;
+    }
 
 
 }
