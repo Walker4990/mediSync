@@ -7,8 +7,9 @@
 
     <!-- 의사 목록 조회 -->
     <select id="doctorSelectAll" resultType="doctor">
-        SELECT doc.doctor_id, doc.doctor_name, dept.dept_name, doc.license_no, doc.phone, doc.created_at FROM doctor doc
-        JOIN department dept on doc.dept_id = dept.dept_id
+        SELECT doc.doctor_id AS doctorId, doc.doctor_name AS doctorName, dept.dept_name AS deptName,
+        doc.dept_id AS deptId, doc.license_no AS licenseNo, doc.phone, doc.created_at
+        FROM doctor doc JOIN department dept ON doc.dept_id = dept.dept_id
     </select>
 
     <!-- 의사 검색 -->
@@ -19,14 +20,14 @@
     <!-- 의사 정보 등록 -->
     <insert id="insertDoctor" parameterType="doctor" useGeneratedKeys="true" keyProperty="doctorId">
         INSERT INTO doctor
-        (doctor_name, department, license_no, phone, created_at)
+        (doctor_name, dept_id, license_no, phone, created_at)
         VALUES
-        (#{doctorName}, #{department}, #{licenseNo}, #{phone}, NOW())
+        (#{doctorName}, #{deptId}, #{licenseNo}, #{phone}, NOW())
     </insert>
 
     <!-- 의사 정보 수정 -->
     <update id="editDoctor" parameterType="doctor">
-        UPDATE doctor SET doctor_name= #{doctorName}, department= #{department}, phone= #{phone}
+        UPDATE doctor SET doctor_name= #{doctorName}, dept_id= #{deptId}, phone= #{phone}
         WHERE doctor_id= #{doctorId}
     </update>
 

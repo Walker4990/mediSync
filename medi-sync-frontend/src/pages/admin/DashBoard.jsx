@@ -72,21 +72,23 @@ export default function DashBoard() {
                 margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
               >
                 <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-                <XAxis dataKey="name" stroke="#333" />
+                <XAxis dataKey="name" stroke="#333" tick={{ fontSize: 13 }} />
                 <YAxis
                   yAxisId="left"
                   orientation="left"
                   stroke="#8884d8"
+                  tick={{ fontSize: 13 }}
                 />{" "}
                 {/* 환자수 */}
                 <YAxis
                   yAxisId="right"
                   orientation="right"
                   stroke="#82ca9d"
+                  tick={{ fontSize: 13 }}
                 />{" "}
                 {/* 청구액 */}
-                <Tooltip />
-                <Legend />
+                <Tooltip contentStyle={{ fontSize: "14px" }} />
+                <Legend wrapperStyle={{ fontSize: "13px" }} />
                 <Bar
                   yAxisId="left"
                   dataKey="환자수"
@@ -116,7 +118,7 @@ export default function DashBoard() {
                   fill="#8884d8"
                   paddingAngle={5}
                   dataKey="value"
-                  label
+                  label={{ fontSize: 14 }}
                 >
                   {statusData.map((entry, index) => (
                     <Cell
@@ -126,12 +128,14 @@ export default function DashBoard() {
                   ))}
                 </Pie>
                 <Tooltip
+                  contentStyle={{ fontSize: "14px" }}
                   formatter={(value, name, props) => [`${value}건`, name]}
                 />
                 <Legend
                   layout="vertical"
                   align="right"
                   verticalAlign="middle"
+                  wrapperStyle={{ fontSize: "14px" }}
                 />
               </PieChart>
             </ResponsiveContainer>
@@ -140,8 +144,8 @@ export default function DashBoard() {
           {/* 3. Placeholder */}
           <ChartCard title="월별 매출 추이">
             <div className="text-center pt-16 text-gray-500">
-              <p className="text-6xl mb-4">📈</p>
-              <p className="text-lg">
+              <p className="text-4xl mb-4">📈</p>
+              <p className="text-g">
                 데이터 분석 로드맵에 따라 차트가 표시될 예정입니다.
               </p>
               <p>실제 API 연동 후 구현</p>
@@ -151,8 +155,8 @@ export default function DashBoard() {
           {/* 4. Placeholder */}
           <ChartCard title="인사 관리 현황">
             <div className="text-center pt-16 text-gray-500">
-              <p className="text-6xl mb-4">🧑</p>
-              <p className="text-lg">
+              <p className="text-4xl mb-4">🧑</p>
+              <p className="text-g">
                 사용자별 상세 데이터는 인사관리 모듈과 연동됩니다.
               </p>
               <p>실제 API 연동 후 구현</p>
