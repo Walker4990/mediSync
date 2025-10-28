@@ -5,16 +5,16 @@
 
 <mapper namespace="com.mediSync.project.mapper.AccountMapper">
 
-    <!-- 계정 리스트 조회 -->
-    <select id="accountSelectAll" resultType="account">
-        SELECT * FROM admin_account
-    </select>
+<!--    &lt;!&ndash; 계정 리스트 조회 &ndash;&gt;-->
+<!--    <select id="accountSelectAll" resultType="account">-->
+<!--        SELECT * FROM admin_account-->
+<!--    </select>-->
 
-    <!-- 어드민 계정 생성 -->
-    <insert id="insertAdmin" useGeneratedKeys="true" keyProperty="adminId" parameterType="account">
-        INSERT INTO admin_account (
-        emp_id, password, name, phone, email, role, profile_img_url, doctor_id, staff_id, created_at)
-        VALUES ( #{empId}, #{password}, #{name}, #{phone}, #{email}, #{role}, #{profileImgUrl}, #{doctorId}, #{staffId}, NOW())
-    </insert>
+<!--    &lt;!&ndash; 어드민 계정 생성 &ndash;&gt;-->
+<!--    <insert id="insertAdmin" useGeneratedKeys="true" keyProperty="adminId" parameterType="">-->
+<!--        INSERT INTO admin_account (-->
+<!--        emp_id, password, name, phone, email, role, profile_img_url, doctor_id, staff_id, created_at)-->
+<!--        VALUES ( #{empId}, #{password}, #{name}, #{phone}, #{email}, #{role}, #{profileImgUrl}, #{doctorId}, #{staffId}, NOW())-->
+<!--    </insert>-->
 
 </mapper>
