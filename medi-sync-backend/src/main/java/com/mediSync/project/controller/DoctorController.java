@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,16 +20,17 @@ public class DoctorController {
 
     private final DoctorService doctorService;
     @GetMapping
-    public List<Doctor> findAllDoctor(@RequestParam(required = false) String department){
-        System.out.println("department 넘어온 값 : "+department);
-        if(department != null && !department.equals("전체 과목")){
-            return doctorService.selectDoctorByDepartment(department);
+    public List<Doctor> findAllDoctor(@RequestParam(required = false) String dept_id){
+
+        System.out.println("department 넘어온 값 : "+dept_id);
+        if(dept_id != null && !dept_id.equals("전체 과목")){
+            return doctorService.selectDoctorByDepartment(dept_id);
         }
         else {
             return doctorService.selectAllDoctor();
         }
     }
- 
+
     @PostMapping
     public ResponseEntity<?> insertDoctor(@RequestBody Doctor doctor) {
         try {

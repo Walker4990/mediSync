@@ -2,18 +2,19 @@ import React, { useEffect, useState, useMemo } from "react";
 import axios from "axios";
 import Footer from "../../component/Footer";
 import Navbar from "../../component/Navbar";
+import { header } from "framer-motion/client";
 
 const API_BASE_URL = "http://192.168.0.24:8080/api/doctors";
-
+const API_TEST_URL = "http://localhost:8080/api/doctors";
 // 가상의 진료 과목 목록 (테이블 참고)
 const departments = [
-  "전체 과목",
-  "내과",
-  "정형외과",
-  "산부인과",
-  "소아청소년과",
-  "이비인후과",
-  "가정의학과",
+  { id: 0, name: "전체 과목" },
+  { id: 1, name: "내과" },
+  { id: 2, name: "정형외과" },
+  { id: 3, name: "산부인과" },
+  { id: 4, name: "소아청소년과" },
+  { id: 5, name: "이비인후과" },
+  { id: 6, name: "가정의학과" },
 ];
 
 const DoctorList = ({
@@ -46,7 +47,7 @@ const DoctorList = ({
                   : "border-gray-300 text-gray-800"
               } hover:border-blue-500 flex justify-between items-center`}
             >
-              {selectedDept}
+              {selectedDept.name}
               <svg
                 className="w-4 h-4"
                 fill="none"
@@ -66,11 +67,11 @@ const DoctorList = ({
               <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-xl max-h-40 overflow-y-auto">
                 {departments.map((dept) => (
                   <div
-                    key={dept}
+                    key={dept.id}
                     onClick={() => handleSelectDept(dept)}
                     className="px-3 py-2 text-gray-700 hover:bg-blue-50 cursor-pointer text-sm"
                   >
-                    {dept}
+                    {dept.name}
                   </div>
                 ))}
               </div>
@@ -101,6 +102,7 @@ const DoctorList = ({
               className="flex justify-between items-start pt-4"
             >
               {/* (좌측) 의사 정보 */}
+
               <div className="flex-grow space-y-1">
                 <p className="text-sm text-gray-500">{doctor.department}</p>
                 <div className="flex items-center space-x-2">
@@ -373,6 +375,7 @@ export default function MedicalConsult() {
   const [apiError, setApiError] = useState(false); // API 오류 상태 추가
 
   const [selectedDept, setSelectedDept] = useState(departments[0]);
+  const [selectedDeptId, setSelectedDeptId] = useState(0);
   const [isDeptDropdownOpen, setIsDeptDropdownOpen] = useState(false);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -388,18 +391,28 @@ export default function MedicalConsult() {
   });
 
   //의사 데이터 조회
-  const fetchDoctors = async (selectedDept) => {
+  const fetchDoctors = async (deft = selectedDept) => {
     setIsLoading(true);
     setApiError(false);
 
     // const res = await axios.get(API_BASE_URL);
-    let url = API_BASE_URL;
-    if (selectedDept !== "전체 과목") {
-      url += `?department=${encodeURIComponent(selectedDept)}`;
-    }
-    const res = await axios.get(url);
+    // let url = API_TEST_URL;
+    // if (deft && deft !== "전체 과목") {
+    //   url += `?department=${encodeURIComponent(deft)}`;
+    // }
     try {
+      const url =
+        deft && deft.id !== 0
+          ? `${API_TEST_URL}?dept_id=${deft.id}`
+          : API_TEST_URL;
+
+      const res = await axios.get(url, {
+        headers: { "Content-Type": "application/json; charset=UTF-8" },
+      });
+
+      console.log("서버 응답 : ", res.data);
       setDoctors(res.data);
+      console.log("setDoctors 후 상태 :", res.data); // ← 추가
     } catch (err) {
       console.error("의사 조회 실패:", err);
       setApiError(true);
@@ -422,7 +435,7 @@ export default function MedicalConsult() {
   //예약 날짜가 바뀔때마다 해당 날짜 시간 목록 백에서 가져오기
   useEffect(() => {
     //값이 없으면 리스트 비워두기
-    if (!isModalOpen || !selectedDate) {
+    if (!isModalOpen || !selectedDate || !selectedDoctor) {
       setReservedTimes([]);
       return;
     }
@@ -452,12 +465,16 @@ export default function MedicalConsult() {
   // 선택된 과목에 따라 의사 목록 필터링
   const filteredDoctors = useMemo(() => {
     // '전체 과목'이 선택되면 모든 의사를 반환
-    if (selectedDept === departments[0]) {
+    if (selectedDeptId === 0) {
       return doctors;
     }
+    const filtered = doctors.filter(
+      (doctor) => doctor.deptId === selectedDept.id
+    );
+    console.log("필터링된 의사 리스트:", filtered); // ← 여기
     // 선택된 과목과 일치하는 의사만 필터링하여 반환
-    return doctors.filter((doctor) => doctor.department === selectedDept);
-  }, [doctors, selectedDept]); // doctors 배열과 선택된 과목이 바뀔 때만 재계산
+    return filtered;
+  }, [doctors, selectedDept, selectedDeptId]); // doctors 배열과 선택된 과목이 바뀔 때만 재계산
 
   // 이벤트 핸들러
   const handleReservationClick = (doctor) => {
@@ -469,6 +486,7 @@ export default function MedicalConsult() {
   const handleSelectDept = (dept) => {
     setSelectedDept(dept);
     setIsDeptDropdownOpen(false);
+    setSelectedDeptId(dept.id); //
 
     //선택된 과목에 따라 의사 리스트 다시 불러오기
     fetchDoctors(dept);

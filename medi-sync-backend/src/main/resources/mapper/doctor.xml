@@ -17,7 +17,7 @@
     </select>
     <!-- 의사 토글검색 -->
    <select id="doctorSelectByDepartment" parameterType="String">
-       select * from doctor WHERE dept_id = #{department}
+       select * from doctor WHERE dept_id = #{dept_id}
    </select>
     
     

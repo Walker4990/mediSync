@@ -31,8 +31,8 @@ public class DoctorService {
         return doctorMapper.getConsultFeeByDoctorId(doctorId);
     }
     //의사 서치
-    public List<Doctor> selectDoctorByDepartment(String department){
-        return doctorMapper.doctorSelectByDepartment(department);
+    public List<Doctor> selectDoctorByDepartment(String dept_id){
+        return doctorMapper.doctorSelectByDepartment(dept_id);
     }
 }
 
