@@ -14,7 +14,7 @@ export default function DrugPage() {
     const [searchTerm, setSearchTerm] = useState("");
 
 
-    // ✅ 데이터 로드
+    // 데이터 로드
     const fetchData = async () => {
         try {
             const res = await getDrugs();
@@ -29,7 +29,7 @@ export default function DrugPage() {
         fetchData();
     }, []);
 
-    // ✅ 저장 (등록/수정)
+    // 저장 (등록/수정)
     const handleSave = async (data) => {
         try {
             if (editData) await updateDrug(data);
@@ -42,7 +42,7 @@ export default function DrugPage() {
         }
     };
 
-    // ✅ 삭제
+    // 삭제
     const handleDelete = async (code) => {
         if (!window.confirm("정말 삭제하시겠습니까?")) return;
         try {
@@ -53,7 +53,7 @@ export default function DrugPage() {
         }
     };
 
-    // ✅ 검색
+    // 검색
     const handleSearch = (e) => {
         const term = e.target.value.toLowerCase();
         setSearchTerm(term);

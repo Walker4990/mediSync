@@ -73,7 +73,7 @@ export default function Reservation() {
         setReservedTimes(response.data);
       } catch (error) {
         //실패시 리스트 비워두기
-        console.error("예약한 시간 불러오기 싷패", error);
+        console.error("예약한 시간 불러오기 실패", error);
         setReservedTimes([]);
       }
     };

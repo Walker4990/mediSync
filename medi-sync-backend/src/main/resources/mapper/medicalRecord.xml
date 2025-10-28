@@ -43,10 +43,11 @@
     </select>
 
     <select id="selectRecordById" parameterType="long" resultType="MedicalRecord">
-        SELECT r.*, p.name AS patientName, d.doctor_name AS doctorName, d.department
+        SELECT r.*, p.name AS patientName, d.doctor_name AS doctorName, dept.dept_name
         FROM medical_record r
         JOIN patient p ON r.patient_id = p.patient_id
         JOIN doctor d ON r.doctor_id = d.doctor_id
+        JOIN department dept ON d.dept_id = dept.dept_id
         WHERE r.record_id = #{recordId}
     </select>
 </mapper>
