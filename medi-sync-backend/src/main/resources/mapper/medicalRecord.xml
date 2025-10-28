@@ -41,7 +41,7 @@
         GROUP BY mr.record_id
         ORDER BY mr.created_at DESC
     </select>
-
+    <!-- 처방전 조회 -->
     <select id="selectRecordById" parameterType="long" resultType="MedicalRecord">
         SELECT r.*, p.name AS patientName, d.doctor_name AS doctorName, dept.dept_name
         FROM medical_record r
@@ -50,4 +50,22 @@
         JOIN department dept ON d.dept_id = dept.dept_id
         WHERE r.record_id = #{recordId}
     </select>
+    <!-- 진료 예약된 환자 조회 -->
+    <select id="selectReservedRecords" resultType="MedicalRecord">
+        SELECT
+        res.reservation_id AS reservationId,
+        res.reservation_date AS reservationDate,
+        res.status AS reservationStatus,
+        p.patient_id AS patientId,
+        p.name AS patientName,
+        d.doctor_id AS doctorId,
+        d.doctor_name AS doctorName
+        FROM reservation res
+        JOIN patient p ON res.patient_id = p.patient_id
+        JOIN doctor d ON res.doctor_id = d.doctor_id
+        WHERE DATE(res.reservation_date) = #{date}
+        AND res.status IN ('WAIT', 'CONSULT')
+        ORDER BY res.reservation_date ASC
+    </select>
+
 </mapper>

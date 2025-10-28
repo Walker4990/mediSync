@@ -31,4 +31,8 @@ public class ReservationService {
         return reservationMapper.selectReservationByPatientId(patient_id);
     }
 
+    // 예약 상태 변경
+    public int updateStatus(Long patientId, String status){
+        return reservationMapper.updateStatus(patientId, status);
+    }
 }

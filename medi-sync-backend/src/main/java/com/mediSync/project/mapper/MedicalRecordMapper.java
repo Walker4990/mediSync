@@ -3,6 +3,7 @@ package com.mediSync.project.mapper;
 import com.mediSync.project.vo.MedicalRecord;
 import org.apache.ibatis.annotations.Mapper;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Mapper
@@ -15,4 +16,5 @@ public interface MedicalRecordMapper {
     List<MedicalRecord> selectRecordAllByPatientId(Long patientId);
     // 환자 처방전 조회
     MedicalRecord selectRecordById(Long recordId);
+    List<MedicalRecord> selectReservedRecords(LocalDate date);
 }

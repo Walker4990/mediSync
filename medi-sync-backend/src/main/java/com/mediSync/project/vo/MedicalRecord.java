@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import org.apache.ibatis.type.Alias;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -27,6 +28,8 @@ public class MedicalRecord {
 
     private String doctorName;
     private String department;
-
+    private Long reservationId;
+    private String reservationStatus;
+    private LocalDate reservationDate;
 
 }

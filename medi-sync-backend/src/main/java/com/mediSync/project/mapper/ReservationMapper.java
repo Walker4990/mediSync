@@ -25,4 +25,6 @@ public interface ReservationMapper {
     //오늘 예약 조회하기
     List<Reservation> findReservationBetween(@Param("start")LocalDate start,
                                              @Param("end")LocalDate end);
+    // 처방시 상태변경
+    int updateStatus(Long patientId, String status);
 }

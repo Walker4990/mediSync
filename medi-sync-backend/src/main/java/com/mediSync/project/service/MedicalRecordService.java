@@ -4,7 +4,10 @@ import com.mediSync.project.mapper.*;
 import com.mediSync.project.vo.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
@@ -17,14 +20,14 @@ public class MedicalRecordService {
     private final InventoryItemMapper inventoryItemMapper;
     private final FinanceTransactionMapper financeTransactionMapper;
     private final TestFeeMapper testFeeMapper;
-    private static final double INSURANCE_RATE = 0.7;
     private final DoctorMapper doctorMapper;
     private final TestResultMapper testResultMapper;
     private final TestScheduleMapper testScheduleMapper;
     private final TestReservationMapper testReservationMapper;
+    private final ReservationMapper reservationMapper;
 
     // 1. 진료비 계산 (정상)
-    private void calculateCost(MedicalRecord mr) {
+    public void calculateCost(MedicalRecord mr) {
         BigDecimal total = BigDecimal.ZERO;
 
         if (mr.getPrescriptions() != null) {
@@ -79,6 +82,7 @@ public class MedicalRecordService {
     }
 
     // 2. 진료 등록 + 재무/재고 로직
+    @Transactional
     public int insertRecord(MedicalRecord mr) {
         calculateCost(mr);
 
@@ -174,7 +178,9 @@ public class MedicalRecordService {
                     testScheduleMapper.increaseReservedCount(schedule.getScheduleId());
 
                 }
+
             }
+            reservationMapper.updateStatus(mr.getPatientId(), "DONE");
         }
 
         return result;
@@ -188,5 +194,8 @@ public class MedicalRecordService {
 
     public List<MedicalRecord> selectRecordAllByPatientId(Long patientId) {
         return medicalRecordMapper.selectRecordAllByPatientId(patientId);
+    }
+    public List<MedicalRecord> selectReservedRecords(LocalDate date) {
+        return medicalRecordMapper.selectReservedRecords(date);
     }
 }
