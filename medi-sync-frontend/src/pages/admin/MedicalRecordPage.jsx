@@ -163,7 +163,7 @@ export default function MedicalRecordPage() {
             // 검사 예약
             for (const p of cleanPrescriptions) {
                 if (p.type === "TEST" && p.testDate && p.testName) {
-                    // ✅ 이미 예약된 경우 (모달에서 선택한 시간 있음) 재예약 금지
+                    // 이미 예약된 경우 (모달에서 선택한 시간 있음) 재예약 금지
                     if (p.isReserved) continue;
 
                     try {
@@ -182,7 +182,7 @@ export default function MedicalRecordPage() {
             
             // ④ 결과 처리
             if (res.data.success) {
-                alert("✅ 진료 및 처방 등록 완료");
+                alert("진료 및 처방 등록 완료");
 
                 // 목록 갱신
                 const recordRes = await axios.get(
@@ -195,10 +195,10 @@ export default function MedicalRecordPage() {
                 setNewPrescriptions([{ drugName: "", dosage: "", duration: "", type: "DRUG" }]);
                 window.location.reload();
             } else {
-                alert("❌ 등록 실패: " + (res.data.message || ""));
+                alert("등록 실패: " + (res.data.message || ""));
             }
         } catch (err) {
-            console.error("❌ 등록 중 오류:", err);
+            console.error("등록 중 오류:", err);
             alert("네트워크 오류: " + err.message);
         }
     };
@@ -265,7 +265,7 @@ export default function MedicalRecordPage() {
             <h1 className="text-2xl font-bold text-blue-700 mb-6 text-center">진료 통합 관리</h1>
 
             <div className="grid grid-cols-2 gap-6">
-                {/* ① 진료 등록 */}
+                {/* 1. 진료 등록 */}
                 <div className="bg-white p-6 rounded-lg shadow">
                     <h2 className="text-lg font-bold text-blue-600 mb-4">🩺 진료 등록</h2>
                     <form onSubmit={handleSubmit} className="space-y-4">
@@ -371,7 +371,7 @@ export default function MedicalRecordPage() {
                     </form>
                 </div>
 
-                {/* ② 처방 입력 */}
+                {/* 2. 처방 입력 */}
                 <div className="bg-white p-6 rounded-lg shadow relative">
                     <h2 className="text-lg font-bold text-blue-600 mb-3">이번 진료 처방</h2>
 
@@ -659,7 +659,7 @@ export default function MedicalRecordPage() {
                     </button>
                 </div>
 
-                {/* (3) 과거 진료 내역 */}
+                {/* 3. 과거 진료 내역 */}
                 <div className="bg-white p-6 rounded-lg shadow overflow-auto max-h-[350px]">
                     <h2 className="text-lg font-bold text-gray-700 mb-3">📋 과거 진료 내역</h2>
                     <button
@@ -716,7 +716,7 @@ export default function MedicalRecordPage() {
                     )}
                 </div>
 
-                {/* (4) 처방 내역 */}
+                {/* 4. 처방 내역 */}
                 <div className="bg-white p-6 rounded-lg shadow overflow-auto max-h-[350px]">
                     <h2 className="text-lg font-bold text-gray-700 mb-3">💊 처방 내역</h2>
                     {prescriptions.length === 0 ? (
