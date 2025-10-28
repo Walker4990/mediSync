@@ -8,7 +8,7 @@ import PatientList from "./pages/admin/PatientList";
 import StaffList from "./pages/admin/StaffList";
 import DoctorList from "./pages/admin/DoctorList";
 import MyPage from "./pages/user/MyPage";
-import Register from "./pages/user/Register";
+import RegisterAPI from "./pages/user/RegisterAPI";
 import LoginPage from "./pages/user/LoginPage";
 import UserHome from "./pages/user/UserHome";
 import MedicalConsult from "./pages/user/MedicalConsult";
@@ -48,7 +48,7 @@ function App() {
         <Route path="/admin/test/other" element={<OtherTestPage />} />
         {/*유저페이지*/}
         <Route path="/" element={<UserHome />} />/
-        <Route path="/user/register" element={<Register />} />
+        <Route path="/user/register" element={<RegisterAPI />} />
         <Route path="/user/login" element={<LoginPage />} />
         <Route path="/user/mypage" element={<MyPage />} />
         <Route path="/user/consult" element={<MedicalConsult />} />
