@@ -2,7 +2,8 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import debounce from "lodash.debounce";
 import AdminHeader from "../../component/AdminHeader";
-import TimeSlotModal from "../../component/TimeSlotModal"; // ✅ npm install lodash.debounce
+import TimeSlotModal from "../../component/TimeSlotModal";
+import {AiFillPrinter} from "react-icons/ai"; // ✅ npm install lodash.debounce
 
 export default function MedicalRecordPage() {
     const [form, setForm] = useState({
@@ -19,8 +20,19 @@ export default function MedicalRecordPage() {
     const [testSuggestions, setTestSuggestions] = useState([]);
     const [modalOpen, setModalOpen] = useState(false);
     const [modalTargetIndex, setModalTargetIndex] = useState(null);
+    const [selectedDate, setSelectedDate] = useState("");
+    const [reservations, setReservations] = useState([]);
 
-    //  이번 진료의 처방 입력 리스트
+    // 화면 진입 시 오늘 날짜로 설정
+    useEffect(() => {
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, "0");
+        const dd = String(today.getDate()).padStart(2, "0");
+        setSelectedDate(`${yyyy}-${mm}-${dd}`);
+    }, []);
+
+    // 이번 진료의 처방 입력 리스트
     const [newPrescriptions, setNewPrescriptions] = useState([
         {
             type: "DRUG",
@@ -36,7 +48,6 @@ export default function MedicalRecordPage() {
         },
     ]);
 
-    // 자동완성 관련 상태
     const [drugSuggestions, setDrugSuggestions] = useState([]);
     const [activeIndex, setActiveIndex] = useState(null);
 
@@ -45,7 +56,7 @@ export default function MedicalRecordPage() {
         if (!keyword || keyword.trim() === "") return setDrugSuggestions([]);
         try {
             const res = await axios.get(`http://192.168.0.24:8080/api/drug/search`, {
-                params: { keyword, type }, // ✅ type=null(기본: 일반약), or INJECTION
+                params: { keyword, type },
             });
             setDrugSuggestions(res.data);
         } catch {
@@ -67,16 +78,122 @@ export default function MedicalRecordPage() {
 
     // 초기 데이터 로드
     useEffect(() => {
-        axios.get("http://192.168.0.24:8080/api/patients").then(res => setPatients(res.data));
         axios.get("http://192.168.0.24:8080/api/doctors").then(res => setDoctors(res.data));
     }, []);
 
-    // 입력 변경
+    // ✅ 날짜 선택 시 예약 환자 조회
+    useEffect(() => {
+        if (selectedDate) {
+            console.log("📅 예약조회 요청:", selectedDate);
+            axios
+                .get(`http://192.168.0.24:8080/api/records/reserved?date=${selectedDate}`)
+                .then((res) => setReservations(res.data))
+                .catch((err) => {
+                    console.error("❌ 예약 환자 조회 실패:", err);
+                    setPatients([]);
+                });
+        } else {
+            setPatients([]);
+        }
+    }, [selectedDate]);
+
+    const handleReservationClick = async (resv) => {
+        try {
+            console.log("🔹 클릭된 예약:", resv);
+
+            if (!resv.reservationId) {
+                console.warn("⚠️ reservationId 없음:", resv);
+                return;
+            }
+
+            // 상태 변경
+            if (resv.reservationStatus === "WAIT") {
+                await axios.put(
+                    `http://192.168.0.24:8080/api/reservation/${resv.reservationId}/status`,
+                    null,
+                    { params: { status: "CONSULT" } }
+                );
+
+                // UI 즉시 반영
+                setReservations((prev) =>
+                    prev.map((r) =>
+                        r.reservationId === resv.reservationId
+                            ? { ...r, reservationStatus: "CONSULT" }
+                            : r
+                    )
+                );
+            }
+            // 진료 과별 금액 추가 반영
+            try {
+                const costRes = await axios.get(
+                    `http://192.168.0.24:8080/api/records/cost/preview`,
+                    { params: { doctorId: resv.doctorId, patientId: resv.patientId } }
+                );
+
+                if (costRes.data.success) {
+                    setForm((prev) => ({
+                        ...prev,
+                        totalCost: costRes.data.totalCost,
+                        insuranceAmount: costRes.data.insuranceAmount,
+                        patientPay: costRes.data.patientPay,
+                    }));
+                    console.log("✅ 진료비 미리보기:", costRes.data);
+                }
+            } catch (err) {
+                console.warn("⚠️ 진료비 계산 실패:", err);
+            }
+            
+            // 진료내역 조회
+            const recordRes = await axios.get(
+                `http://192.168.0.24:8080/api/records/patient/${resv.patientId}`
+            );
+            setRecords(recordRes.data || []);
+
+            setForm({
+                ...form,
+                patientId: String(resv.patientId ?? ""),
+                doctorId: String(resv.doctorId ?? ""),
+            });
+
+            setPrescriptions([]);
+            setSelectedRecord(null);
+        } catch (err) {
+            console.error("❌ 진료내역 조회 또는 상태 변경 실패:", err);
+        }
+    };
+
+    useEffect(() => {
+        // 둘 다 선택돼야 계산 시작
+        if (!form.doctorId || !form.patientId) return;
+
+        const fetchCost = async () => {
+            try {
+                const res = await axios.get(
+                    "http://192.168.0.24:8080/api/records/cost/preview",
+                    { params: { doctorId: form.doctorId, patientId: form.patientId } }
+                );
+                if (res.data && res.data.totalCost) {
+                    setForm((prev) => ({
+                        ...prev,
+                        totalCost: res.data.totalCost,
+                        insuranceAmount: res.data.insuranceAmount,
+                        patientPay: res.data.patientPay,
+                    }));
+                    console.log("✅ 진료비 자동 갱신:", res.data);
+                }
+            } catch (err) {
+                console.warn("❌ 진료비 자동 계산 실패:", err);
+            }
+        };
+
+        fetchCost();
+    }, [form.doctorId]); // doctorId 바뀔 때마다 실행
+
+
     const handleChange = (e) => {
         const { name, value } = e.target;
         setForm({ ...form, [name]: value });
 
-        // 환자 선택 시 과거 진료 내역 로드
         if (name === "patientId" && value) {
             axios.get(`http://192.168.0.24:8080/api/records/patient/${value}`)
                 .then(res => setRecords(res.data))
@@ -85,13 +202,11 @@ export default function MedicalRecordPage() {
             setPrescriptions([]);
             setSelectedRecord(null);
         }
-        //  의사 선택 시 진료비/보험률 자동 조회
+
         if (name === "doctorId" && value) {
             axios.get(`http://192.168.0.24:8080/api/doctors/fee/${value}`)
                 .then(res => {
                     const { consultFee, insuranceRate } = res.data;
-
-                    // 진료비 반영
                     setForm((prev) => ({
                         ...prev,
                         consultFee: consultFee || 0,
@@ -107,21 +222,14 @@ export default function MedicalRecordPage() {
         e.preventDefault();
 
         try {
-            // ① 처방 데이터 정제
             const cleanPrescriptions = newPrescriptions.map((p) => {
                 const base = { ...p };
-
-                // 빈 문자열 → null 변환
                 Object.keys(base).forEach((k) => {
                     if (base[k] === "") base[k] = null;
                 });
-
-                // unitPrice를 숫자형으로 변환
                 if (base.unitPrice !== null && base.unitPrice !== undefined) {
                     base.unitPrice = Number(base.unitPrice);
                 }
-
-                // type별 불필요한 필드 정리
                 if (base.type === "DRUG") {
                     delete base.injectionName;
                     delete base.testName;
@@ -139,11 +247,9 @@ export default function MedicalRecordPage() {
                     delete base.duration;
                     delete base.injectionName;
                 }
-
                 return base;
             });
 
-            // ② 전체 payload 구성
             const payload = {
                 patientId: Number(form.patientId),
                 doctorId: Number(form.doctorId),
@@ -154,18 +260,13 @@ export default function MedicalRecordPage() {
                 prescriptions: cleanPrescriptions,
             };
 
-            console.log("📤 최종 전송 payload:", payload);
-
-            // ③ 전송
             const res = await axios.post("http://192.168.0.24:8080/api/records", payload, {
                 headers: { "Content-Type": "application/json" },
             });
-            // 검사 예약
+
             for (const p of cleanPrescriptions) {
                 if (p.type === "TEST" && p.testDate && p.testName) {
-                    // 이미 예약된 경우 (모달에서 선택한 시간 있음) 재예약 금지
                     if (p.isReserved) continue;
-
                     try {
                         await axios.post("http://192.168.0.24:8080/api/testSchedule/reserve", {
                             testCode: p.testCode,
@@ -173,24 +274,41 @@ export default function MedicalRecordPage() {
                             testTime: p.testTime,
                             patientId: form.patientId,
                         });
-                        console.log(`🧾 검사 예약 완료: ${p.testName} (${p.testDate} ${p.testTime})`);
                     } catch (err) {
                         console.warn(`❌ 검사 예약 실패 (${p.testName}):`, err);
                     }
                 }
             }
-            
-            // ④ 결과 처리
+
             if (res.data.success) {
+                // 처방 등록 성공 → CONSULT → DONE 자동 전환
+                if (form.reservationId) {
+                    try {
+                        await axios.put(
+                            `http://192.168.0.24:8080/api/reservation/${form.reservationId}/status`,
+                            null,
+                            { params: { status: "DONE" } }
+                        );
+                    } catch (err) {
+                        console.warn("❌ 예약 상태 업데이트 실패:", err);
+                    }
+                }
+
                 alert("진료 및 처방 등록 완료");
 
-                // 목록 갱신
+                try {
+                    const recordId = res.data.recordId; // 백엔드에서 recordId 리턴해야 함
+                    if (recordId) {
+                        window.open(`http://192.168.0.24:8080/api/prescriptions/pdf/${recordId}`, "_blank");
+                    }
+                } catch (err) {
+                    console.warn("⚠️ 처방전 자동 발행 실패:", err);
+                }
+                console.log("✅ 등록 응답:", res.data);
                 const recordRes = await axios.get(
                     `http://192.168.0.24:8080/api/records/patient/${form.patientId}`
                 );
                 setRecords(recordRes.data);
-
-                // 입력 초기화
                 setForm({ ...form, diagnosis: "", totalCost: "" });
                 setNewPrescriptions([{ drugName: "", dosage: "", duration: "", type: "DRUG" }]);
                 window.location.reload();
@@ -203,37 +321,31 @@ export default function MedicalRecordPage() {
         }
     };
 
+
     useEffect(() => {
-        const total = newPrescriptions.reduce(
-            (sum, p) => sum + (p.total || 0), 0
-        );
-        setForm((prev) => ({...prev, totalCost:total}));
+        const total = newPrescriptions.reduce((sum, p) => sum + (p.total || 0), 0);
+        setForm((prev) => ({ ...prev, totalCost: total }));
     }, [newPrescriptions]);
 
-    // 과거 진료 클릭 시 과거 처방 조회
     const handleRecordClick = async (recordId) => {
         setSelectedRecord(recordId);
         const res = await axios.get(`http://192.168.0.24:8080/api/prescriptions/${recordId}`);
         setPrescriptions(res.data);
     };
 
-    //  처방 입력 관련 함수
     const handlePrescriptionChange = (i, e) => {
         const { name, value } = e.target;
         const updated = [...newPrescriptions];
         updated[i][name] = value;
 
-        // 약품명 자동검색 유지
         if (name === "drugName") {
             setActiveIndex(i);
             searchDrug(value);
         }
 
-        // 자동 금액 계산 (단가, 용량, 기간 변경 시)
         if (["unitPrice", "dosage", "duration"].includes(name)) {
             const p = updated[i];
             let total = 0;
-
             if (p.type === "DRUG") {
                 const dosage = parseFloat(p.dosage) || 0;
                 const duration = parseFloat(p.duration) || 0;
@@ -244,13 +356,11 @@ export default function MedicalRecordPage() {
                 const unitPrice = parseFloat(p.unitPrice) || 0;
                 total = dosage * unitPrice;
             }
-
             updated[i].total = total;
         }
 
         setNewPrescriptions(updated);
     };
-
 
     const addPrescriptionRow = () =>
         setNewPrescriptions([...newPrescriptions, { drugName: "", dosage: "", duration: "", type: "DRUG" }]);
@@ -258,118 +368,160 @@ export default function MedicalRecordPage() {
     const removePrescriptionRow = (i) =>
         setNewPrescriptions(newPrescriptions.filter((_, idx) => idx !== i));
 
-
     return (
         <div className="p-20 bg-gray-50 min-h-screen font-pretendard">
             <AdminHeader />
             <h1 className="text-2xl font-bold text-blue-700 mb-6 text-center">진료 통합 관리</h1>
 
             <div className="grid grid-cols-2 gap-6">
-                {/* 1. 진료 등록 */}
-                <div className="bg-white p-6 rounded-lg shadow">
-                    <h2 className="text-lg font-bold text-blue-600 mb-4">🩺 진료 등록</h2>
-                    <form onSubmit={handleSubmit} className="space-y-4">
-                        {/* 환자 선택 */}
-                        <div>
-                            <label className="block text-gray-700 mb-1 font-medium">환자 선택</label>
-                            <select
-                                name="patientId"
-                                value={form.patientId}
-                                onChange={handleChange}
-                                className="w-full border rounded p-2 focus:ring-2 focus:ring-blue-400"
-                                required
-                            >
-                                <option value="">-- 환자 선택 --</option>
-                                {patients.map((p) => (
-                                    <option key={p.patientId} value={p.patientId}>
-                                        {p.name}
-                                    </option>
+                {/* ✅ 진료 등록 폼 시작 */}
+                {/* ✅ 1. 예약 조회 섹션 */}
+                <div className="bg-white p-5 rounded-lg shadow mb-6">
+                    <h2 className="text-lg font-semibold text-blue-600 mb-3">📅 예약 조회</h2>
+
+                    {/* 날짜 선택 */}
+                    <div className="flex items-center gap-4 mb-3">
+                        <label className="text-gray-700 font-medium">예약 날짜</label>
+                        <input
+                            type="date"
+                            className="border rounded p-2 focus:ring-2 focus:ring-blue-400"
+                            value={selectedDate}
+                            onChange={(e) => setSelectedDate(e.target.value)}
+                        />
+                    </div>
+
+                    {/* 예약 환자 테이블 */}
+                    {reservations.length === 0 ? (
+                        <p className="text-gray-500 text-sm">선택한 날짜에 예약된 환자가 없습니다.</p>
+                    ) : (
+                        <div className="max-h-[300px] overflow-y-auto">
+                            <table className="w-full text-sm border-collapse">
+                                <thead className="bg-blue-50 text-blue-700">
+                                <tr>
+                                    <th className="p-2 border-b">시간</th>
+                                    <th className="p-2 border-b">환자명</th>
+                                    <th className="p-2 border-b">의사</th>
+                                    <th className="p-2 border-b">상태</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {reservations.map((r) => (
+                                    <tr
+                                        key={r.reservationId}
+                                        onClick={() => handleReservationClick(r)}
+                                        className={`cursor-pointer ${
+                                            form.patientId === String(r.patientId)
+                                                ? "bg-blue-50"
+                                                : "hover:bg-gray-50"
+                                        }`}
+                                    >
+                                        <td className="p-2 border-b text-gray-700">
+                                            {new Date(r.reservationDate).toLocaleTimeString("ko-KR", {
+                                                hour: "2-digit",
+                                                minute: "2-digit",
+                                            })}
+                                        </td>
+                                        <td className="p-2 border-b font-medium">{r.patientName}</td>
+                                        <td className="p-2 border-b text-gray-600">{r.doctorName}</td>
+                                        <td className="p-2 border-b">
+                <span
+                    className={`px-2 py-0.5 rounded text-xs ${
+                        r.reservationStatus === "WAIT"
+                            ? "bg-yellow-100 text-yellow-700"
+                            : r.reservationStatus === "CONSULT"
+                                ? "bg-blue-100 text-blue-700"
+                                : "bg-gray-100 text-gray-500"
+                    }`}
+                >
+                  {r.reservationStatus}
+                </span>
+                                        </td>
+                                    </tr>
                                 ))}
-                            </select>
+                                </tbody>
+                            </table>
                         </div>
+                    )}
+                </div>
 
-                        {/* 의사 선택 */}
-                        <div>
-                            <label className="block text-gray-700 mb-1 font-medium">주치의 선택</label>
-                            <select
-                                name="doctorId"
-                                value={form.doctorId}
-                                onChange={handleChange}
-                                className="w-full border rounded p-2 focus:ring-2 focus:ring-blue-400"
-                                required
-                            >
-                                <option value="">-- 주치의 선택 --</option>
-                                {doctors.map((d) => (
-                                    <option key={d.doctorId} value={d.doctorId}>
-                                        {d.doctorName} ({d.deptName})
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
+                {/* ✅ 2. 진료 등록 폼 */}
+                <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow space-y-4">
+                    {/* 주치의 선택 */}
+                    <div>
+                        <label className="block text-gray-700 mb-1 font-medium">주치의 선택</label>
+                        <select
+                            name="doctorId"
+                            value={form.doctorId || ""}
+                            onChange={handleChange}
+                            className="w-full border rounded p-2 focus:ring-2 focus:ring-blue-400"
+                            required
+                        >
+                            <option value="">-- 주치의 선택 --</option>
+                            {doctors.map((d) => (
+                                <option key={d.doctorId} value={d.doctorId}>
+                                    {d.doctorName} ({d.deptName})
+                                </option>
+                            ))}
+                        </select>
+                    </div>
 
-                        {/* 진단 */}
-                        <div>
-                            <label className="block text-gray-700 mb-1 font-medium">진단명 / 소견</label>
-                            <textarea
-                                name="diagnosis"
-                                value={form.diagnosis}
-                                onChange={handleChange}
-                                placeholder="예: 위염, 약물치료 권장"
-                                rows="3"
-                                className="w-full border rounded p-2 focus:ring-2 focus:ring-blue-400 resize-none"
-                                required
-                            />
-                        </div>
+                    {/* 진단 */}
+                    <div>
+                        <label className="block text-gray-700 mb-1 font-medium">진단명 / 소견</label>
+                        <textarea
+                            name="diagnosis"
+                            value={form.diagnosis}
+                            onChange={handleChange}
+                            placeholder="예: 위염, 약물치료 권장"
+                            rows="3"
+                            className="w-full border rounded p-2 focus:ring-2 focus:ring-blue-400 resize-none"
+                            required
+                        />
+                    </div>
 
-                        {/* 진료비 */}
-                        <div className="mt-4">
-                            <label className="block text-gray-700 mb-1 font-medium">진료비 계산</label>
-
-                            <div className="space-y-2 border rounded-lg p-3 bg-gray-50">
-                                {/* 총 진료비 */}
-                                <div className="flex justify-between text-gray-800">
-                                    <span>총 진료비</span>
-                                    <span className="font-semibold">
-                {form.totalCost
-                    ? form.totalCost.toLocaleString() + " 원"
-                    : "-"}
-            </span>
-                                </div>
-
-                                {/* 보험 적용 (70%) */}
-                                <div className="flex justify-between text-blue-600">
-                                    <span>보험 적용 (70%)</span>
-                                    <span>
-                {form.totalCost
-                    ? Math.round(form.totalCost * 0.7).toLocaleString() + " 원"
-                    : "-"}
-            </span>
-                                </div>
-
-                                {/* 본인 부담금 (30%) */}
-                                <div className="flex justify-between text-red-600">
-                                    <span>본인 부담금 (30%)</span>
-                                    <span className="font-semibold">
-                {form.totalCost
-                    ? Math.round(form.totalCost * 0.3).toLocaleString() + " 원"
-                    : "-"}
-            </span>
-                                </div>
+                    {/* 진료비 계산 */}
+                    <div className="mt-4">
+                        <label className="block text-gray-700 mb-1 font-medium">진료비 계산</label>
+                        <div className="space-y-2 border rounded-lg p-3 bg-gray-50">
+                            <div className="flex justify-between text-gray-800">
+                                <span>총 진료비</span>
+                                <span className="font-semibold">
+          {form.totalCost ? form.totalCost.toLocaleString() + " 원" : "-"}
+        </span>
                             </div>
 
-                            <p className="text-xs text-gray-400 mt-1">
-                                ※ 처방 입력 시 자동 계산됩니다.
-                            </p>
+                            <div className="flex justify-between text-blue-600">
+                                <span>보험 적용 (70%)</span>
+                                <span>
+          {form.totalCost
+              ? Math.round(form.totalCost * 0.7).toLocaleString() + " 원"
+              : "-"}
+        </span>
+                            </div>
+
+                            <div className="flex justify-between text-red-600">
+                                <span>본인 부담금 (30%)</span>
+                                <span className="font-semibold">
+          {form.totalCost
+              ? Math.round(form.totalCost * 0.3).toLocaleString() + " 원"
+              : "-"}
+        </span>
+                            </div>
                         </div>
 
-                        <button
-                            type="submit"
-                            className="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-md font-semibold"
-                        >
-                            진료 및 처방 등록
-                        </button>
-                    </form>
-                </div>
+                        <p className="text-xs text-gray-400 mt-1">
+                            ※ 처방 입력 시 자동 계산됩니다.
+                        </p>
+                    </div>
+
+                    <button
+                        type="submit"
+                        className="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-md font-semibold"
+                    >
+                        진료 및 처방 등록
+                    </button>
+                </form>
+
 
                 {/* 2. 처방 입력 */}
                 <div className="bg-white p-6 rounded-lg shadow relative">
@@ -676,39 +828,76 @@ export default function MedicalRecordPage() {
                     {records.length === 0 ? (
                         <p className="text-gray-400 text-center mt-10">진료 내역이 없습니다.</p>
                     ) : (
-                        <table className="w-full border-collapse text-sm">
+                        <table className="w-full border-collapse text-sm text-center">
                             <thead className="bg-blue-50 text-blue-800 font-semibold">
                             <tr>
-                                <th className="p-2 border-b">날짜</th>
-                                <th className="p-2 border-b">진단명</th>
-                                <th className="p-2 border-b">주치의</th>
-                                <th className="p-2 border-b">진료과</th>
-                                <th className="p-2 border-b">처방 횟수</th>
-                                <th className="p-2 border-b">비용</th>
-                                <th className="p-2 border-b">상태</th>
+                                <th className="p-2 border-b w-24">날짜</th>
+                                <th className="p-2 border-b text-left w-48">진단명</th>
+                                <th className="p-2 border-b w-32">주치의</th>
+                                <th className="p-2 border-b w-20">처방전</th>
+                                <th className="p-2 border-b w-28">비용</th>
+                                <th className="p-2 border-b w-28">상태</th>
                             </tr>
                             </thead>
                             <tbody>
                             {records.map((r) => (
                                 <tr
                                     key={r.recordId}
-                                    className={`transition-all ${selectedRecord === r.recordId
-                                        ? "bg-blue-100"
-                                        : "hover:bg-blue-50"
+                                    className={`transition-all ${
+                                        selectedRecord === r.recordId
+                                            ? "bg-blue-100"
+                                            : "hover:bg-blue-50"
                                     } cursor-pointer`}
                                     onClick={() => handleRecordClick(r.recordId)}
                                 >
-                                    <td className="p-2 border-b text-gray-700">{r.createdAt?.substring(0, 10)}</td>
-                                    <td className="p-2 border-b text-gray-700 text-left truncate max-w-[150px]">{r.diagnosis}</td>
-                                    <td className="p-2 border-b text-gray-700">{r.doctorName}</td>
-                                    <td className="p-2 border-b text-gray-700">{r.department}</td>
-                                    <td className="p-2 border-b text-gray-700">{r.prescriptionCount || 0}</td>
-                                    <td className="p-2 border-b text-gray-700">{r.totalCost?.toLocaleString()}원</td>
-                                    <td className={`p-2 border-b font-medium ${r.status === "COMPLETED"
-                                        ? "text-green-600"
-                                        : r.status === "IN_PROGRESS"
-                                            ? "text-orange-500"
-                                            : "text-gray-500"}`}>{r.status}</td>
+                                    {/* 날짜 */}
+                                    <td className="p-2 border-b text-gray-700 align-middle">
+                                        {r.createdAt?.substring(0, 10)}
+                                    </td>
+
+                                    {/* 진단명 (좌측 정렬) */}
+                                    <td className="p-2 border-b text-gray-700 text-left truncate max-w-[160px]">
+                                        {r.diagnosis}
+                                    </td>
+
+                                    {/* 주치의 */}
+                                    <td className="p-2 border-b text-gray-700 align-middle">
+                                        {r.doctorName}
+                                    </td>
+
+                                    {/* 처방전 아이콘 */}
+                                    <td className="p-2 border-b text-center align-middle">
+                                        <AiFillPrinter
+                                            size={20}
+                                            className="mx-auto text-blue-600 hover:text-blue-800 transition-colors"
+                                            title="처방전 다운로드"
+                                            onClick={(e) => {
+                                                e.stopPropagation(); // 행 클릭 이벤트 방지
+                                                window.open(
+                                                    `http://192.168.0.24:8080/api/prescriptions/pdf/${r.recordId}`,
+                                                    "_blank"
+                                                );
+                                            }}
+                                        />
+                                    </td>
+
+                                    {/* 비용 */}
+                                    <td className="p-2 border-b text-gray-700 align-middle">
+                                        {r.totalCost?.toLocaleString()}원
+                                    </td>
+
+                                    {/* 상태 */}
+                                    <td
+                                        className={`p-2 border-b font-medium align-middle ${
+                                            r.status === "COMPLETED"
+                                                ? "text-green-600"
+                                                : r.status === "IN_PROGRESS"
+                                                    ? "text-orange-500"
+                                                    : "text-gray-500"
+                                        }`}
+                                    >
+                                        {r.status}
+                                    </td>
                                 </tr>
                             ))}
                             </tbody>

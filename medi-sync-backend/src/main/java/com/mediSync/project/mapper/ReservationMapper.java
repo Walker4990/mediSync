@@ -17,4 +17,6 @@ public interface ReservationMapper {
     //예약 취소하기
     int deleteReservation(Reservation reservation);
 
+    // 처방시 상태변경
+    int updateStatus(Long patientId, String status);
 }

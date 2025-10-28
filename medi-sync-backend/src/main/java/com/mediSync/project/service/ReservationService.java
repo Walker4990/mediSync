@@ -31,4 +31,9 @@ public class ReservationService {
 
     //예약 취소하기
     public int deleteReservation(Reservation reservation){return  reservationMapper.deleteReservation(reservation);}
+
+    // 예약 상태 변경
+    public int updateStatus(Long patientId, String status){
+        return reservationMapper.updateStatus(patientId, status);
+    }
 }

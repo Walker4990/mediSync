@@ -4,11 +4,13 @@ import com.mediSync.project.service.ReservationService;
 import com.mediSync.project.vo.Doctor;
 import com.mediSync.project.vo.Reservation;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestController
@@ -52,6 +54,16 @@ public class ReservationController {
         return res;
     }
 
+    @PutMapping("/{reservationId}/status")
+    public ResponseEntity<?> updateStatus(
+            @PathVariable Long reservationId,
+            @RequestParam String status) {
 
+        int result = reservationService.updateStatus(reservationId, status);
+        return ResponseEntity.ok(Map.of(
+                "success", result > 0,
+                "status", status
+        ));
+    }
 
 }

@@ -36,4 +36,15 @@
         reservation_date = #{reservation_date}
     </delete>
 
+    <update id="updateStatus" parameterType="reservation">
+        UPDATE reservation
+        SET status = CASE
+        WHEN status = 'WAIT' THEN 'CONSULT'
+        WHEN status = 'CONSULT' THEN 'DONE'
+        ELSE status
+        END,
+        updated_at = NOW()
+        WHERE patient_id = #{patientId}
+        AND status IN ('WAIT', 'CONSULT')
+    </update>
 </mapper>
