@@ -4,54 +4,6 @@ import AdminHeader from "../../component/AdminHeader";
 
 const API_URL = "http://192.168.0.24:8080/api/accounts";
 
-// 목업 데이터 (실제 백엔드 API 응답 형태를 가정)
-const mockAccountData = [
-  {
-    adminId: 1,
-    empId: "KHW001",
-    name: "김현우",
-    role: "ADMIN",
-    phone: "010-1234-5678",
-    email: "khw@medisync.com",
-    staffId: 999,
-    doctorId: null,
-    createdAt: "2025-10-22T12:20:40",
-  },
-  {
-    adminId: 2,
-    empId: "LJH002",
-    name: "이재훈",
-    role: "ADMIN",
-    phone: "010-2345-1112",
-    email: "ljh@medisync.com",
-    staffId: null,
-    doctorId: 101,
-    createdAt: "2025-10-23T09:15:30",
-  },
-  {
-    adminId: 3,
-    empId: "PSJ003",
-    name: "박수진",
-    role: "USER",
-    phone: "010-3333-4004",
-    email: "psj@medisync.com",
-    staffId: 501,
-    doctorId: null,
-    createdAt: "2025-10-23T15:00:00",
-  },
-  {
-    adminId: 4,
-    empId: "CMS004",
-    name: "최민수",
-    role: "USER",
-    phone: "010-4444-5005",
-    email: "cms@medisync.com",
-    staffId: null,
-    doctorId: 102,
-    createdAt: "2025-10-24T08:30:10",
-  },
-];
-
 const AccountList = () => {
   const [accounts, setAccounts] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -63,17 +15,24 @@ const AccountList = () => {
     setIsLoading(true);
     setError(null);
     try {
-      // ⚠️ 실제 API 호출 코드
-      // const response = await fetch(`${API_URL}/all`);
-      // if (!response.ok) throw new Error("계정 데이터를 불러오는데 실패했습니다.");
-      // const data = await response.json();
+      const response = await fetch(`${API_URL}/all`);
+      if (!response.ok) {
+        // HTTP 오류 코드가 반환된 경우
+        const errorText = await response.text();
+        throw new Error(
+          `계정 데이터를 불러오는데 실패했습니다. (상태: ${
+            response.status
+          }, 내용: ${errorText.substring(0, 100)}...)`
+        );
+      }
 
-      // Mock Data 사용
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      setAccounts(mockAccountData);
+      const data = await response.json();
+      setAccounts(data);
     } catch (err) {
-      console.error(err);
-      setError("데이터 로드 중 오류가 발생했습니다.");
+      console.error("Fetch Accounts Error:", err);
+      setError(
+        "데이터 로드 중 오류가 발생했습니다. 서버 연결 상태 및 CORS 설정을 확인하세요."
+      );
       setAccounts([]);
     } finally {
       setIsLoading(false);
@@ -145,12 +104,25 @@ const AccountList = () => {
 
   // 수정 및 삭제 기능
   const handleEdit = (id) => {
-    alert(`ID ${id} 수정`);
+    alert(`ID ${id} 계정 수정`);
   };
 
-  const handleDelete = (id) => {
-    if (window.confirm(`ID ${id} 계정을 정말 삭제하시겠습니까?`)) {
-      alert(`ID ${id} 삭제`);
+  const handleDelete = async (id) => {
+    if (window.confirm(`ID ${id} 계정을 정말로 삭제하시겠습니까?`)) {
+      try {
+        const response = await fetch(`${API_URL}/${id}`, {
+          method: "DELETE",
+        });
+
+        if (!response.ok) {
+          throw new Error(`삭제에 실패했습니다. (상태: ${response.status})`);
+        }
+        alert(`ID ${id} 계정 삭제`);
+        fetchAccounts();
+      } catch (error) {
+        console.error("Delete Error:", error);
+        alert(`삭제 중 오류 발생: ${error.message}`);
+      }
     }
   };
 
