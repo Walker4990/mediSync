@@ -1,7 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
 import axios from "axios";
-import Footer from "../../component/Footer";
-import Navbar from "../../component/Navbar";
 import { header } from "framer-motion/client";
 
 const API_BASE_URL = "http://192.168.0.24:8080/api/doctors";

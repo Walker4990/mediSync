@@ -15,7 +15,7 @@ export default function Navbar() {
 
         {/* 메뉴 */}
         <div className="flex items-center space-x-10 text-gray-700 font-medium">
-          <Link to="/insurance" className="hover:text-blue-500 transition">
+          <Link to="/user/insurance" className="hover:text-blue-500 transition">
             보험청구
           </Link>
           <Link to="/user/consult" className="hover:text-blue-500 transition">

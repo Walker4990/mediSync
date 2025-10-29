@@ -12,7 +12,6 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Alias("acc")
 public class AccountDTO {
     private Long adminId; // AI PK
     private String empId;
@@ -25,10 +24,5 @@ public class AccountDTO {
     private Long doctorId;
     private Long staffId;
     private LocalDateTime createdAt;
-
-    private Long userId;
-    private String loginId;
-    private String provider;    // 예: "naver", "kakao"
-    private String providerId;  // 예: "naver_123456" (서비스명 + 고유ID)
 
 }

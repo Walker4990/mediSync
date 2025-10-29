@@ -3,11 +3,14 @@ package com.mediSync.project.controller;
 import com.mediSync.project.service.UserAccountService;
 import com.mediSync.project.vo.UserAccount;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/users")
@@ -17,9 +20,8 @@ public class UserAccountController {
     private final UserAccountService userAccountService;
 
     @GetMapping
-    public ResponseEntity<List<UserAccount>> getAllUsers() {
-        List<UserAccount> users = userAccountService.userSelectAll();
-        return ResponseEntity.ok(users);
+    public List<UserAccount> getAllUsers() {
+        return userAccountService.userSelectAll();
     }
 
     @GetMapping("/{userId}")
@@ -32,20 +34,26 @@ public class UserAccountController {
         }
     }
 
-    @PostMapping
-    public ResponseEntity<Object> registerUser(@RequestBody UserAccount vo) {
+    @PostMapping("/add")
+    public ResponseEntity<?> registerUser(@RequestBody UserAccount vo) {
         try {
-            if (vo.getRole() == null || vo.getRole().isEmpty()) {
-                vo.setRole("USER");
-            }
             userAccountService.userInsert(vo);
-            return ResponseEntity.status(HttpStatus.CREATED)
-                    .body(java.util.Map.of("success", true, "message", "회원가입이 성공적으로 완료되었습니다."));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(java.util.Map.of("success", false, "message", "등록 실패: " + e.getMessage()));
-        }
+        return ResponseEntity
+                .status(HttpStatus.CREATED) // HTTP 201 Created는 생성 성공의 표준 응답 코드입니다.
+                .body(Map.of("success", true, "message", "의사 등록 완료"));
+    } catch (
+    DuplicateKeyException e) {
+        e.printStackTrace();
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT) // HTTP 409 Conflict
+                .body(Map.of("success", false, "message", "이미 등록된 정보입니다"));
+    } catch (Exception e) {
+        e.printStackTrace();
+        return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR) // HTTP 500
+                .body(Map.of("success", false, "message", "서버 오류 발생"));
     }
+}
 
     @PutMapping("/{userId}")
     public ResponseEntity<String> updateUser(@PathVariable Long userId, @RequestBody UserAccount vo) {

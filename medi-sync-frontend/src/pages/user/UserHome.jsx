@@ -17,13 +17,13 @@ export default function UserHome() {
           </p>
           <div className="flex gap-4">
             <Link
-              to="/user/login"
+              to="/"
               className="bg-white text-blue-500 font-semibold px-6 py-3 rounded-full hover:bg-blue-100 transition"
             >
               진료 시작하기
             </Link>
             <Link
-              to="/insurance"
+              to="/"
               className="border border-white px-6 py-3 rounded-full hover:bg-blue-600 transition"
             >
               보험 청구 조회

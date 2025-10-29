@@ -3,6 +3,8 @@ import axios from "axios";
 import { X } from "lucide-react";
 import ModalContext from "./ModalContext";
 
+const API_URL = "http://192.168.0.24:8080/api/users/add";
+
 export default function RegisterModal() {
   const {
     isModalOpen: isOpen,
@@ -86,8 +88,6 @@ export default function RegisterModal() {
       alert("⚠️ 모든 필수 정보를 입력해 주세요.");
       return;
     }
-
-    const API_URL = "http://192.168.0.24:8080/api/users";
 
     const dataToSend = {
       name: form.name,
@@ -203,7 +203,7 @@ export default function RegisterModal() {
                 전화번호
               </span>
               <input
-                type="tel"
+                type="text"
                 name="phone"
                 value={form.phone}
                 onChange={handleChange}
@@ -309,13 +309,12 @@ export default function RegisterModal() {
           {/* 로그인 링크 */}
           <div className="mt-6 text-center text-sm">
             이미 계정이 있으신가요?
-            <a
-              href="/"
+            <button
               onClick={handleLoginClick}
               className="text-blue-600 hover:text-blue-800 font-medium ml-2"
             >
               로그인하기
-            </a>
+            </button>
           </div>
         </div>
       </div>

@@ -55,24 +55,4 @@
         WHERE admin_id = #{adminId}
     </delete>
 
-    <!-- 소셜 로그인 관련 쿼리문 테스트 -->
-    <select id="selectAccountByProviderId" parameterType="String" resultMap="accountResultMap">
-        SELECT *
-        FROM admin_account
-        WHERE provider_id = #{providerId}
-    </select>
-
-    <select id="selectAccountByLoginId" parameterType="String" resultMap="accountResultMap">
-        SELECT *
-        FROM admin_account
-        WHERE login_id = #{loginId}
-    </select>
-
-    <insert id="insertSocialUser" parameterType="com.mediSync.project.dto.AccountDTO">
-        INSERT INTO admin_account (
-        login_id, password, name, email, role, provider, provider_id, created_at
-        ) VALUES (
-        #{loginId}, #{password}, #{name}, #{email}, #{role}, #{provider}, #{providerId}, NOW()
-        )
-    </insert>
 </mapper>

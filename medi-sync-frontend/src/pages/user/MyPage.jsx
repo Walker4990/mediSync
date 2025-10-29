@@ -13,8 +13,6 @@ import {
   ChevronRight,
   X,
 } from "lucide-react";
-import Footer from "../../component/Footer";
-import Navbar from "../../component/Navbar";
 
 // 회원정보 수정 탭
 const UserInfoEdit = () => {
@@ -338,8 +336,8 @@ const MyPage = () => {
   return (
     <div className="font-pretendard">
       {/* 상단 섹션 */}
-      <section className="px-4 md:px-8 pt-12 pb-16 bg-gradient-to-l from-white to-sky-100 shadow-inner">
-        <div className="max-w-6xl mx-auto">
+      <section className="pt-12 pb-16 bg-gradient-to-l from-white to-sky-100 shadow-inner">
+        <div className="max-w-6xl mx-auto px-4 md:px-8">
           <h1 className="text-3xl font-bold text-gray-800">
             환영합니다, <span className="text-blue-600">홍길동</span> 님!
           </h1>

@@ -5,26 +5,24 @@ import com.mediSync.project.mapper.AccountMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.security.crypto.password.PasswordEncoder;
+// import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
 public class AccountService {
 
     private final AccountMapper accountMapper;
-    private final PasswordEncoder passwordEncoder;
 
-    @Transactional
-    public void registerAccount(AccountDTO dto) {
-        // 비밀번호 암호화
-        String encodedPassword = passwordEncoder.encode(dto.getPassword());
-        dto.setPassword(encodedPassword);
-        // DB 저장
-        accountMapper.insertAdmin(dto);
-    }
+    // @Transactional
+    // public void registerAccount(AccountDTO dto) {
+    //     // 비밀번호 암호화
+    //     String encodedPassword = passwordEncoder.encode(dto.getPassword());
+    //     dto.setPassword(encodedPassword);
+    //     // DB 저장
+    //     accountMapper.insertAdmin(dto);
+    // }
 
     public List<AccountDTO> selectAllAdmin() {
         return accountMapper.selectAllAdmin();
