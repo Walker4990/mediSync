@@ -9,6 +9,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -24,8 +26,12 @@ public class ReservationController {
     public List<String> getReservationList(@RequestParam String date, @RequestParam Integer doctor_id) {
         System.out.println(date + doctor_id);
         Reservation reservation = new Reservation();
+        //시간 설정
         LocalDate localDate = LocalDate.parse(date);
-        reservation.setReservation_date(localDate.atStartOfDay());
+        LocalDateTime localDateTime = localDate.atStartOfDay();
+        Date convertDate = Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant());
+
+        reservation.setReservation_date(convertDate);
         reservation.setDoctor_id(doctor_id);
         List<String> rawTimes = reservationService.getReservedTimesByDate(reservation);
 

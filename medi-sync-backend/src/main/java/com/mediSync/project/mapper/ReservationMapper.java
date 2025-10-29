@@ -1,5 +1,6 @@
 package com.mediSync.project.mapper;
 
+import com.mediSync.project.dto.ReservationDTO;
 import com.mediSync.project.vo.Reservation;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -24,8 +25,8 @@ public interface ReservationMapper {
     List<Reservation> selectReservationByPatientId(Integer patient_id);
 
     //오늘 예약 조회하기
-    List<Reservation> findReservationBetween(@Param("start") LocalDateTime start,
-                                             @Param("end")LocalDateTime end);
+    List<ReservationDTO> findReservationBetween(@Param("start") LocalDateTime start,
+                                                @Param("end")LocalDateTime end);
     // 처방시 상태변경
     int updateStatus(Long patientId, String status);
 }

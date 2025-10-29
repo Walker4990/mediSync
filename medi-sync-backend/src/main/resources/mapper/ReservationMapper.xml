@@ -41,12 +41,21 @@
         where patient_id = #{patient_id}
     </select>
 
-    <!-- 오늘 예약 조회하기 -->
-    <select id="findReservationBetween" resultType="reservation">
-        select * from reservation
-        where reservation_date BETWEEN #{start} AND #{end}
+    <!-- 내일 예약 조회하기 -->
+    <select id="findReservationBetween" resultType="com.mediSync.project.dto.ReservationDTO">
+        select
+        r.reservation_date as reservation_date,
+        d.doctor_name as doctorName,
+        p.name,
+        p.email
+        from
+        reservation r
+        join doctor d using(doctor_id)
+        join patient p using(patient_id)
+        where r.reservation_date BETWEEN #{start} AND #{end};
     </select>
 
+    <!-- 예약 상태 업데이트-->
     <update id="updateStatus" parameterType="reservation">
         UPDATE reservation
         SET status = CASE

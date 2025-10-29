@@ -24,7 +24,7 @@ public class Reservation {
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     @JsonProperty("reservation_date")
-    private LocalDateTime reservation_date;
+    private Date  reservation_date;
 
     @JsonProperty("status")
     private String status;
