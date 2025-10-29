@@ -39,6 +39,13 @@ dependencies {
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     implementation 'com.itextpdf:itextpdf:5.5.13.3'
     implementation 'com.google.zxing:core:3.5.2'
+
+    //  WebSocket + STOMP 실시간 통신
+    implementation 'org.springframework.boot:spring-boot-starter-websocket'
+
+    //  JSON 직렬화 (WebSocket payload용)
+    implementation 'com.fasterxml.jackson.core:jackson-databind'
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
 }
 
 tasks.named('test') {

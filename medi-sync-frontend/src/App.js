@@ -7,6 +7,7 @@ import DashBoard from "./pages/admin/DashBoard";
 import PatientList from "./pages/admin/PatientList";
 import StaffList from "./pages/admin/StaffList";
 import DoctorList from "./pages/admin/DoctorList";
+import MyPage from "./pages/user/MyPage";
 import Register from "./pages/user/Register";
 import LoginPage from "./pages/user/LoginPage";
 import UserHome from "./pages/user/UserHome";
@@ -21,10 +22,18 @@ import ImagingTestPage from "./pages/admin/ImagingTestPage";
 import EndoscopeTestPage from "./pages/admin/EndoscopeTestPage";
 import BasicTestPage from "./pages/admin/BasicTestPage";
 import OtherTestPage from "./pages/admin/OtherTestPage";
+import {NotificationProvider} from "./context/NotificationContext";
+import WebSocketListener from "./component/AddNotification";
+import NotificationPanel from "./component/NotificationPanel";
 
 function App() {
   return (
+      <NotificationProvider>
+
     <BrowserRouter>
+        <WebSocketListener />
+
+        <NotificationPanel />
       <Routes>
         {/*관리자 페이지*/}
         <Route path="/admin" element={<Home />} />
@@ -49,10 +58,12 @@ function App() {
         <Route path="/" element={<UserHome />} />/
         <Route path="/user/register" element={<Register />} />
         <Route path="/user/login" element={<LoginPage />} />
+        <Route path="/user/mypage" element={<MyPage />} />
         <Route path="/user/consult" element={<MedicalConsult />} />
         <Route path="/user/reservation" element={<Reservation />} />
       </Routes>
     </BrowserRouter>
+      </NotificationProvider>
   );
 }
 
