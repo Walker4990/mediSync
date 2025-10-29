@@ -2,12 +2,13 @@ package com.mediSync.project.controller;
 
 import com.mediSync.project.dto.PatientDTO;
 import com.mediSync.project.service.PatientService;
+import com.mediSync.project.vo.MedicalRecord;
 import com.mediSync.project.vo.Patient;
+import com.mediSync.project.vo.Prescription;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -24,6 +25,7 @@ public class PatientController {
     public List<Patient> allPatient() {
         return patientService.allPatients();
     }
+
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody PatientDTO dto) {
         try {
@@ -43,4 +45,22 @@ public class PatientController {
         }
     }
 
+    @GetMapping("/{patientId}/records")
+    public List<MedicalRecord> getPatientRecords(@PathVariable("patientId") Long patientId) {
+        return patientService.getPatientRecords(patientId);
+    }
+
+    @GetMapping("/{patientId}/prescriptions")
+    public List<Prescription> getPatientPrescriptions(@PathVariable("patientId") Long patientId) {
+        return patientService.getPatientPrescriptions(patientId);
+    }
+
+    @GetMapping("/{patientId}/detail")
+    public ResponseEntity<Patient> getPatientDetail(@PathVariable("patientId") Long patientId) {
+        Patient patient = patientService.getPatientDetail(patientId);
+        if(patient == null){
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(patient);
+    }
 }

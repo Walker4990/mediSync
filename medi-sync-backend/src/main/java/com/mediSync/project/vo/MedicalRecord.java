@@ -27,7 +27,7 @@ public class MedicalRecord {
     private List<Prescription> prescriptions;
 
     private String doctorName;
-    private String department;
+    private String deptName;
     private Long reservationId;
     private String reservationStatus;
     private LocalDate reservationDate;

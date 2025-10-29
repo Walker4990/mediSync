@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.mediSync.project.mapper.OperationMapper">
+
+   <insert id="insertOperation" parameterType="operation">
+       INSERT INTO operation (
+            patient_id, doctor_id, staff_id, record_id, operation_name, diagnosis, anesthesia_type,
+            room_id, scheduled_date, scheduled_time, cost, status
+       ) VALUES (
+            #{patientId}, #{doctorId}, #{staffId}, #{recordId},
+            #{operationName}, #{diagnosis}, #{anesthesiaType},
+            #{roomId}, #{scheduledDate}, #{scheduledTime}, #{cost}, 'SCHEDULED'
+       )
+   </insert>
+    <!-- 수술 목록 조회 -->
+    <select id="selectOperationList" resultType="operation">
+        SELECT o.*, p.name AS patientName, d.doctor_name AS doctorName, r.room_name AS roomName
+        FROM operation o
+        JOIN patient p ON o.patient_id = p.patient_id
+        JOIN doctor d ON o.doctor_id = d.doctor_id
+        LEFT JOIN operation_room r ON o.room_id = r.room_id
+        ORDER BY o.scheduled_date DESC, o.scheduled_time ASC
+    </select>
+
+    <!-- 수술방 목록 -->
+    <select id="selectOperationRoomList" resultType="operationRoom">
+        SELECT * FROM operation_room
+    </select>
+
+    <!-- 특정 수술 상세 조회 -->
+    <select id="getOperationById" parameterType="long" resultType="operation">
+        SELECT o.*, p.name AS patient_name, d.doctor_name AS doctor_name
+        FROM operation o
+        LEFT JOIN patient p ON o.patient_id = p.patient_id
+        LEFT JOIN doctor d ON o.doctor_id = d.doctor_id
+        WHERE o.operation_id = #{operationId}
+    </select>
+
+    <!--  중복 예약 확인 -->
+    <select id="checkScheduleConflict" parameterType="map" resultType="int">
+        SELECT COUNT(*)
+        FROM operation
+        WHERE room_id = #{roomId}
+        AND scheduled_date = #{scheduledDate}
+        AND scheduled_time = #{scheduledTime}
+        AND status IN ('SCHEDULED', 'IN_PROGRESS')
+    </select>
+
+    <!--  상태 변경 -->
+    <update id="updateOperationStatus" parameterType="map">
+        UPDATE operation
+        SET status = #{status}, updated_at = NOW()
+        WHERE operation_id = #{operationId}
+    </update>
+
+    <!--  수술 결과 업데이트 -->
+    <update id="updateResult" parameterType="operation">
+        UPDATE operation
+        SET result_note = #{resultNote},
+        status = 'COMPLETED',
+        updated_at = NOW()
+        WHERE operation_id = #{operationId}
+    </update>
+    <!-- 수술 상세 정보 입력 -->
+    <update id="updateOperation" parameterType="operation">
+        UPDATE operation
+        SET operation_name = #{operationName},
+        anesthesia_type = #{anesthesiaType},
+        result_note = #{resultNote},
+        updated_at = NOW()
+        WHERE operation_id = #{operationId}
+    </update>
+
+    <!-- operation_staff -->
+    <insert id="insertOperationStaff" parameterType="operationStaff">
+        INSERT INTO operation_staff (operation_id, medical_staff_id, name, position, created_at)
+        VALUES (#{operationId}, #{medicalStaffId}, #{name}, #{position}, NOW());
+    </insert>
+
+    <select id="selectOperationStaffList" resultType="operationStaff">
+        SELECT
+        os.staff_id AS staffId,
+        os.operation_id AS operationId,
+        ms.staff_id AS medicalStaffId,
+        ms.staff_name AS name,
+        ms.position AS position,
+        os.created_at AS createdAt
+        FROM operation_staff os
+        JOIN medical_staff ms
+        ON os.medical_staff_id = ms.staff_id
+        WHERE os.operation_id = #{operationId}
+        ORDER BY os.created_at DESC
+    </select>
+
+    <!-- 로그 -->
+    <insert id="insertOperationLog" parameterType="operationLog">
+        INSERT INTO operation_log (operation_id, user_name, action, created_at)
+        VALUES (#{operationId}, #{userName}, #{action}, NOW())
+    </insert>
+
+    <select id="selectOperationLogs" resultType="operationLog">
+        SELECT * FROM operation_log
+        WHERE operation_id = #{operationId}
+        ORDER BY created_at DESC
+    </select>
+
+    <!-- 참여 의료진 조회 -->
+    <select id="selectStaffByOperationId" parameterType="long" resultType="medicalStaff">
+        SELECT
+        ms.staff_id      AS staffId,
+        ms.staff_name    AS staffName,
+        ms.position      AS position
+        FROM
+        operation_staff os
+        JOIN
+        medical_staff ms ON os.medical_staff_id = ms.staff_id
+        WHERE
+        os.operation_id = #{operationId}
+        ORDER BY ms.staff_name;
+    </select>
+
+    <!--수술 참여자 명단 제외 -->
+    <delete id="deleteOperationStaff" parameterType="map">
+        DELETE FROM operation_staff
+        WHERE operation_id = #{operationId}
+        AND medical_staff_id  = #{staffId}
+    </delete>
+    <!-- 의료진 분신술 방지 -->
+    <select id="checkDuplicateStaff" parameterType="map" resultType="int">
+        SELECT COUNT(*)
+        FROM operation_staff
+        WHERE operation_id = #{operationId}
+        AND medical_staff_id = #{medicalStaffId}
+    </select>
+
+    <!-- 수술 등록 시 수술실 사용중으로 표시 -->
+    <update id="updateRoomInUse" parameterType="long">
+        UPDATE operation_room
+        SET available = 0
+        WHERE room_id = #{roomId};
+    </update>
+
+    <!-- 수술 완료 시 다시 사용 가능으로 복귀 -->
+    <update id="updateRoomAvailable" parameterType="long">
+        UPDATE operation_room
+        SET available = 1
+        WHERE room_id = #{roomId};
+    </update>
+</mapper>

@@ -28,6 +28,9 @@ export default function AdminHeader() {
               { name: "기타 검사", href: "/admin/test/other" },
             ]}
           />
+            <Link to="/admin/operation" className="hover:text-blue-200">
+                수술관리
+            </Link>
           <DropdownMenu
             title="고객관리"
             items={[

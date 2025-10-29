@@ -70,4 +70,8 @@ public class MedicalStaffController {
                     .body(Map.of("success", false, "message", "삭제 중 서버 오류 발생"));
         }
     }
+    @GetMapping("/search")
+    public List<MedicalStaff> searchStaffByKeyword(String keyword) {
+        return medicalStaffService.searchStaffByKeyword(keyword);
+    }
 }

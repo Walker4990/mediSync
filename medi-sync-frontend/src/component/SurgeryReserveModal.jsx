@@ -11,7 +11,7 @@ export default function ReserveModal({
     const [timeSlots, setTimeSlots] = useState([]);
     const [selectedTime, setSelectedTime] = useState(null);
     const [loading, setLoading] = useState(false);
-
+    const [operationName, setOperationName] = useState("");
     const defaultTimes = [
         "09:00", "09:30", "10:00", "10:30", "11:00",
         "13:00", "13:30", "14:00", "14:30", "15:00", "15:30", "16:00"
@@ -25,13 +25,25 @@ export default function ReserveModal({
         Promise.all(
             defaultTimes.map(time =>
                 axios
-                    .get("http://192.168.0.24:8080/api/testSchedule/check", {
-                        params: {
-                            testCode: test.testCode,
-                            testDate: date,
-                            testTime: time
-                        },
-                    })
+                    .get(
+                        mode === "test"
+                            ? "http://192.168.0.24:8080/api/testSchedule/check"
+                            : "http://192.168.0.24:8080/api/operation/check", // ✅ 수정 ①
+                        {
+                            params:
+                                mode === "test"
+                                    ? {
+                                        testCode: test.testCode,
+                                        testDate: date,
+                                        testTime: time,
+                                    }
+                                    : {
+                                        scheduledDate: date,
+                                        scheduledTime: time,
+                                        roomId: 1,
+                                    },
+                        }
+                    )
                     .then(res => ({
                         time,
                         available: res.data.available,
@@ -42,21 +54,25 @@ export default function ReserveModal({
             .then(results => setTimeSlots(results))
             .catch(err => console.error("❌ 시간 조회 실패:", err))
             .finally(() => setLoading(false));
-    }, [date, open, test.testCode]);
+    }, [date, open, test.testCode, mode]);
 
-    // ✅ 시간 클릭
+    // ✅ 시간 선택
     const handleSelectTime = (time) => {
         setSelectedTime(time);
     };
 
     // ✅ 예약 저장
     const handleReserve = async () => {
-        if (!date || !selectedTime) return alert("날짜와 시간을 선택하세요.");
+        if (!date || !selectedTime)
+            return alert("날짜와 시간을 선택하세요.");
+
+        if (mode === "surgery" && !operationName.trim())
+            return alert("수술명을 입력하세요."); //  추가
 
         const url =
             mode === "test"
                 ? "http://192.168.0.24:8080/api/testSchedule/reserve"
-                : "http://192.168.0.24:8080/api/surgery/reserve";
+                : "http://192.168.0.24:8080/api/operation/reserve";
 
         const payload =
             mode === "test"
@@ -70,12 +86,13 @@ export default function ReserveModal({
                     recordId: test.recordId,
                     doctorId: test.doctorId,
                     patientId: test.patientId,
-                    surgeryName: test.testName || "수술",
-                    surgeryDate: date,
-                    surgeryTime: selectedTime,
-                    operationRoom: "OR-1",
+                    operationName: operationName || "수술",
+                    scheduledDate: date,
+                    scheduledTime: `${date}T${selectedTime}:00`,
+                    roomId: 1,
+                    cost: 1000000,
                 };
-
+        console.log("🧩 예약 전 payload:", payload);
         try {
             await axios.post(url, payload);
             alert(`✅ ${mode === "test" ? "검사" : "수술"} 예약 완료!`);
@@ -92,10 +109,10 @@ export default function ReserveModal({
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 w-96 shadow-lg animate-fade-in">
                 <h3 className="text-lg font-bold text-blue-600 mb-4 text-center">
-                    {mode === "test" ? `🧪 ${test.testName} 예약` : `🏥 ${test.testName} 수술 예약`}
+                    {mode === "test" ? `🧪 ${test.testName} 예약` : `🏥 ${test.operationName || "수술"} 예약`}
                 </h3>
 
-                {/* ✅ 날짜 선택 */}
+                {/* 날짜 선택 */}
                 <div className="mb-4">
                     <label className="block text-gray-700 text-sm mb-1">날짜 선택</label>
                     <input
@@ -110,7 +127,7 @@ export default function ReserveModal({
                     />
                 </div>
 
-                {/* ✅ 시간대 표시 */}
+                {/* 시간대 표시 */}
                 <div>
                     <label className="block text-gray-700 text-sm mb-2">시간 선택</label>
                     {loading ? (
@@ -123,11 +140,12 @@ export default function ReserveModal({
                                     onClick={() => handleSelectTime(slot.time)}
                                     disabled={!slot.available}
                                     className={`rounded-md py-2 text-sm font-medium border transition
-                                        ${selectedTime === slot.time
-                                        ? "bg-blue-600 text-white"
-                                        : slot.available
-                                            ? "bg-gray-100 hover:bg-blue-100 text-gray-800"
-                                            : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                    ${
+                                        selectedTime === slot.time
+                                            ? "bg-blue-600 text-white"
+                                            : slot.available
+                                                ? "bg-gray-100 hover:bg-blue-100 text-gray-800"
+                                                : "bg-gray-300 text-gray-500 cursor-not-allowed"
                                     }`}
                                 >
                                     {slot.time}
@@ -137,7 +155,21 @@ export default function ReserveModal({
                     )}
                 </div>
 
-                {/* ✅ 버튼 */}
+                {/* 수술명 입력 (수술 모드일 때만) */}
+                {mode === "surgery" && (
+                    <div className="mb-4">
+                        <label className="block text-gray-700 text-sm mb-1">수술명 입력</label>
+                        <input
+                            type="text"
+                            value={operationName}
+                            onChange={(e) => setOperationName(e.target.value)}
+                            placeholder="예: 백내장 수술"
+                            className="border rounded p-2 w-full"
+                        />
+                    </div>
+                )}
+
+                {/* 버튼 */}
                 <div className="flex justify-end gap-3 mt-6">
                     <button onClick={onClose} className="text-gray-500">
                         취소

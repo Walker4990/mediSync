@@ -2,8 +2,10 @@ package com.mediSync.project.service;
 
 import com.mediSync.project.dto.PatientDTO;
 import com.mediSync.project.mapper.PatientMapper;
+import com.mediSync.project.vo.MedicalRecord;
 import com.mediSync.project.vo.Patient;
 import com.mediSync.project.vo.PatientAccount;
+import com.mediSync.project.vo.Prescription;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,6 +38,15 @@ public class PatientService {
     }
     public List<Patient> allPatients(){
         return patientMapper.allPatient();
+    }
+    public List<MedicalRecord> getPatientRecords(Long patientId) {
+        return patientMapper.getPatientRecords(patientId);
+    }
+    public List<Prescription> getPatientPrescriptions(Long patientId) {
+        return patientMapper.getPatientPrescriptions(patientId);
+    }
+    public Patient getPatientDetail(Long patientId) {
+        return patientMapper.getPatientDetail(patientId);
     }
 }
 
