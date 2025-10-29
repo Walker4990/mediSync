@@ -62,6 +62,8 @@ public class ReservationController {
         List<Reservation> list = reservationService.selectReservationByPatientId(patient_id);
         return  list;
     }
+
+    //상태 업데이트
     @PutMapping("/{reservationId}/status")
     public ResponseEntity<?> updateStatus(
             @PathVariable Long reservationId,

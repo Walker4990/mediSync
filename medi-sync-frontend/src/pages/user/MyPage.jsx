@@ -1,5 +1,8 @@
 import React, { useEffect, useState, useMemo } from "react";
 import axios from "axios";
+import FullCalendar from "@fullcalendar/react";
+import dayGridPlugin from "@fullcalendar/daygrid";
+import timeGridPlugin from "@fullcalendar/timegrid";
 import {
   User,
   Lock,
@@ -23,6 +26,7 @@ const UserInfoEdit = () => {
   const [staffId, setStaffId] = useState("");
   const [checkResult, setCheckResult] = useState("");
 
+  //사번 조회(직원 인증)
   const handleStaffCheck = async () => {
     if (!staffId) {
       setCheckResult("사번을 입력해주세요.");
@@ -31,12 +35,12 @@ const UserInfoEdit = () => {
     setIsChecking(true);
     setCheckResult("");
 
-    // Mock API call for Staff ID check
+    // 사번 체크
     await new Promise((resolve) => setTimeout(resolve, 1000));
     setIsChecking(false);
 
     if (staffId === "MS999") {
-      // Mock Success
+      // Mock 성공
       setIsStaff(true);
       setCheckResult("✅ 직원 사번이 확인되었습니다.");
     } else {
@@ -45,7 +49,7 @@ const UserInfoEdit = () => {
       setCheckResult("❌ 유효하지 않은 사번입니다.");
     }
   };
-
+  //회원 정보 변경 클릭 시 화면 단
   return (
     <div className="p-6 space-y-6">
       <h3 className="text-xl font-semibold border-b pb-2">회원정보 변경</h3>
@@ -147,7 +151,7 @@ const NotificationSettings = () => {
   const toggleSetting = (key) => {
     setSettings((prev) => ({ ...prev, [key]: !prev[key] }));
   };
-
+  //알림설정 css
   const SettingToggle = ({ label, keyName }) => (
     <div className="flex justify-between items-center p-3 border-b last:border-b-0">
       <span className="text-gray-700">{label}</span>
@@ -165,7 +169,7 @@ const NotificationSettings = () => {
       </button>
     </div>
   );
-
+  //알림 설정 화면단
   return (
     <div className="p-6 space-y-4">
       <h3 className="text-xl font-semibold border-b pb-2 flex items-center">
@@ -173,10 +177,11 @@ const NotificationSettings = () => {
       </h3>
       <div className="bg-white rounded-lg shadow-md p-4 space-y-2">
         <SettingToggle label="이메일 알림 (진료/예약 관련)" keyName="email" />
-        <SettingToggle label="문자(SMS) 알림 (긴급 정보)" keyName="sms" />
+        <SettingToggle label="SMS 수신 동의 (긴습사항)" keyName="marketing" />
         <SettingToggle label="푸시 알림 (앱 사용 시)" keyName="push" />
         <SettingToggle label="마케팅 정보 수신 (선택)" keyName="marketing" />
       </div>
+      <br></br>
       <p className="text-sm text-gray-500 pt-2">
         필수 알림(법적 의무 사항 등)은 미수신 설정과 관계없이 발송될 수
         있습니다.
@@ -184,15 +189,18 @@ const NotificationSettings = () => {
     </div>
   );
 };
-
-// 환자 기록 탭
+//환자 기록 탭
 const PatientRecords = ({ title, icon: Icon }) => (
   <div className="p-6 space-y-4">
+    {" "}
     <h3 className="text-xl font-semibold border-b pb-2 flex items-center">
-      <Icon className="w-5 h-5 mr-2" /> {title}
-    </h3>
+      {" "}
+      <Icon className="w-5 h-5 mr-2" /> {title}{" "}
+    </h3>{" "}
     <div className="bg-white rounded-lg shadow-md overflow-hidden">
+      {" "}
       <ul className="divide-y divide-gray-200">
+        {" "}
         {[
           "2025-10-15 외과 진료",
           "2025-09-20 내과 진료",
@@ -202,17 +210,69 @@ const PatientRecords = ({ title, icon: Icon }) => (
             key={index}
             className="flex justify-between items-center p-4 hover:bg-gray-50 transition cursor-pointer"
           >
-            <span>{item}</span>
-            <ChevronRight className="w-5 h-5 text-gray-400" />
+            {" "}
+            <span>{item}</span>{" "}
+            <ChevronRight className="w-5 h-5 text-gray-400" />{" "}
           </li>
-        ))}
-      </ul>
-    </div>
+        ))}{" "}
+      </ul>{" "}
+    </div>{" "}
     <button className="w-full py-2 border border-blue-400 text-blue-600 rounded-lg hover:bg-blue-50 transition">
-      더 많은 기록 보기
-    </button>
+      {" "}
+      더 많은 기록 보기{" "}
+    </button>{" "}
   </div>
 );
+// 환자 일정 탭
+const ViewReservation = ({ title, icon: Icon }) => {
+  const [events, setEvents] = useState([]);
+  //로그인 유저 임시 번호
+  const userId = 1;
+  useEffect(() => {
+    axios
+      .get(`/api/calender/?userId=${userId}`)
+      .then((res) => {
+        const formatted = res.data.map((item) => ({
+          title: item.title,
+          start: item.startDate,
+          end: item.startDate,
+          color: item.color || "blue",
+        }));
+        setEvents(formatted);
+      })
+      .catch((err) => {
+        console.log("일정 조회 실패", err);
+      });
+  }, []);
+
+  //캘린더
+  return (
+    <div className="p-6 space-y-4">
+      <h3 className="text-xl font-semibold border-b pb-2 flex items-center">
+        <Icon className="w-5 h-5 mr-2" /> {title}
+      </h3>
+      <div className="bg-white rounded-lg shadow-md overflow-hidden">
+        {events.length === 0 ? (
+          <p className="text-center text-gray-500 py-12">
+            현재 등록된 일정이 없습니다 🗓️
+          </p>
+        ) : (
+          <FullCalendar
+            plugins={[dayGridPlugin, timeGridPlugin]}
+            initialView="dayGridMonth"
+            headerToolbar={{
+              left: "prev,next today",
+              center: "title",
+              right: "dayGridMonth,timeGridWeek,timeGridDay",
+            }}
+            events={events}
+            height={600}
+          ></FullCalendar>
+        )}
+      </div>
+    </div>
+  );
+};
 
 // 실시간 상담 아이콘 -> 클릭 시 채팅 시작 (임의 구현)
 const ChatFloatingButton = () => {
@@ -288,14 +348,14 @@ const MyPage = () => {
 
       {
         id: "med_records",
-        label: "진료 기록 조회",
-        icon: FileText,
+        label: "예약 조회 및 변경",
+        icon: Calendar,
         group: "patient",
       },
       {
         id: "reservations",
-        label: "예약 조회 및 변경",
-        icon: Calendar,
+        label: "진료 기록 조회",
+        icon: FileText,
         group: "patient",
       },
       { id: "tests", label: "검사 결과 조회", icon: Search, group: "patient" },
@@ -319,13 +379,13 @@ const MyPage = () => {
       case "notification_settings":
         return <NotificationSettings />;
       case "med_records":
-        return <PatientRecords title="진료 기록" icon={FileText} />;
+        return <ViewReservation title="예약 조회 및 변경" icon={Calendar} />;
       case "reservations":
-        return <PatientRecords title="예약 조회 및 변경" icon={Calendar} />;
+        return <PatientRecords title="진료 기록" icon={FileText} />;
       case "tests":
-        return <PatientRecords title="검사 결과 조회" icon={Search} />;
+        return <ViewReservation title="검사 결과 조회" icon={Search} />;
       case "insurance_payment":
-        return <PatientRecords title="보험/수납 내역" icon={Wallet} />;
+        return <ViewReservation title="보험/수납 내역" icon={Wallet} />;
       default:
         return <div className="p-6 text-gray-500">선택된 메뉴가 없습니다.</div>;
     }

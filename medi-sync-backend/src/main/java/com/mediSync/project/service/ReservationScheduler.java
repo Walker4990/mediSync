@@ -30,7 +30,6 @@ public class ReservationScheduler {
                                                     .withHour(0)
                                                     .withMinute(0)
                                                     .withSecond(0);
-
         LocalDateTime end = start.plusDays(1);
 
         List<ReservationDTO> reservationList = reservationMapper
