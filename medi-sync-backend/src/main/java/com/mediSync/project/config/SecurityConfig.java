@@ -3,6 +3,7 @@ package com.mediSync.project.config;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -31,7 +32,7 @@ public class SecurityConfig {
         // 1. URL 기반 인가(Authorization) 설정
         http.authorizeHttpRequests(auth -> auth
                 // static 파일 및 로그인/회원가입 관련 페이지는 누구나 접근 가능
-                // .requestMatchers(
+                   .requestMatchers(HttpMethod.POST, "/api/users").permitAll()
 //                        AntPathRequestMatcher.antMatcher("/css/**"),
 //                        AntPathRequestMatcher.antMatcher("/js/**"),
 //                        AntPathRequestMatcher.antMatcher("/images/**"),
@@ -65,7 +66,7 @@ public class SecurityConfig {
                 .userInfoEndpoint(userInfo -> userInfo
                         .userService(customOAuth2UserService)
                 )
-                .defaultSuccessUrl("/main", true) // 소셜 로그인 성공 시 이동 경로
+                .defaultSuccessUrl("/", true) // 소셜 로그인 성공 시 이동 경로
                 .failureUrl("/login?oauth_error")
         );
 
@@ -80,7 +81,7 @@ public class SecurityConfig {
         // 5. CSRF (Cross-Site Request Forgery) 설정
         // API 서버가 아니라면 기본적으로 CSRF를 활성화하는 것이 안전합니다.
         // 개발/테스트 목적으로 잠시 비활성화할 수 있지만, 운영 시에는 주의가 필요합니다.
-        // http.csrf(csrf -> csrf.disable());
+        http.csrf(csrf -> csrf.disable());
 
         // 6. 기타 설정 (H2 Console 사용 시)
         // http.headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()));

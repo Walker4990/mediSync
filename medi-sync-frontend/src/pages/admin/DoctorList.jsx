@@ -3,6 +3,7 @@ import axios from "axios";
 import { format } from "date-fns";
 import AdminHeader from "../../component/AdminHeader";
 import ConfirmModal from "../../component/ConfirmModal";
+import { ChevronDown } from "lucide-react";
 import {
   FaEdit,
   FaTrashAlt,
@@ -136,21 +137,27 @@ export default function DoctorList() {
             >
               진료과명 *
             </label>
-            <select
-              id="deptId"
-              name="deptId"
-              value={formData.deptId}
-              onChange={handleChange}
-              required
-              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-blue-500 focus:border-blue-500"
-            >
-              <option value="">진료과를 선택하세요</option>
-              {deptOptions.map((dept) => (
-                <option key={dept.deptId} value={dept.deptId}>
-                  {dept.deptName}
-                </option>
-              ))}
-            </select>
+            <div className="relative mt-1">
+              <ChevronDown
+                className="absolute right-0 top-1/2 transform -translate-y-1/2 mr-3 h-5 w-5 text-gray-400 pointer-events-none"
+                aria-hidden="true"
+              />
+              <select
+                id="deptId"
+                name="deptId"
+                value={formData.deptId}
+                onChange={handleChange}
+                required
+                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-blue-500 focus:border-blue-500 appearance-none"
+              >
+                <option value="">진료과를 선택하세요</option>
+                {deptOptions.map((dept) => (
+                  <option key={dept.deptId} value={dept.deptId}>
+                    {dept.deptName}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
           {/* 등록 시에만 면허번호 입력 가능, 수정 시에는 변경 불가 */}
@@ -432,9 +439,7 @@ export default function DoctorList() {
                   >
                     {d.doctorName}
                   </td>
-                  <td className="py-2 px-4">
-                    {d.deptName} / {d.deptId}
-                  </td>
+                  <td className="py-2 px-4">{d.deptName}</td>
                   <td className="py-2 px-4">{d.licenseNo}</td>
                   <td className="py-2 px-4">{d.phone}</td>
                   <td className="py-2 px-4 text-gray-500 text-xs">

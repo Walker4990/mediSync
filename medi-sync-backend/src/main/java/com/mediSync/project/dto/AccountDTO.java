@@ -1,5 +1,6 @@
 package com.mediSync.project.dto;
 
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -10,6 +11,8 @@ import java.time.LocalDateTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
+@Alias("acc")
 public class AccountDTO {
     private Long adminId; // AI PK
     private String empId;

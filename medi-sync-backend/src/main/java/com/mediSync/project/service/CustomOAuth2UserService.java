@@ -59,7 +59,7 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
 
         // 6. Spring Security 세션에 저장할 인증 객체(DefaultOAuth2User) 생성
         return new DefaultOAuth2User(
-                Collections.singleton(new SimpleGrantedAuthority("ROLE_" + account.getRole().name())),
+                Collections.singleton(new SimpleGrantedAuthority("ROLE_" + account.getRole())),
                 attributes.getAttributes(),
                 attributes.getNameAttributeKey()
         );
@@ -99,7 +99,7 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
                 .password(passwordEncoder.encode(UUID.randomUUID().toString())) // 임시 비밀번호
                 .name(attributes.getName())
                 .email(attributes.getEmail())
-                .role(AccountDTO.Role.USER) // 기본 권한
+                .role("USER") // 기본 권한
                 .provider(attributes.getProvider()) // "naver" 또는 "kakao"
                 .providerId(providerId)
                 .build();

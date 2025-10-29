@@ -1,7 +1,10 @@
-import React from "react";
+import React, { useContext } from "react";
 import { Link } from "react-router-dom";
+import ModalContext from "./ModalContext";
 
 export default function Navbar() {
+  const { openModal, openLoginModal } = useContext(ModalContext);
+
   return (
     <nav className="fixed top-0 left-0 w-full bg-white shadow-sm z-50 font-pretendard">
       <div className="max-w-6xl mx-auto px-6 py-3 flex justify-between items-center">
@@ -22,21 +25,22 @@ export default function Navbar() {
             마이페이지
           </Link>
 
-          {/* 구분선 (옵션) */}
+          {/* 구분선 */}
           <span className="w-px h-5 bg-gray-300 mx-2 hidden md:block"></span>
-
-          <Link
-            to="/user/login"
-            className="text-blue-500 border border-blue-500 px-5 py-1.5 rounded-lg hover:bg-blue-500 hover:text-white transition"
-          >
-            로그인
-          </Link>
-          <Link
-            to="/user/register"
-            className="text-white bg-blue-500 px-5 py-1.5 rounded-lg hover:bg-blue-600 transition"
-          >
-            회원가입
-          </Link>
+          <div className="btn-group flex gap-x-5">
+            <button
+              onClick={openLoginModal}
+              className="text-blue-500 border border-blue-500 px-5 py-1.5 rounded-lg hover:bg-blue-500 hover:text-white transition"
+            >
+              로그인
+            </button>
+            <button
+              onClick={openModal}
+              className="text-white bg-blue-500 px-5 py-1.5 rounded-lg hover:bg-blue-600 transition"
+            >
+              회원가입
+            </button>
+          </div>
         </div>
       </div>
     </nav>
