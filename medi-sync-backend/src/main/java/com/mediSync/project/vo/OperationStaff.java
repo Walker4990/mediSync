@@ -15,6 +15,7 @@ public class OperationStaff {
     private Long staffId;
     private Long operationId;
     private String name;
-    private String role;
+    private String position;
     private LocalDateTime createdAt;
+    private Long medicalStaffId;
 }

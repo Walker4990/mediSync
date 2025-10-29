@@ -1,10 +1,9 @@
 package com.mediSync.project.service;
 
 import com.mediSync.project.mapper.OperationMapper;
-import com.mediSync.project.vo.Operation;
-import com.mediSync.project.vo.OperationLog;
-import com.mediSync.project.vo.OperationStaff;
+import com.mediSync.project.vo.*;
 import lombok.RequiredArgsConstructor;
+import org.apache.ibatis.annotations.Param;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,10 +23,19 @@ public class OperationService {
                 operation.getScheduledDate().toString(),
                 operation.getScheduledTime().toString()
         );
+
         if (conflict > 0) {
             throw new IllegalStateException("이미 예약된 수술실/시간입니다.");
         }
-        return operationMapper.insertOperation(operation) > 0;
+
+        // ✅ 먼저 수술 insert
+        int inserted = operationMapper.insertOperation(operation);
+        if (inserted > 0) {
+            // ✅ insert 성공 시에만 수술실 상태 변경
+            operationMapper.updateRoomInUse(operation.getRoomId());
+            return true;
+        }
+        return false;
     }
 
     public List<Operation> selectOperationList() {
@@ -64,10 +72,13 @@ public class OperationService {
     @Transactional
     public void addStaff(OperationStaff staff) {
         operationMapper.insertOperationStaff(staff);
-
+        int duplicate = operationMapper.checkDuplicateStaff(staff.getOperationId(), staff.getStaffId());
+        if (duplicate > 0) {
+            throw new IllegalStateException("이미 등록된 의료진입니다.");
+        }
         OperationLog log = new OperationLog();
         log.setOperationId(staff.getOperationId());
-        log.setAction("의료진 추가: " + staff.getName() + " (" + staff.getRole() + ")");
+        log.setAction("의료진 추가: " + staff.getName() + " (" + staff.getPosition() + ")");
         log.setUserName("관리자");
         operationMapper.insertOperationLog(log);
     }
@@ -79,5 +90,31 @@ public class OperationService {
     public List<OperationLog> getOperationLogs(Long operationId) {
         return operationMapper.selectOperationLogs(operationId);
     }
+    public List<OperationRoom> selectOperationRoomList(){
+        return operationMapper.selectOperationRoomList();
+    }
+    public List<MedicalStaff> selectStaffByOperationId(Long operationId) {
+        return operationMapper.selectStaffByOperationId(operationId);
+    }
+    @Transactional
+    public void deleteOperationStaff(Long operationId, Long staffId) {
+        int result = operationMapper.deleteOperationStaff(operationId, staffId);
+        if (result == 0) {
+            throw new IllegalArgumentException("삭제 대상이 존재하지 않습니다.");
+        }
+        OperationLog log = new OperationLog();
+        log.setOperationId(operationId);
+        log.setAction("의료진 삭제");
+        log.setUserName("관리자");
+    }
+
+//    @Transactional
+//    public void completeOperation(Operation operation) {
+//        operationMapper.updateResult(operation);
+//        operationMapper.updateRoomAvailable(operation.getRoomId());
+//        operationMapper.insertOperationLog(
+//                new OperationLog(operation.getOperationId(), "SYSTEM", "수술 완료 → 수술실 사용 가능")
+//        );
+//    }
 }
 

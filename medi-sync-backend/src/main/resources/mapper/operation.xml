@@ -25,6 +25,11 @@
         ORDER BY o.scheduled_date DESC, o.scheduled_time ASC
     </select>
 
+    <!-- 수술방 목록 -->
+    <select id="selectOperationRoomList" resultType="operationRoom">
+        SELECT * FROM operation_room
+    </select>
+
     <!-- 특정 수술 상세 조회 -->
     <select id="getOperationById" parameterType="long" resultType="operation">
         SELECT o.*, p.name AS patient_name, d.doctor_name AS doctor_name
@@ -71,14 +76,23 @@
 
     <!-- operation_staff -->
     <insert id="insertOperationStaff" parameterType="operationStaff">
-        INSERT INTO operation_staff (operation_id, name, role, created_at)
-        VALUES (#{operationId}, #{name}, #{role}, NOW())
+        INSERT INTO operation_staff (operation_id, medical_staff_id, name, position, created_at)
+        VALUES (#{operationId}, #{medicalStaffId}, #{name}, #{position}, NOW());
     </insert>
 
     <select id="selectOperationStaffList" resultType="operationStaff">
-        SELECT * FROM operation_staff
-        WHERE operation_id = #{operationId}
-        ORDER BY created_at DESC
+        SELECT
+        os.staff_id AS staffId,
+        os.operation_id AS operationId,
+        ms.staff_id AS medicalStaffId,
+        ms.staff_name AS name,
+        ms.position AS position,
+        os.created_at AS createdAt
+        FROM operation_staff os
+        JOIN medical_staff ms
+        ON os.medical_staff_id = ms.staff_id
+        WHERE os.operation_id = #{operationId}
+        ORDER BY os.created_at DESC
     </select>
 
     <!-- 로그 -->
@@ -93,4 +107,46 @@
         ORDER BY created_at DESC
     </select>
 
+    <!-- 참여 의료진 조회 -->
+    <select id="selectStaffByOperationId" parameterType="long" resultType="medicalStaff">
+        SELECT
+        ms.staff_id      AS staffId,
+        ms.staff_name    AS staffName,
+        ms.position      AS position
+        FROM
+        operation_staff os
+        JOIN
+        medical_staff ms ON os.medical_staff_id = ms.staff_id
+        WHERE
+        os.operation_id = #{operationId}
+        ORDER BY ms.staff_name;
+    </select>
+
+    <!--수술 참여자 명단 제외 -->
+    <delete id="deleteOperationStaff" parameterType="map">
+        DELETE FROM operation_staff
+        WHERE operation_id = #{operationId}
+        AND medical_staff_id  = #{staffId}
+    </delete>
+    <!-- 의료진 분신술 방지 -->
+    <select id="checkDuplicateStaff" parameterType="map" resultType="int">
+        SELECT COUNT(*)
+        FROM operation_staff
+        WHERE operation_id = #{operationId}
+        AND medical_staff_id = #{medicalStaffId}
+    </select>
+
+    <!-- 수술 등록 시 수술실 사용중으로 표시 -->
+    <update id="updateRoomInUse" parameterType="long">
+        UPDATE operation_room
+        SET available = 0
+        WHERE room_id = #{roomId};
+    </update>
+
+    <!-- 수술 완료 시 다시 사용 가능으로 복귀 -->
+    <update id="updateRoomAvailable" parameterType="long">
+        UPDATE operation_room
+        SET available = 1
+        WHERE room_id = #{roomId};
+    </update>
 </mapper>

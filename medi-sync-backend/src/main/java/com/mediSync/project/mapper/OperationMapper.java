@@ -1,8 +1,6 @@
 package com.mediSync.project.mapper;
 
-import com.mediSync.project.vo.Operation;
-import com.mediSync.project.vo.OperationLog;
-import com.mediSync.project.vo.OperationStaff;
+import com.mediSync.project.vo.*;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -28,4 +26,17 @@ public interface OperationMapper {
     // 로그
     int insertOperationLog(OperationLog log);
     List<OperationLog> selectOperationLogs(Long operationId);
+
+    // 수술방 조회
+    List<OperationRoom> selectOperationRoomList();
+
+    List<MedicalStaff> selectStaffByOperationId(Long operationId);
+
+    int deleteOperationStaff(@Param("operationId") Long operationId,
+                             @Param("staffId") Long staffId);
+    int checkDuplicateStaff(@Param("operationId") Long operationId,
+                            @Param("medicalStaffId") Long medicalStaffId);
+
+    int updateRoomInUse(Long roomId);
+    int updateRoomAvailable(Long roomId);
 }

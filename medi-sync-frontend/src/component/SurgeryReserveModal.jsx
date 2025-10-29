@@ -11,7 +11,7 @@ export default function ReserveModal({
     const [timeSlots, setTimeSlots] = useState([]);
     const [selectedTime, setSelectedTime] = useState(null);
     const [loading, setLoading] = useState(false);
-
+    const [operationName, setOperationName] = useState("");
     const defaultTimes = [
         "09:00", "09:30", "10:00", "10:30", "11:00",
         "13:00", "13:30", "14:00", "14:30", "15:00", "15:30", "16:00"
@@ -66,10 +66,13 @@ export default function ReserveModal({
         if (!date || !selectedTime)
             return alert("날짜와 시간을 선택하세요.");
 
+        if (mode === "surgery" && !operationName.trim())
+            return alert("수술명을 입력하세요."); //  추가
+
         const url =
             mode === "test"
                 ? "http://192.168.0.24:8080/api/testSchedule/reserve"
-                : "http://192.168.0.24:8080/api/operation/reserve"; // ✅ 수정 ② (이전엔 /surgery)
+                : "http://192.168.0.24:8080/api/operation/reserve";
 
         const payload =
             mode === "test"
@@ -83,7 +86,7 @@ export default function ReserveModal({
                     recordId: test.recordId,
                     doctorId: test.doctorId,
                     patientId: test.patientId,
-                    operationName: test.testName || "수술", // ✅ 수정 ③ (백엔드 컬럼명에 맞춤)
+                    operationName: operationName || "수술",
                     scheduledDate: date,
                     scheduledTime: `${date}T${selectedTime}:00`,
                     roomId: 1,
@@ -106,10 +109,10 @@ export default function ReserveModal({
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 w-96 shadow-lg animate-fade-in">
                 <h3 className="text-lg font-bold text-blue-600 mb-4 text-center">
-                    {mode === "test" ? `🧪 ${test.testName} 예약` : `🏥 ${test.testName || "수술"} 예약`}
+                    {mode === "test" ? `🧪 ${test.testName} 예약` : `🏥 ${test.operationName || "수술"} 예약`}
                 </h3>
 
-                {/* ✅ 날짜 선택 */}
+                {/* 날짜 선택 */}
                 <div className="mb-4">
                     <label className="block text-gray-700 text-sm mb-1">날짜 선택</label>
                     <input
@@ -124,7 +127,7 @@ export default function ReserveModal({
                     />
                 </div>
 
-                {/* ✅ 시간대 표시 */}
+                {/* 시간대 표시 */}
                 <div>
                     <label className="block text-gray-700 text-sm mb-2">시간 선택</label>
                     {loading ? (
@@ -152,7 +155,21 @@ export default function ReserveModal({
                     )}
                 </div>
 
-                {/* ✅ 버튼 */}
+                {/* 수술명 입력 (수술 모드일 때만) */}
+                {mode === "surgery" && (
+                    <div className="mb-4">
+                        <label className="block text-gray-700 text-sm mb-1">수술명 입력</label>
+                        <input
+                            type="text"
+                            value={operationName}
+                            onChange={(e) => setOperationName(e.target.value)}
+                            placeholder="예: 백내장 수술"
+                            className="border rounded p-2 w-full"
+                        />
+                    </div>
+                )}
+
+                {/* 버튼 */}
                 <div className="flex justify-end gap-3 mt-6">
                     <button onClick={onClose} className="text-gray-500">
                         취소

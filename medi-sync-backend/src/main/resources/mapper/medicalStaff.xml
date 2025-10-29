@@ -34,5 +34,13 @@
     <delete id="deleteStaff" parameterType="Long">
         DELETE from medical_staff WHERE staff_id = #{staffId}
     </delete>
+    <!-- 의료진 찾기(수술 시) -->
+    <select id="searchStaffByKeyword" parameterType="string" resultType="medicalStaff">
+        SELECT staff_id AS staffId, staff_name AS staffName, position FROM medical_staff
+        WHERE staff_name     LIKE CONCAT ('%', #{keyword}, '%')
+        OR    position LIKE CONCAT ('%', #{keyword}, '%')
+        LIMIT 10;
+    </select>
+
 
 </mapper>

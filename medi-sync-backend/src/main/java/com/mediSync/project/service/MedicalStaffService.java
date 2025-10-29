@@ -24,4 +24,9 @@ public class MedicalStaffService {
     public void deleteStaff(Long staffId) {
         medicalStaffMapper.deleteStaff(staffId);
     }
+
+    public List<MedicalStaff> searchStaffByKeyword(String keyword) {
+        return medicalStaffMapper.searchStaffByKeyword(keyword);
+    }
+
 }

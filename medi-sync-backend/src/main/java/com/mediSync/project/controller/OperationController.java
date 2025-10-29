@@ -1,10 +1,9 @@
 package com.mediSync.project.controller;
 
 import com.mediSync.project.service.OperationService;
-import com.mediSync.project.vo.Operation;
-import com.mediSync.project.vo.OperationLog;
-import com.mediSync.project.vo.OperationStaff;
+import com.mediSync.project.vo.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -101,4 +100,28 @@ public class OperationController {
     public ResponseEntity<List<OperationStaff>> getStaffList(@PathVariable Long operationId) {
         return ResponseEntity.ok(operationService.getStaffList(operationId));
     }
+    @GetMapping("/room")
+    public ResponseEntity<List<OperationRoom>> getRoomList() {
+        return ResponseEntity.ok(operationService.selectOperationRoomList());
+    }
+    @GetMapping("/{operationId}/operationStaffs")
+    public List<MedicalStaff> selectStaffByOperationId(@PathVariable Long operationId) {
+        return operationService.selectStaffByOperationId(operationId);
+    }
+    @DeleteMapping("/{operationId}/staff/{staffId}")
+    public ResponseEntity<?> deleteStaff(@PathVariable Long operationId,
+                                         @PathVariable Long staffId) {
+        try {
+            operationService.deleteOperationStaff(operationId, staffId);
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "의료진 삭제 완료"
+            ));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("success", false, "message", "삭제 중 오류 발생"));
+        }
+    }
+
 }

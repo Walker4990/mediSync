@@ -27,10 +27,15 @@
 
     <!-- 과거진료 내역 불러오기 (수술 시)-->
     <select id="getPatientRecords" parameterType="long" resultType="medicalRecord">
-        SELECT r.record_id, r.created_at, r.diagnosis, d.doctor_name AS doctorName, dept.dept_name AS deptName
+        SELECT
+        r.record_id,
+        r.created_at,
+        r.diagnosis,
+        d.doctor_name AS doctorName,
+        dept.dept_name AS deptName
         FROM medical_record r
         LEFT JOIN doctor d ON r.doctor_id = d.doctor_id
-        JOIN department dept ON d.dept_id = dept.dept_id
+        LEFT JOIN department dept ON d.dept_id = dept.dept_id
         WHERE r.patient_id = #{patientId}
         ORDER BY r.created_at DESC
     </select>
