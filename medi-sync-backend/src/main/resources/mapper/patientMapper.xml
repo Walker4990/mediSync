@@ -25,4 +25,44 @@
         SELECT * FROM patient
     </select>
 
+    <!-- 과거진료 내역 불러오기 (수술 시)-->
+    <select id="getPatientRecords" parameterType="long" resultType="medicalRecord">
+        SELECT r.record_id, r.created_at, r.diagnosis, d.doctor_name AS doctorName, dept.dept_name AS deptName
+        FROM medical_record r
+        LEFT JOIN doctor d ON r.doctor_id = d.doctor_id
+        JOIN department dept ON d.dept_id = dept.dept_id
+        WHERE r.patient_id = #{patientId}
+        ORDER BY r.created_at DESC
+    </select>
+
+    <!-- 처방 내역 불러오기 (수술 시) -->
+    <select id="getPatientPrescriptions" parameterType="long" resultType="prescription">
+        SELECT
+        p.prescription_id       AS prescriptionId,
+        p.record_id             AS recordId,
+        p.type                  AS type,
+        p.created_at            AS createdAt,
+        p.drug_name             AS drugName,
+        p.dosage                AS dosage,
+        p.duration              AS duration,
+        p.test_name             AS testName,
+        p.test_area             AS testArea,
+        p.test_date             AS testDate,
+        p.injection_name        AS injectionName,
+        p.injection_area        AS injectionArea,
+        p.injection_count       AS injectionCount,
+        p.unit                  AS unit,
+        p.unit_price            AS unitPrice,
+        d.doctor_name           AS doctorName,
+        r.diagnosis             AS diagnosis
+        FROM prescription p
+        JOIN medical_record r ON p.record_id = r.record_id
+        LEFT JOIN doctor d ON r.doctor_id = d.doctor_id
+        WHERE r.patient_id = #{patientId}
+        ORDER BY p.created_at DESC
+    </select>
+    <!-- 환자 상세정보 불러오기 (수술 시) -->
+    <select id="getPatientDetail" parameterType="long" resultType="patient">
+        SELECT * FROM patient WHERE patient_id=#{patientId}
+    </select>
 </mapper>

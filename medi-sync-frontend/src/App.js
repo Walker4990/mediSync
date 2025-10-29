@@ -25,6 +25,8 @@ import OtherTestPage from "./pages/admin/OtherTestPage";
 import {NotificationProvider} from "./context/NotificationContext";
 import WebSocketListener from "./component/AddNotification";
 import NotificationPanel from "./component/NotificationPanel";
+import OperationDetailPage from "./pages/admin/OperationDetailPage";
+import OperationListPage from "./pages/admin/OperationListPage";
 
 function App() {
   return (
@@ -54,6 +56,8 @@ function App() {
         <Route path="/admin/test/endoscope" element={<EndoscopeTestPage />} />
         <Route path="/admin/test/basic" element={<BasicTestPage />} />
         <Route path="/admin/test/other" element={<OtherTestPage />} />
+        <Route path="/admin/operation/:operationId" element={<OperationDetailPage />} />
+        <Route path="/admin/operation" element={<OperationListPage />} />
         {/*유저페이지*/}
         <Route path="/" element={<UserHome />} />/
         <Route path="/user/register" element={<Register />} />

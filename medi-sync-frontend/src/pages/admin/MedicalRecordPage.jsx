@@ -1096,29 +1096,18 @@ export default function MedicalRecordPage() {
                 }} />
             {/*수술 시간 예약용 모달*/}
             <SurgeryReserveModal
+                mode="surgery"
                 open={surgeryModalOpen}
-                testCode={selectedSurgery?.recordId || ""}
-                testDate={new Date().toISOString().split("T")[0]}
                 onClose={() => setSurgeryModalOpen(false)}
-                onSelectTime={async (time) => {
-                    try {
-                        await axios.post("http://192.168.0.24:8080/api/surgery/reserve", {
-                            recordId: selectedSurgery.recordId,
-                            doctorId: selectedSurgery.doctorId,
-                            patientId: selectedSurgery.patientId,
-                            surgeryName: selectedSurgery.diagnosis || "수술",
-                            surgeryDate: new Date().toISOString().split("T")[0],
-                            surgeryTime: time,
-                            operationRoom: "OR-1",
-                        });
-                        alert(`✅ ${selectedSurgery.patientName} 수술 예약 완료 (${time})`);
-                        setSurgeryModalOpen(false);
-                    } catch (err) {
-                        console.error("❌ 수술 예약 실패:", err);
-                        alert("❌ 수술 예약 실패: 서버 오류");
-                    }
+                test={{
+                    recordId: selectedSurgery?.recordId,
+                    doctorId: selectedSurgery?.doctorId,
+                    patientId: selectedSurgery?.patientId,
+                    testName: selectedSurgery?.diagnosis || "수술",
+                    patientName: selectedSurgery?.patientName,
                 }}
             />
+
 
 
 
