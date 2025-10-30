@@ -3,11 +3,11 @@
   PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
   "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="com.mediSync.project.mapper.MedicalRecordMapper">
+<mapper namespace="com.mediSync.project.medical.mapper.MedicalRecordMapper">
 
     <!--  진료 등록  -->
     <insert id="insertRecord"
-            parameterType="com.mediSync.project.vo.MedicalRecord"
+            parameterType="com.mediSync.project.medical.vo.MedicalRecord"
             useGeneratedKeys="true"
             keyProperty="recordId">
 

@@ -833,17 +833,17 @@ export default function MedicalRecordPage() {
                 {/* 3. 과거 진료 내역 */}
                 <div className="bg-white p-6 rounded-lg shadow overflow-auto max-h-[350px]">
                     <h2 className="text-lg font-bold text-gray-700 mb-3">📋 과거 진료 내역</h2>
-                    <button
-                        type="button"
-                        disabled={!selectedRecord}
-                        onClick={() => {
-                            if (!selectedRecord) return alert("진료 내역을 먼저 선택하세요.");
-                            window.open(`http://192.168.0.24:8080/api/prescriptions/pdf/${selectedRecord}`, "_blank");
-                        }}
-                        className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600"
-                    >
-                        📄 처방전 다운로드
-                    </button>
+                    {/*<button*/}
+                    {/*    type="button"*/}
+                    {/*    disabled={!selectedRecord}*/}
+                    {/*    onClick={() => {*/}
+                    {/*        if (!selectedRecord) return alert("진료 내역을 먼저 선택하세요.");*/}
+                    {/*        window.open(`http://192.168.0.24:8080/api/prescriptions/pdf/${selectedRecord}`, "_blank");*/}
+                    {/*    }}*/}
+                    {/*    className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600"*/}
+                    {/*>*/}
+                    {/*    📄 처방전 다운로드*/}
+                    {/*</button>*/}
                     {records.length === 0 ? (
                         <p className="text-gray-400 text-center mt-10">진료 내역이 없습니다.</p>
                     ) : (

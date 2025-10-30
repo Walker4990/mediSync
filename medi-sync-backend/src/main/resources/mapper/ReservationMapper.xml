@@ -3,7 +3,7 @@
   PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
   "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="com.mediSync.project.mapper.ReservationMapper">
+<mapper namespace="com.mediSync.project.patient.mapper.ReservationMapper">
 
     <!--  선택한 날짜의 예약 정보 가져오기  -->
     <select id="getReservedTimesByDate" resultType="String" parameterType="reservation">
@@ -42,7 +42,7 @@
     </select>
 
     <!-- 내일 예약 조회하기 -->
-    <select id="findReservationBetween" resultType="com.mediSync.project.dto.ReservationDTO">
+    <select id="findReservationBetween" resultType="com.mediSync.project.patient.dto.ReservationDTO">
         select
         r.reservation_date as reservation_date,
         d.doctor_name as doctorName,
