@@ -34,7 +34,7 @@ public class UserAccountController {
         }
     }
 
-    @PostMapping("/add")
+    @PostMapping
     public ResponseEntity<?> registerUser(@RequestBody UserAccount vo) {
         try {
             userAccountService.userInsert(vo);

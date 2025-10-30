@@ -3,7 +3,7 @@ import axios from "axios";
 import { X } from "lucide-react";
 import ModalContext from "./ModalContext";
 
-const API_URL = "http://192.168.0.24:8080/api/users/add";
+const API_URL = "http://localhost:8080/api/users";
 
 export default function RegisterModal() {
   const {
