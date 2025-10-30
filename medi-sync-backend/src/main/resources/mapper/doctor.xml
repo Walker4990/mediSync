@@ -7,9 +7,9 @@
 
     <!-- 의사 목록 조회 -->
     <select id="doctorSelectAll" resultType="doctor">
-        SELECT doc.doctor_id AS doctorId, doc.doctor_name AS doctorName, dept.dept_name AS deptName,
-        doc.dept_id AS deptId, doc.license_no AS licenseNo, doc.phone, doc.created_at
+        SELECT *
         FROM doctor doc JOIN department dept ON doc.dept_id = dept.dept_id
+        ORDER BY doc.doctor_id DESC
     </select>
 
     <!-- 의사 검색 -->

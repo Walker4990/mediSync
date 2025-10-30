@@ -1,5 +1,6 @@
 package com.mediSync.project.patient.dto;
 
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -10,7 +11,7 @@ import java.time.LocalDateTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Alias("account")
+@Builder
 public class AccountDTO {
     private Long adminId; // AI PK
     private String empId;
@@ -23,4 +24,5 @@ public class AccountDTO {
     private Long doctorId;
     private Long staffId;
     private LocalDateTime createdAt;
+
 }

@@ -17,6 +17,39 @@ import {
 
 const API_URL = "http://192.168.0.24:8080/api/accounts";
 
+const InputField = ({
+  label,
+  name,
+  type = "text",
+  icon: Icon,
+  required = false,
+  placeholder = "",
+  value,
+  onChange,
+  disabled,
+}) => (
+  <div className="flex flex-col space-y-1">
+    <label
+      htmlFor={name}
+      className="text-sm font-medium text-gray-600 flex items-center"
+    >
+      {Icon && <Icon className="w-4 h-4 mr-2 text-blue-500" />}
+      {label} {required && <span className="text-red-500 ml-1">*</span>}
+    </label>
+    <input
+      id={name}
+      name={name}
+      type={type}
+      value={value || ""}
+      onChange={onChange}
+      required={required}
+      placeholder={placeholder}
+      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out shadow-sm disabled:bg-gray-100"
+      disabled={disabled}
+    />
+  </div>
+);
+
 // 패스워드 암호화 (BCryptPasswordEncoder)
 // 이미지 파일 업로드 기능 추가 필요 (multipart/form-data)
 
@@ -37,8 +70,8 @@ const AccountRegiForm = () => {
   const [messageType, setMessageType] = useState(""); // 'success' or 'error'
 
   const roles = [
-    { value: "ADMIN", label: "관리자 (ADMIN)" },
-    { value: "USER", label: "사용자 (USER)" },
+    { value: "ADMIN", label: "임직원 (ADMIN)" },
+    { value: "USER", label: "고객 (USER)" },
   ];
 
   const handleChange = (e) => {
@@ -106,36 +139,6 @@ const AccountRegiForm = () => {
     }
   };
 
-  const InputField = ({
-    label,
-    name,
-    type = "text",
-    icon: Icon,
-    required = false,
-    placeholder = "",
-  }) => (
-    <div className="flex flex-col space-y-1">
-      <label
-        htmlFor={name}
-        className="text-sm font-medium text-gray-600 flex items-center"
-      >
-        {Icon && <Icon className="w-4 h-4 mr-2 text-blue-500" />}
-        {label} {required && <span className="text-red-500 ml-1">*</span>}
-      </label>
-      <input
-        id={name}
-        name={name}
-        type={type}
-        value={formData[name]}
-        onChange={handleChange}
-        required={required}
-        placeholder={placeholder}
-        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out shadow-sm disabled:bg-gray-100"
-        disabled={isSubmitting}
-      />
-    </div>
-  );
-
   return (
     <div className="bg-gray-50 min-h-screen font-pretendard">
       {/* 상단 고정 관리자 헤더 */}
@@ -178,11 +181,11 @@ const AccountRegiForm = () => {
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <InputField
-                    label="사원/직원 ID"
+                    label="사원 ID"
                     name="empId"
                     icon={Briefcase}
                     required={true}
-                    placeholder="로그인용 아이디"
+                    placeholder="로그인 코드 자동 발행 로직 필요"
                   />
                   <InputField
                     label="비밀번호"

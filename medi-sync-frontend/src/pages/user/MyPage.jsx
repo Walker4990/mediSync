@@ -16,8 +16,6 @@ import {
   ChevronRight,
   X,
 } from "lucide-react";
-import Footer from "../../component/Footer";
-import Navbar from "../../component/Navbar";
 
 // 회원정보 수정 탭
 const UserInfoEdit = () => {
@@ -396,83 +394,76 @@ const MyPage = () => {
     menuItems.find((item) => item.id === activeTab)?.label || "마이페이지";
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navbar />
-      <div className="pt-16 font-pretendard">
-        {/* 상단 섹션 */}
-        <section className="px-4 md:px-8 pt-12 pb-16 bg-gradient-to-l from-white to-sky-100 shadow-inner">
-          <div className="max-w-6xl mx-auto">
-            <h1 className="text-3xl font-bold text-gray-800">
-              환영합니다, <span className="text-blue-600">홍길동</span> 님!
-            </h1>
-            <p className="text-gray-500 mt-1">
-              이곳에서 당신의 정보를 안전하게 관리하고 기록을 확인하세요.
-            </p>
-          </div>
-        </section>
-
-        {/* 메인 콘텐츠 영역 (사이드바 + 내용) */}
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row mt-8 px-4 md:px-8">
-          {/* 사이드바 (메뉴 목록) */}
-          <aside className="w-full md:w-64 mb-8 md:mb-0 md:mr-8 bg-white rounded-xl shadow-lg border border-gray-200 p-4">
-            <nav className="space-y-2">
-              {/* 섹션 1: 프로필 관리 */}
-              <p className="text-sm font-bold text-gray-500 uppercase mt-4 mb-2 border-b pb-1">
-                내 정보 관리
-              </p>
-              {menuItems
-                .filter((item) => item.group === "profile")
-                .map((item) => (
-                  <button
-                    key={item.id}
-                    onClick={() => setActiveTab(item.id)}
-                    className={`w-full text-left flex items-center p-3 rounded-lg transition duration-150 ${
-                      activeTab === item.id
-                        ? "bg-blue-600 text-white shadow-md"
-                        : "text-gray-700 hover:bg-gray-100"
-                    }`}
-                  >
-                    <item.icon className="w-5 h-5 mr-3" />
-                    <span className="font-medium">{item.label}</span>
-                  </button>
-                ))}
-
-              {/* 섹션 2: 환자 기록 */}
-              <p className="text-sm font-bold text-gray-500 uppercase mt-6 mb-2 border-b pb-1">
-                나의 진료 기록
-              </p>
-              {menuItems
-                .filter((item) => item.group === "patient")
-                .map((item) => (
-                  <button
-                    key={item.id}
-                    onClick={() => setActiveTab(item.id)}
-                    className={`w-full text-left flex items-center p-3 rounded-lg transition duration-150 ${
-                      activeTab === item.id
-                        ? "bg-blue-600 text-white shadow-md"
-                        : "text-gray-700 hover:bg-gray-100"
-                    }`}
-                  >
-                    <item.icon className="w-5 h-5 mr-3" />
-                    <span className="font-medium">{item.label}</span>
-                  </button>
-                ))}
-            </nav>
-          </aside>
-
-          {/* 콘텐츠 영역 */}
-          <main className="flex-grow bg-white rounded-xl shadow-xl border border-gray-200">
-            <header className="p-4 border-b bg-gray-50 rounded-t-xl">
-              <h2 className="text-2xl font-bold text-gray-700">
-                {activeLabel}
-              </h2>
-            </header>
-            {renderContent()}
-          </main>
+    <div className="font-pretendard">
+      {/* 상단 섹션 */}
+      <section className="pt-12 pb-16 bg-gradient-to-l from-white to-sky-100 shadow-inner">
+        <div className="max-w-6xl mx-auto px-4 md:px-8">
+          <h1 className="text-3xl font-bold text-gray-800">
+            환영합니다, <span className="text-blue-600">홍길동</span> 님!
+          </h1>
+          <p className="text-gray-500 mt-1">
+            이곳에서 당신의 정보를 안전하게 관리하고 기록을 확인하세요.
+          </p>
         </div>
+      </section>
+      {/* 메인 콘텐츠 영역 (사이드바 + 내용) */}
+      <div className="max-w-6xl mx-auto flex flex-col md:flex-row mt-8 px-4 md:px-8">
+        {/* 사이드바 (메뉴 목록) */}
+        <aside className="w-full md:w-64 mb-8 md:mb-0 md:mr-8 bg-white rounded-xl shadow-lg border border-gray-200 p-4">
+          <nav className="space-y-2">
+            {/* 섹션 1: 프로필 관리 */}
+            <p className="text-sm font-bold text-gray-500 uppercase mt-4 mb-2 border-b pb-1">
+              내 정보 관리
+            </p>
+            {menuItems
+              .filter((item) => item.group === "profile")
+              .map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveTab(item.id)}
+                  className={`w-full text-left flex items-center p-3 rounded-lg transition duration-150 ${
+                    activeTab === item.id
+                      ? "bg-blue-600 text-white shadow-md"
+                      : "text-gray-700 hover:bg-gray-100"
+                  }`}
+                >
+                  <item.icon className="w-5 h-5 mr-3" />
+                  <span className="font-medium">{item.label}</span>
+                </button>
+              ))}
+
+            {/* 섹션 2: 환자 기록 */}
+            <p className="text-sm font-bold text-gray-500 uppercase mt-6 mb-2 border-b pb-1">
+              나의 진료 기록
+            </p>
+            {menuItems
+              .filter((item) => item.group === "patient")
+              .map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveTab(item.id)}
+                  className={`w-full text-left flex items-center p-3 rounded-lg transition duration-150 ${
+                    activeTab === item.id
+                      ? "bg-blue-600 text-white shadow-md"
+                      : "text-gray-700 hover:bg-gray-100"
+                  }`}
+                >
+                  <item.icon className="w-5 h-5 mr-3" />
+                  <span className="font-medium">{item.label}</span>
+                </button>
+              ))}
+          </nav>
+        </aside>
+
+        {/* 콘텐츠 영역 */}
+        <main className="flex-grow bg-white rounded-xl shadow-xl border border-gray-200">
+          <header className="p-4 border-b bg-gray-50 rounded-t-xl">
+            <h2 className="text-2xl font-bold text-gray-700">{activeLabel}</h2>
+          </header>
+          {renderContent()}
+        </main>
       </div>
       <ChatFloatingButton /> {/* 실시간 상담 아이콘 */}
-      <Footer />
     </div>
   );
 };
