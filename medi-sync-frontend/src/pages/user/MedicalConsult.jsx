@@ -1,7 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
 import axios from "axios";
-import Footer from "../../component/Footer";
-import Navbar from "../../component/Navbar";
 import { header } from "framer-motion/client";
 
 const API_BASE_URL = "http://192.168.0.24:8080/api/doctors";
@@ -335,7 +333,7 @@ const TimeModal = ({
                 key={time}
                 onClick={() => !isReserved && handleSelectTime(time)}
                 disabled={isReserved}
-                className={`py-3 px-1 rounded-lg text-sm transition-all duration-200 
+                className={`py-3 px-1 rounded-lg text-sm transition-all duration-200
                                 ${
                                   selectedTime === time
                                     ? "bg-blue-500 text-white font-bold shadow-md"
@@ -507,21 +505,16 @@ export default function MedicalConsult() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 font-pretendard">
-      <Navbar />
-      <main className="max-w-7xl mx-auto pt-24 pb-12 px-8">
-        <div className="flex justify-center">
-          <DoctorList
-            doctors={filteredDoctors}
-            handleReservationClick={handleReservationClick}
-            apiError={apiError}
-            selectedDept={selectedDept}
-            handleSelectDept={handleSelectDept}
-            isDeptDropdownOpen={isDeptDropdownOpen}
-            setIsDeptDropdownOpen={setIsDeptDropdownOpen}
-          />
-        </div>
-      </main>
+    <div className="flex justify-center">
+      <DoctorList
+        doctors={filteredDoctors}
+        handleReservationClick={handleReservationClick}
+        apiError={apiError}
+        selectedDept={selectedDept}
+        handleSelectDept={handleSelectDept}
+        isDeptDropdownOpen={isDeptDropdownOpen}
+        setIsDeptDropdownOpen={setIsDeptDropdownOpen}
+      />
       {/* 예약 모달 */}
       <TimeModal
         isVisible={isModalOpen}
@@ -535,7 +528,6 @@ export default function MedicalConsult() {
         setSelectedDate={setSelectedDate}
         sevenDays={sevenDays}
       />
-      <Footer />
     </div>
   );
 }

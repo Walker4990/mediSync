@@ -7,6 +7,10 @@ import java.util.List;
 
 @Mapper
 public interface AccountMapper {
-    List<AccountDTO> accountSelectAll();
+    List<AccountDTO> selectAllAdmin();
+    AccountDTO selectAccountByEmpId(Long adminId);
     void insertAdmin(AccountDTO dto);
+    int updateAdmin(AccountDTO dto);
+    int deleteAdmin(Long adminId);
+
 }
