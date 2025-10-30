@@ -12,4 +12,5 @@ public class CalendarDTO {
     private String title;
     private String startDate;
     private String color;
+    private String textColor;
 }

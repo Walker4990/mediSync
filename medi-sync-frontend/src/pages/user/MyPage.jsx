@@ -225,16 +225,17 @@ const PatientRecords = ({ title, icon: Icon }) => (
 const ViewReservation = ({ title, icon: Icon }) => {
   const [events, setEvents] = useState([]);
   //로그인 유저 임시 번호
-  const userId = 1;
+  const patient_id = 1;
   useEffect(() => {
     axios
-      .get(`/api/calender/?userId=${userId}`)
+      .get(`/api/calendar/?patient_id=${patient_id}`)
       .then((res) => {
         const formatted = res.data.map((item) => ({
           title: item.title,
           start: item.startDate,
           end: item.startDate,
-          color: item.color || "blue",
+          color: item.color || "#3B82F6",
+          textColor: item.textColor || "#FFFFFF",
         }));
         setEvents(formatted);
       })

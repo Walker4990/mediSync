@@ -5,6 +5,22 @@
 
 <mapper namespace="com.mediSync.project.mapper.CalendarMapper">
 
+    <select id="getReservation" parameterType="Integer" resultType="reservation">
+        select * from reservation where patient_id = #{patient_id}
+    </select>
+
+    <select id="getTestReservation" parameterType="Integer" resultType="testReservation">
+        select * from test_reservation where patient_id = #{patient_id}
+    </select>
+
+    <select id="getTestSchedule" parameterType="Integer" resultType="testSchedule">
+        select * from test_schedule where schedule_id = #{schedule_id}
+    </select>
+
+    <select id="getOperation" parameterType="Integer" resultType="operation">
+        select * from operation where patient_id = #{patient_id}
+    </select>
+
 
 
 </mapper>
