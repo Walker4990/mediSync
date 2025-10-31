@@ -8,7 +8,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class CalendarDTO {
-    private Integer patientId;
     private String title;
     private String startDate;
     private String color;

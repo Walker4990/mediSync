@@ -15,19 +15,10 @@ import java.util.Date;
 @AllArgsConstructor
 @Alias("reservation")
 public class Reservation {
-    private Integer reservation_id;
-
-    @JsonProperty("patient_id")
-    private Integer patient_id;
-    @JsonProperty("doctor_id")
-    private Integer doctor_id;
-
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
-    @JsonProperty("reservation_date")
-    private Date  reservation_date;
-
-    @JsonProperty("status")
+    private Integer reservationId;
+    private Integer patientId;
+    private Integer doctorId;
+    private Date  reservationDate;
     private String status;
-    @JsonProperty("created_at")
-    private Date created_at;
+    private Date createdAt;
 }

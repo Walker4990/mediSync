@@ -31,8 +31,8 @@ public class ReservationController {
         LocalDateTime localDateTime = localDate.atStartOfDay();
         Date convertDate = Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant());
 
-        reservation.setReservation_date(convertDate);
-        reservation.setDoctor_id(doctor_id);
+        reservation.setReservationDate(convertDate);
+        reservation.setDoctorId(doctor_id);
         List<String> rawTimes = reservationService.getReservedTimesByDate(reservation);
 
         return rawTimes.stream()

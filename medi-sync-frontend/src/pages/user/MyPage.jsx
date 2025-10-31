@@ -228,8 +228,9 @@ const ViewReservation = ({ title, icon: Icon }) => {
   const patient_id = 1;
   useEffect(() => {
     axios
-      .get(`/api/calendar/?patient_id=${patient_id}`)
+      .get(`http://localhost:8080/api/calendar?patient_id=${patient_id}`)
       .then((res) => {
+        console.log("받은 일정 데이터:", res.data);
         const formatted = res.data.map((item) => ({
           title: item.title,
           start: item.startDate,
@@ -265,6 +266,7 @@ const ViewReservation = ({ title, icon: Icon }) => {
               right: "dayGridMonth,timeGridWeek,timeGridDay",
             }}
             events={events}
+            eventDisplay="block"
             height={600}
           ></FullCalendar>
         )}

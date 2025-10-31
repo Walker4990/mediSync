@@ -8,43 +8,43 @@
     <!--  선택한 날짜의 예약 정보 가져오기  -->
     <select id="getReservedTimesByDate" resultType="String" parameterType="reservation">
         <![CDATA[
-        SELECT TIME(reservation_date)
+        SELECT TIME(reservationDate)
         FROM reservation
-        WHERE reservation_date >= #{reservation_date}
-        AND reservation_date < DATE_ADD(#{reservation_date}, INTERVAL 1 DAY)
-        AND doctor_id = #{doctor_id}
+        WHERE reservation_date >= #{reservationDate}
+        AND reservation_date < DATE_ADD(#{reservationDate}, INTERVAL 1 DAY)
+        AND doctor_id = #{doctorId}
         ]]>
 
     </select>
     <!--  예약하기  -->
     <insert id="addReservation" parameterType="reservation">
         insert into reservation(patient_id,doctor_id,reservation_date,status,created_at)
-        values(#{patient_id},#{doctor_id},#{reservation_date}, 'WAIT', now())
+        values(#{patientId},#{doctorId},#{reservationDate}, 'WAIT', now())
     </insert>
 
     <!-- 예약 취소하기 -->
     <delete id="deleteReservation" parameterType="reservation">
         delete from reservation
         where
-        reservation_id = #{reservation_id}
+        reservation_id = #{reservationId}
         AND
-        patient_id=#{patient_id}
+        patient_id=#{patientId}
         AND
-        doctor_id = #{doctor_id}
+        doctor_id = #{doctorId}
         AND
-        reservation_date = #{reservation_date}
+        reservation_date = #{reservationDate}
     </delete>
     
     <!-- 내 예약 조회하기 -->
     <select id="selectReservationByPatientId" parameterType="Integer">
         select * from reservation
-        where patient_id = #{patient_id}
+        where patient_id = #{patientId}
     </select>
 
     <!-- 내일 예약 조회하기 -->
     <select id="findReservationBetween" resultType="com.mediSync.project.dto.ReservationDTO">
         select
-        r.reservation_date as reservation_date,
+        r.reservation_date,
         d.doctor_name as doctorName,
         p.name,
         p.email
