@@ -5,7 +5,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
-@MapperScan(basePackages = "com.mediSync.project.mapper")
+@MapperScan(basePackages = "com.mediSync.project.**.mapper")
 @SpringBootApplication
 @EnableScheduling
 public class ProjectApplication {

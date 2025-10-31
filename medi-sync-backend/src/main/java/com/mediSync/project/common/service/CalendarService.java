@@ -2,6 +2,10 @@ package com.mediSync.project.common.service;
 
 import com.mediSync.project.common.dto.CalendarDTO;
 import com.mediSync.project.common.mapper.CalendarMapper;
+import com.mediSync.project.operation.vo.Operation;
+import com.mediSync.project.patient.vo.Reservation;
+import com.mediSync.project.test.vo.TestReservation;
+import com.mediSync.project.test.vo.TestSchedule;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -16,7 +20,7 @@ public class CalendarService {
        return calendarMapper.getUserCalendar(patient_id);
     }
     //진료예약 정보 가져오기
-    public List<Reservation> getReservation(Integer patient_id){
+    public List<CalendarDTO> getReservation(Integer patient_id){
         return  calendarMapper.getReservation(patient_id);
     }
     //검사 정보 가져오기
@@ -24,13 +28,17 @@ public class CalendarService {
         return calendarMapper.getTestReservation(patient_id);
     }
     //검사 이름 및 날짜&시간 가져오기
-    public List<TestSchedule> getTestSchedule(Long schedule_id){
+    public List<CalendarDTO> getTestSchedule(Long schedule_id){
         return calendarMapper.getTestSchedule(schedule_id);
     }
 
     //수술 예약 정보 가져오기
-    public List<Operation> getOperation(Integer patient_id){
+    public List<CalendarDTO> getOperation(Integer patient_id){
         return calendarMapper.getOperation(patient_id);
+    }
+
+    public CalendarDTO getScheduleDetail(String date, Integer patientId){
+        return calendarMapper.getScheduleDetail(date, patientId);
     }
 
 

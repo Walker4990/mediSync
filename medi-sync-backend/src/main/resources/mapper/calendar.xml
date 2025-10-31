@@ -5,22 +5,46 @@
 
 <mapper namespace="com.mediSync.project.common.mapper.CalendarMapper">
 
-    <select id="getReservation" parameterType="Integer" resultType="reservation">
-        select * from reservation where patient_id = #{patient_id}
+    <select id="getReservation" parameterType="Integer" resultType="calendar">
+        select
+        r.reservation_date as startDate,
+        d.doctor_name,
+        p.name as patientName
+        from reservation r
+        join doctor d using(doctor_id)
+        join patient p using(patient_id)
+        where r.patient_id = #{patient_id}
     </select>
 
     <select id="getTestReservation" parameterType="Integer" resultType="testReservation">
-        select * from test_reservation where patient_id = #{patient_id}
+        select * from test_reservation
+        where patient_id = #{patient_id}
     </select>
 
-    <select id="getTestSchedule" parameterType="Integer" resultType="testSchedule">
-        select * from test_schedule where schedule_id = #{schedule_id}
+    <select id="getTestSchedule" parameterType="Integer" resultType="calendar">
+        select
+        ts.test_name as title,
+        d.doctor_name,
+        p.name as patientName,
+        CONCAT(DATE_FORMAT(ts.test_date, '%Y-%m-%d'),' ', DATE_FORMAT(CAST(ts.test_time AS TIME), '%H:%i:%s')) AS startDate
+        from test_reservation tr
+        join patient p using(patient_id)
+        join test_schedule ts using(schedule_id)
+        join doctor d using(doctor_id)
+        where schedule_id = #{schedule_id}
     </select>
 
-    <select id="getOperation" parameterType="Integer" resultType="operation">
-        select * from operation where patient_id = #{patient_id}
+    <select id="getOperation" parameterType="Integer" resultType="calendar">
+        select
+        o.operation_name as title,
+        d.doctor_name,
+        p.name as patientName,
+        CONCAT(DATE_FORMAT(o.scheduled_date, '%Y-%m-%d'),' ', DATE_FORMAT(o.scheduled_time, '%H:%i:%s')) AS startDate
+        from operation o
+        join patient p using(patient_id)
+        join doctor d using(doctor_id)
+        where patient_id = #{patient_id}
     </select>
-
 
 
 </mapper>

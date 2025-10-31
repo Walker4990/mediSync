@@ -28,57 +28,57 @@ public class CalendarController {
                                 @RequestParam("patient_id") Integer patient_id){
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
         List<CalendarDTO> calendarInfo = new ArrayList<>();
-        List<Reservation> reserList = calendarService.getReservation(patient_id);
+        List<CalendarDTO> reserList = calendarService.getReservation(patient_id);
 
         // 진료예약
         if(reserList != null && !reserList.isEmpty()){
 
-            for(Reservation re : reserList){
-                CalendarDTO dto = new CalendarDTO();
-                dto.setTitle("병원 진료");
-                String date = sdf.format(re.getReservationDate());
-                dto.setStartDate(date);
-                dto.setColor("#3B82F6");
-                dto.setTextColor("white");
-                calendarInfo.add(dto);
-                System.out.println("reservation : "+dto);
+            for(CalendarDTO re : reserList){
+                System.out.println("가져온 값 : "+ re);
+                re.setTitle("병원 진료");
+                re.setColor("#3B82F6");
+                re.setTextColor("white");
+                re.setType("진료 예약");
+                calendarInfo.add(re);
+                System.out.println("최종 reservation : "+ re);
             }
         }
         // 검사 예약
         List<TestReservation> tereList = calendarService.getTestReservation(patient_id);
         if(tereList != null && !tereList.isEmpty()){
             for(TestReservation tere: tereList){
-                List<TestSchedule> scheList = calendarService.getTestSchedule(tere.getScheduleId());
+                List<CalendarDTO> scheList = calendarService.getTestSchedule(tere.getScheduleId());
                 if (scheList == null || scheList.isEmpty()) continue;
-                for(TestSchedule sche : scheList){
-                    CalendarDTO dto = new CalendarDTO();
-                    dto.setTitle(sche.getTestName());
-                    String date = sche.getTestDate().toString();
-                    date +="T"+sche.getTestTime().toString();
-                    dto.setStartDate(date);
-                    dto.setColor("#60A5FA");
-                    dto.setTextColor("#FFFFFF");
-                    calendarInfo.add(dto);
-                    System.out.println("schedule : "+dto);
+                for(CalendarDTO sche : scheList){
+                    System.out.println("가져온 값 : "+ sche);
+                    sche.setTitle(sche.getTitle());
+                    sche.setColor("#60A5FA");
+                    sche.setTextColor("#FFFFFF");
+                    sche.setType("검사 예약");
+                    calendarInfo.add(sche);
+                    System.out.println("schedule : "+sche);
                 }
             }
         }
         //수술 예약
-        List<Operation> operList = calendarService.getOperation(patient_id);
+        List<CalendarDTO> operList = calendarService.getOperation(patient_id);
         if(operList != null && !operList.isEmpty()){
-            for(Operation op: operList){
-                CalendarDTO dto = new CalendarDTO();
-                dto.setTitle(op.getOperationName());
-                String date = op.getScheduledDate().toString();
-                date +="T"+op.getScheduledTime().toString();
-                dto.setStartDate(date);
-                dto.setColor("#1E40AF");
-                dto.setTextColor("#FFFFFF");
-                calendarInfo.add(dto);
-                System.out.println("operation : "+dto);
+            for(CalendarDTO op: operList){
+                System.out.println("가져온 값 : "+ op);
+                op.setColor("#1E40AF");
+                op.setTextColor("#FFFFFF");
+                op.setType("수술 예약");
+                calendarInfo.add(op);
+                System.out.println("operation : "+op);
             }
 
         }
         return calendarInfo;
+    }
+    @GetMapping("/detail")
+    public CalendarDTO getScheduleDetail(@RequestParam("date") String date,
+                                         @RequestParam("patient_id") Integer patientId){
+
+        return calendarService.getScheduleDetail(date,patientId);
     }
 }

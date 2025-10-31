@@ -5,7 +5,7 @@
 
 <mapper namespace="com.mediSync.project.patient.mapper.AccountMapper">
 
-    <resultMap id="accountResultMap" type="com.mediSync.project.dto.AccountDTO">
+    <resultMap id="accountResultMap" type="com.mediSync.project.patient.dto.AccountDTO">
         <id property="adminId" column="admin_id" />
         <result property="empId" column="emp_id" />
         <result property="password" column="password" />
@@ -23,7 +23,7 @@
     </resultMap>
 
     <!-- 계정 등록 -->
-    <insert id="insertAdmin" parameterType="com.mediSync.project.dto.AccountDTO">
+    <insert id="insertAdmin" parameterType="com.mediSync.project.patient.dto.AccountDTO">
         INSERT INTO admin_account (
         emp_id, password, name, phone, email, role, profile_img_url, doctor_id, staff_id, created_at
         ) VALUES (
@@ -41,7 +41,7 @@
     </select>
 
     <!-- 계정 정보 수정 -->
-    <update id="updateAdmin" parameterType="com.mediSync.project.dto.AccountDTO">
+    <update id="updateAdmin" parameterType="com.mediSync.project.patient.dto.AccountDTO">
         UPDATE admin_account
         SET name = #{name}, phone = #{phone}, email = #{email}, role = #{role},
         profile_img_url = #{profileImgUrl}, doctor_id = #{doctorId}, staff_id = #{staffId}

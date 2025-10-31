@@ -224,6 +224,9 @@ const PatientRecords = ({ title, icon: Icon }) => (
 // 환자 일정 탭
 const ViewReservation = ({ title, icon: Icon }) => {
   const [events, setEvents] = useState([]);
+  const [selectedEvent, setSelectedEvent] = useState(null);
+  const [isCalendarModalOpen, setIsCalendarModalOpen] = useState(false);
+
   //로그인 유저 임시 번호
   const patient_id = 1;
   useEffect(() => {
@@ -237,6 +240,11 @@ const ViewReservation = ({ title, icon: Icon }) => {
           end: item.startDate,
           color: item.color || "#3B82F6",
           textColor: item.textColor || "#FFFFFF",
+          extendedProps: {
+            type: item.type,
+            patientName: item.patientName,
+            doctorName: item.doctorName,
+          },
         }));
         setEvents(formatted);
       })
@@ -260,10 +268,35 @@ const ViewReservation = ({ title, icon: Icon }) => {
           <FullCalendar
             plugins={[dayGridPlugin, timeGridPlugin]}
             initialView="dayGridMonth"
+            themeSystem="standard"
+            eventClick={(info) => {
+              const clickedEvent = {
+                title: info.event.title,
+                start: info.event.start,
+                color: info.event.backgroundColor,
+                textColor: info.event.textColor,
+                type: info.event.extendedProps.type,
+                patientName: info.event.extendedProps.patientName,
+                doctorName: info.event.extendedProps.doctorName,
+              };
+
+              if (clickedEvent) {
+                setSelectedEvent(clickedEvent);
+                setIsCalendarModalOpen(true);
+              } else {
+                console.warn("일치하는 이벤트를 찾을 수 없습니다:", info.event);
+              }
+            }}
             headerToolbar={{
               left: "prev,next today",
               center: "title",
               right: "dayGridMonth,timeGridWeek,timeGridDay",
+            }}
+            buttonText={{
+              today: "오늘",
+              month: "월",
+              week: "주",
+              day: "일",
             }}
             events={events}
             eventDisplay="block"
@@ -271,6 +304,53 @@ const ViewReservation = ({ title, icon: Icon }) => {
           ></FullCalendar>
         )}
       </div>
+      {isCalendarModalOpen && selectedEvent && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-96 shadow-lg">
+            <h2 className="text-xl font-semibold mb-4 text-gray-800">
+              {selectedEvent.title}
+            </h2>
+            <p className="text-gray-600 mb-1">
+              <strong>예약 종류: </strong>
+              {selectedEvent.type}
+            </p>
+            <p className="text-gray-600 mb-1">
+              <strong>환자: </strong>
+              {selectedEvent.patientName}
+            </p>
+            <p className="text-gray-600 mb-3">
+              <strong>담당 의사: </strong>
+              {selectedEvent.doctorName}
+            </p>
+            <p className="text-gray-600 mb-4">
+              <strong>예약 시간</strong>{" "}
+              {selectedEvent.start
+                ? new Date(selectedEvent.start).toLocaleString("ko-KR")
+                : "시간 정보 없음"}
+            </p>
+
+            <div className="flex justify-end space-x-2">
+              <button
+                onClick={() => {
+                  setIsCalendarModalOpen(false);
+                  setSelectedEvent(null);
+                }}
+                className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
+              >
+                닫기
+              </button>
+              <button
+                onClick={() => {
+                  alert("예약 취소");
+                }}
+                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              >
+                예약 취소
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
