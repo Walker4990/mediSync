@@ -305,48 +305,72 @@ const ViewReservation = ({ title, icon: Icon }) => {
         )}
       </div>
       {isCalendarModalOpen && selectedEvent && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-96 shadow-lg">
-            <h2 className="text-xl font-semibold mb-4 text-gray-800">
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl shadow-2xl w-[420px] overflow-hidden  animate-fadeIn ">
+            {/*상단 해더 */}
+            <div
+              className="h-24 flex items-center justify-center text-white text-2xl font-bold"
+              style={{
+                backgroundColor:
+                  selectedEvent.type === "진료 예약"
+                    ? "#3B82F6"
+                    : selectedEvent.type === "검사 예약"
+                    ? "#60A5FA"
+                    : selectedEvent.type === "수술 예약"
+                    ? "#1E40AF"
+                    : "#64748B",
+              }}
+            >
               {selectedEvent.title}
-            </h2>
-            <p className="text-gray-600 mb-1">
-              <strong>예약 종류: </strong>
-              {selectedEvent.type}
-            </p>
-            <p className="text-gray-600 mb-1">
-              <strong>환자: </strong>
-              {selectedEvent.patientName}
-            </p>
-            <p className="text-gray-600 mb-3">
-              <strong>담당 의사: </strong>
-              {selectedEvent.doctorName}
-            </p>
-            <p className="text-gray-600 mb-4">
-              <strong>예약 시간</strong>{" "}
-              {selectedEvent.start
-                ? new Date(selectedEvent.start).toLocaleString("ko-KR")
-                : "시간 정보 없음"}
-            </p>
+            </div>
+            {/*본문 내용*/}
+            <div className="p-6 space-y-4">
+              <div className="space-y-2 text-gray-700">
+                <div className="flex justify-between border-b pb-2">
+                  <span className="font-semibold text-gray-600">예약종류</span>
+                  <span className="text-gray-800">{selectedEvent.type}</span>
+                </div>
+                <div className="flex justify-between border-b pb-2">
+                  <span className="font-semibold text-gray-600">환자</span>
+                  <span className="text-gray-800">
+                    {selectedEvent.patientName}
+                  </span>
+                </div>
+                <div className="flex justify-between border-b pb-2">
+                  <span className="font-semibold text-gray-600">담당 의사</span>
+                  <span className="text-gray-800">
+                    {selectedEvent.doctorName}
+                  </span>
+                </div>
+                <div className="flex justify-between border-b pb-2">
+                  <span className="font-semibold text-gray-600">예약 시간</span>
+                  <span className="text-gray-800">
+                    {selectedEvent.start
+                      ? new Date(selectedEvent.start).toLocaleString("ko-KR")
+                      : "시간 정보 없음"}
+                  </span>
+                </div>
+              </div>
 
-            <div className="flex justify-end space-x-2">
-              <button
-                onClick={() => {
-                  setIsCalendarModalOpen(false);
-                  setSelectedEvent(null);
-                }}
-                className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
-              >
-                닫기
-              </button>
-              <button
-                onClick={() => {
-                  alert("예약 취소");
-                }}
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-              >
-                예약 취소
-              </button>
+              <div className="flex justify-end space-x-3 pt-4">
+                <button
+                  onClick={() => {
+                    setIsCalendarModalOpen(false);
+                    setSelectedEvent(null);
+                  }}
+                  className="px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                >
+                  닫기
+                </button>
+                <button
+                  onClick={() => {
+                    alert("예약 취소");
+                  }}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  예약 취소
+                </button>
+              </div>
             </div>
           </div>
         </div>
