@@ -3,7 +3,7 @@
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="com.mediSync.project.mapper.DrugMapper">
+<mapper namespace="com.mediSync.project.drug.mapper.DrugMapper">
 
     <select id="selectAllDrug" resultType="drug">
         SELECT

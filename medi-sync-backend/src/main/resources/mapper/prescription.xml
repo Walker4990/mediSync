@@ -3,7 +3,7 @@
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="com.mediSync.project.mapper.PrescriptionMapper">
+<mapper namespace="com.mediSync.project.medical.mapper.PrescriptionMapper">
 
     <!--  처방전 등록  -->
     <insert id="insertPrescription" parameterType="prescription">
@@ -20,7 +20,35 @@
     <select id="selectPrescriptionByPatientId" parameterType="long" resultType="prescription">
         SELECT * FROM prescription p
         JOIN medical_record mr ON p.record_id = mr.record_id
+        JOIN doctor d ON mr.doctor_id = d.doctor_id
         WHERE mr.record_id = #{recordId}
         ORDER BY p.created_at DESC
     </select>
+
+
+
+    <!-- 입원환자 처방 내역 조회 -->
+    <select id="selectInpatientPrescriptions" resultType="prescription">
+        SELECT
+        p.prescription_id      AS prescriptionId,
+        pa.patient_id           AS patientId,
+        pa.name                 AS patientName,
+        pa.admission_status     AS admissionStatus,
+        d.doctor_name           AS doctorName,
+        mr.record_id            AS recordId,
+        p.drug_name             AS drugName,
+        p.dosage                AS dosage,
+        p.duration              AS duration,
+        p.unit                  AS unit,
+        p.notes                 AS notes,
+        p.created_at            AS createdAt
+        FROM prescription p
+        JOIN medical_record mr ON p.record_id = mr.record_id
+        JOIN patient pa ON mr.patient_id = pa.patient_id
+        LEFT JOIN doctor d ON mr.doctor_id = d.doctor_id
+        WHERE pa.admission_status = 'INPATIENT'
+        ORDER BY p.created_at DESC
+    </select>
+
+
 </mapper>

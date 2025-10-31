@@ -3,7 +3,7 @@
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="com.mediSync.project.mapper.FinanceTransactionMapper">
+<mapper namespace="com.mediSync.project.finance.mapper.FinanceTransactionMapper">
     <select id="selectAll" resultType="finance">
         SELECT * FROM finance_transaction
     </select>

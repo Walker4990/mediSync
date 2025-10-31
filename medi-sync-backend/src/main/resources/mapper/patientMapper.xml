@@ -3,7 +3,7 @@
   PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
   "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="com.mediSync.project.mapper.PatientMapper">
+<mapper namespace="com.mediSync.project.patient.mapper.PatientMapper">
 
     <!-- 1. 환자 정보 저장 -->
     <insert id="insertPatient" useGeneratedKeys="true" keyProperty="patientId">
@@ -66,8 +66,53 @@
         WHERE r.patient_id = #{patientId}
         ORDER BY p.created_at DESC
     </select>
+
     <!-- 환자 상세정보 불러오기 (수술 시) -->
     <select id="getPatientDetail" parameterType="long" resultType="patient">
         SELECT * FROM patient WHERE patient_id=#{patientId}
+    </select>
+
+    <select id="selectInpatient" resultType="patient">
+        SELECT
+        p.patient_id       AS patientId,
+        p.name             AS name,
+        p.phone            AS phone,
+        p.address          AS address,
+        p.admission_status AS admissionStatus,
+        r.room_no          AS roomNo,
+        r.ward_name        AS wardName,
+        r.nurse_in_charge  AS nurseName,
+        r.status           AS roomStatus,
+        mr.record_id       AS recordId,
+        mr.diagnosis       AS diagnosis,
+        mr.doctor_id       AS doctorId,
+        d.doctor_name      AS doctorName,
+        p.admission_date   AS admissionDate,
+        p.discharge_date   AS dischargeDate
+        FROM patient p
+        LEFT JOIN room r ON p.room_id = r.room_id
+        LEFT JOIN medical_record mr ON p.patient_id = mr.patient_id
+        LEFT JOIN doctor d ON mr.doctor_id = d.doctor_id
+        WHERE p.admission_status = 'INPATIENT'
+        ORDER BY r.room_no ASC
+    </select>
+    <!-- 환자 과거 처방 내역 조회 -->
+    <select id="findByPatientId" parameterType="long" resultType="prescription">
+        SELECT
+        p.prescription_id,
+        p.type,
+        p.drug_name,
+        p.dosage,
+        p.duration,
+        p.test_name,
+        p.test_area,
+        p.injection_name,
+        p.injection_count,
+        p.unit,
+        p.created_at
+        FROM prescription p
+        LEFT JOIN medical_record mr ON p.record_id = mr.record_id
+        WHERE mr.patient_id = #{patientId}
+        ORDER BY p.created_at DESC
     </select>
 </mapper>

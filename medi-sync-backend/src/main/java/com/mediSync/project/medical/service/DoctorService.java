@@ -1,0 +1,41 @@
+package com.mediSync.project.medical.service;
+
+import com.mediSync.project.medical.mapper.DoctorMapper;
+import com.mediSync.project.medical.vo.Doctor;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.Map;
+
+@Service
+@RequiredArgsConstructor
+public class DoctorService {
+    private final DoctorMapper doctorMapper;
+
+    public List<Doctor> selectAllDoctor(){
+        return doctorMapper.doctorSelectAll();
+    }
+    public Doctor selectDoctorById(Long doctorId){
+        return doctorMapper.doctorSelectById(doctorId);
+    }
+    public void insertDoctor(Doctor doctor){ doctorMapper.insertDoctor(doctor);
+    }
+    public void editDoctor(Doctor doctor) {
+        doctorMapper.editDoctor(doctor);
+    }
+    public void delDoctor(Long doctorId) {
+        doctorMapper.delDoctor(doctorId);
+    }
+    public Map<String, Object> getConsultFeeByDoctorId(Long doctorId) {
+        return doctorMapper.getConsultFeeByDoctorId(doctorId);
+    }
+    //의사 서치
+    public List<Doctor> selectDoctorByDepartment(String dept_id){
+        return doctorMapper.doctorSelectByDepartment(dept_id);
+    }
+}
+
+
+
+

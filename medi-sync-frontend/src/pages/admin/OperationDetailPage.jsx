@@ -247,27 +247,16 @@ export default function OperationDetailPage() {
                         </div>
 
 
-                        {/* 수술실 */}
-                        <div>
-                            <label className="text-sm text-gray-600">수술실</label>
-                            <select
-                                className="border w-full rounded-md p-2 mt-1"
-                                value={operation.roomId || ""}
-                                onChange={(e) => setOperation({ ...operation, roomId: e.target.value })}
-                            >
-                                <option value="">선택</option>
-                                {rooms.map((room) => (
-                                    <option
-                                        key={room.roomId}
-                                        value={room.roomId}
-                                        disabled={Number(room.available) !== 1} // ✅ 문자열을 숫자로 변환해 비교
-                                    >
-                                        {room.roomName}
-
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
+                        {/* 수술실 */}<div>
+                        <label className="text-sm text-gray-600">수술실</label>
+                        <select
+                            className="border w-full rounded-md p-2 mt-1 bg-gray-100 cursor-not-allowed"
+                            value={operation.roomName || ""} // ✅ roomName 표시
+                            disabled // ✅ 읽기 전용으로 잠금
+                        >
+                            <option value="">{operation.roomName || "배정되지 않음"}</option>
+                        </select>
+                    </div>
 
 
                         {/* 담당의 */}
@@ -297,36 +286,6 @@ export default function OperationDetailPage() {
                             />
                         </div>
 
-                        {/* 보험 적용 여부 */}
-                        <div>
-                            <label className="text-sm text-gray-600">보험 적용</label>
-                            <select
-                                className="border w-full rounded-md p-2 mt-1"
-                                value={operation.insuranceCovered || "N"}
-                                onChange={(e) =>
-                                    setOperation({ ...operation, insuranceCovered: e.target.value })
-                                }
-                            >
-                                <option value="Y">예</option>
-                                <option value="N">아니오</option>
-                            </select>
-                        </div>
-
-                        {/* 상태 */}
-                        <div>
-                            <label className="text-sm text-gray-600">수술 상태</label>
-                            <select
-                                className="border w-full rounded-md p-2 mt-1"
-                                value={operation.status || "SCHEDULED"}
-                                onChange={(e) =>
-                                    setOperation({ ...operation, status: e.target.value })
-                                }
-                            >
-                                <option value="SCHEDULED">예정</option>
-                                <option value="IN_PROGRESS">진행중</option>
-                                <option value="COMPLETED">완료</option>
-                            </select>
-                        </div>
 
                         {/* 결과 기록 */}
                         <div className="col-span-2">
@@ -499,6 +458,7 @@ export default function OperationDetailPage() {
                                         {p.type === "TEST" && `${p.testName} (${p.testArea})`}
                                         {p.type === "INJECTION" && `${p.injectionName} ×${p.dosage}ml`}
                                     </td>
+                                    <td>{p.duration}</td>
                                     <td>{p.doctorName}</td>
                                 </tr>
                             ))}

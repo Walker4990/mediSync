@@ -3,9 +3,9 @@
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="com.mediSync.project.mapper.TestReservationMapper">
+<mapper namespace="com.mediSync.project.test.mapper.TestReservationMapper">
    <!-- 검사 예약 조회 -->
-    <select id="selectTestReservation" resultType="com.mediSync.project.vo.TestReservation">
+    <select id="selectTestReservation" resultType="com.mediSync.project.test.vo.TestReservation">
         SELECT
         r.reservation_id AS reservationId,
         r.schedule_id AS scheduleId,

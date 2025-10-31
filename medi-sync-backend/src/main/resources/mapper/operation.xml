@@ -3,7 +3,7 @@
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="com.mediSync.project.mapper.OperationMapper">
+<mapper namespace="com.mediSync.project.operation.mapper.OperationMapper">
 
    <insert id="insertOperation" parameterType="operation">
        INSERT INTO operation (
@@ -29,13 +29,24 @@
     <select id="selectOperationRoomList" resultType="operationRoom">
         SELECT * FROM operation_room
     </select>
+    <!-- 수술방 불러오기 -->
+    <select id="getRoomById" parameterType="long" resultType="operationRoom">
+        SELECT room_id,
+        room_name,
+        capacity,
+        available,
+        created_at
+        FROM operation_room
+        WHERE room_id = #{roomId}
+    </select>
 
     <!-- 특정 수술 상세 조회 -->
     <select id="getOperationById" parameterType="long" resultType="operation">
-        SELECT o.*, p.name AS patient_name, d.doctor_name AS doctor_name
+        SELECT o.*, p.name AS patient_name, d.doctor_name AS doctor_name, r.room_name AS roomName
         FROM operation o
         LEFT JOIN patient p ON o.patient_id = p.patient_id
         LEFT JOIN doctor d ON o.doctor_id = d.doctor_id
+        LEFT JOIN operation_room r ON o.room_id = r.room_id
         WHERE o.operation_id = #{operationId}
     </select>
 
@@ -148,5 +159,31 @@
         UPDATE operation_room
         SET available = 1
         WHERE room_id = #{roomId};
+    </update>
+
+    <!-- 수술 가능한 방 고르기 -->
+    <select id="selectAvailableRooms" resultType="operationRoom">
+        SELECT * FROM operation_room WHERE available = 1
+    </select>
+
+    <!-- 수술 진행상태 자동 변경 -->
+    <update id="updateScheduledToProgress">
+        <![CDATA[
+    UPDATE operation
+    SET status = 'IN_PROGRESS', updated_at = now()
+    WHERE status = 'SCHEDULED'
+      AND CONCAT(scheduled_date, ' ', scheduled_time) <= now()
+      AND CONCAT(scheduled_date, ' ', scheduled_time) >= now() - INTERVAL 1 HOUR
+    ]]>
+    </update>
+
+    <!-- IN_PROGRESS → COMPLETED -->
+    <update id="updateProgressToCompleted">
+        <![CDATA[
+    UPDATE operation
+    SET status = 'COMPLETED', updated_at = NOW()
+    WHERE status = 'IN_PROGRESS'
+      AND CONCAT(scheduled_date, ' ', scheduled_time) < NOW() - INTERVAL 4 HOUR
+    ]]>
     </update>
 </mapper>

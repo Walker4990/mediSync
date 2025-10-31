@@ -3,17 +3,21 @@
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="com.mediSync.project.mapper.TestFeeMapper">
+<mapper namespace="com.mediSync.project.test.mapper.TestFeeMapper">
     <!-- 검사명 검색   -->
-    <select id="searchTestByKeyword" parameterType="string" resultType="com.mediSync.project.vo.TestFee">
-        SELECT test_code, test_name, base_price, insurance_rate
+    <select id="searchTestByKeyword" parameterType="string" resultType="com.mediSync.project.test.vo.TestFee">
+        SELECT
+        test_code AS testCode,
+        test_name AS testName,
+        base_price AS basePrice,
+        insurance_rate AS insuranceRate
         FROM test_fee
         WHERE test_name LIKE CONCAT('%', #{keyword}, '%')
         ORDER BY test_name ASC
         LIMIT 10
     </select>
     <!--  검사 상세 조회  -->
-    <select id="searchTestByCode" parameterType="string" resultType="com.mediSync.project.vo.TestFee">
+    <select id="searchTestByCode" parameterType="string" resultType="com.mediSync.project.test.vo.TestFee">
         SELECT * FROM test_fee WHERE test_code = #{testCode}
     </select>
     <!-- 테스트 이름으로 조회 -->
