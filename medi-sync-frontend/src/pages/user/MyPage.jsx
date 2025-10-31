@@ -228,7 +228,7 @@ const ViewReservation = ({ title, icon: Icon }) => {
   const [isCalendarModalOpen, setIsCalendarModalOpen] = useState(false);
 
   //로그인 유저 임시 번호
-  const patient_id = 1;
+  const patient_id = 5;
   const fetchCalendarData = async () => {
     try {
       const res = await axios.get(
@@ -270,6 +270,7 @@ const ViewReservation = ({ title, icon: Icon }) => {
           </p>
         ) : (
           <FullCalendar
+            locale="ko"
             plugins={[dayGridPlugin, timeGridPlugin]}
             initialView="dayGridMonth"
             themeSystem="standard"

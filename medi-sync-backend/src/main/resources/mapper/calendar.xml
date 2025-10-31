@@ -5,7 +5,7 @@
 
 <mapper namespace="com.mediSync.project.common.mapper.CalendarMapper">
 
-    <select id="getReservation" parameterType="Integer" resultType="calendar">
+    <select id="getReservation" parameterType="long" resultType="calendar">
         select
         r.reservation_date as startDate,
         r.reservation_id as id,
@@ -17,12 +17,12 @@
         where r.patient_id = #{patient_id}
     </select>
 
-    <select id="getTestReservation" parameterType="Integer" resultType="testReservation">
+    <select id="getTestReservation" parameterType="long" resultType="testReservation">
         select * from test_reservation
         where patient_id = #{patient_id}
     </select>
 
-    <select id="getTestSchedule" parameterType="Integer" resultType="calendar">
+    <select id="getTestSchedule" parameterType="long" resultType="calendar">
         select
         ts.test_name as title,
         d.doctor_name,
@@ -37,7 +37,7 @@
         where schedule_id = #{schedule_id}
     </select>
 
-    <select id="getOperation" parameterType="Integer" resultType="calendar">
+    <select id="getOperation" parameterType="long" resultType="calendar">
         select
         o.operation_name as title,
         d.doctor_name,
@@ -58,14 +58,14 @@
     
     <delete id="deleteTestSchedule" parameterType="map">
         delete from test_schedule
-        WHERE reservation_id = #{id}
+        WHERE reservation_id = #{id, jdbcType=BIGINT}
         AND test_date = #{date}
         AND test_time = #{time}
     </delete>
 
     <delete id="deleteOperation" parameterType="map">
         delete from operation
-        WHERE operation_id = #{id}
+        WHERE operation_id = #{id, jdbcType=BIGINT}
         AND schedule_date = #{date}
         AND schedule_time = #{time}
     </delete>

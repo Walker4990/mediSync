@@ -13,10 +13,10 @@ import java.util.Map;
 @Mapper
 public interface CalendarMapper {
     List<CalendarDTO> getUserCalendar(Integer userId);
-    List<CalendarDTO> getReservation(Integer patient_id);
-    List<TestReservation> getTestReservation(Integer patient_id);
+    List<CalendarDTO> getReservation(Long patient_id);
+    List<TestReservation> getTestReservation(Long patient_id);
     List<CalendarDTO> getTestSchedule(Long schedule_id);
-    List<CalendarDTO> getOperation(Integer patient_id);
+    List<CalendarDTO> getOperation(Long patient_id);
 
     int deleteReservation(Map<String, Object> params);
     int deleteTestSchedule(Map<String, Object> params);

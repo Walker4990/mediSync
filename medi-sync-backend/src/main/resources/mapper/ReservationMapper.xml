@@ -52,8 +52,10 @@
         reservation r
         join doctor d using(doctor_id)
         join patient p using(patient_id)
-        where r.reservation_date BETWEEN #{start} AND #{end};
+        WHERE r.reservation_date BETWEEN #{start} AND #{end}
+        AND status NOT IN ('CANCEL', 'DONE');
     </select>
+
 
     <!-- 예약 상태 업데이트-->
     <update id="updateStatus" parameterType="reservation">

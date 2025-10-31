@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.text.SimpleDateFormat;
@@ -28,7 +29,7 @@ public class CalendarController {
 
     @GetMapping
     public List<CalendarDTO> getUserCalendar(
-                                @RequestParam("patient_id") Integer patient_id){
+                                @RequestParam("patient_id") Long patient_id){
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
         List<CalendarDTO> calendarInfo = new ArrayList<>();
         List<CalendarDTO> reserList = calendarService.getReservation(patient_id);
@@ -84,30 +85,8 @@ public class CalendarController {
                                                @RequestParam("type") String type,
                                                @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
                                                LocalDateTime startDate){
-        LocalDate date;
-        String time;
-        try {
-            switch (type){
-                case "진료 예약":
-                    calendarService.deleteReservation(Map.of("id",id,"date",startDate));
-                    break;
-                case "검사 예약":
-                    date = startDate.toLocalDate();
-                    time = String.format("%02d:%02d",startDate.getHour(),startDate.getMinute());
-                    calendarService.deleteTestSchedule(Map.of("id",id,"date",date,"time",time));
-                    break;
-                case "수술 예약":
-                    date = startDate.toLocalDate();
-                    time = String.format("%02d:%02d",startDate.getHour(),startDate.getMinute());
-                    calendarService.deleteOperation(Map.of("id",id,"date",date,"time",time));
-                    break;
-                default:
-                    return ResponseEntity.badRequest().body("알 수 없는 예약 유형 입니다.");
-            }
-            return ResponseEntity.ok("예약이 취소되었습니다");
-        }catch (Exception e){
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("예약 취소 중 서버 오류가 발생했습니다.");
-        }
 
+        calendarService.cancelReservation(id,type,startDate);
+        return ResponseEntity.ok("예약 취소 완료");
     }
 }
