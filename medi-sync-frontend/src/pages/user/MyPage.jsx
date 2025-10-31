@@ -175,7 +175,7 @@ const NotificationSettings = () => {
       </h3>
       <div className="bg-white rounded-lg shadow-md p-4 space-y-2">
         <SettingToggle label="이메일 알림 (진료/예약 관련)" keyName="email" />
-        <SettingToggle label="SMS 수신 동의 (긴습사항)" keyName="marketing" />
+        <SettingToggle label="SMS 수신 동의 (긴습사항)" keyName="sms" />
         <SettingToggle label="푸시 알림 (앱 사용 시)" keyName="push" />
         <SettingToggle label="마케팅 정보 수신 (선택)" keyName="marketing" />
       </div>
