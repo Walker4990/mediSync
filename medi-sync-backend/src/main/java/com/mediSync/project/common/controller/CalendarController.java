@@ -7,14 +7,17 @@ import com.mediSync.project.patient.vo.Reservation;
 import com.mediSync.project.test.vo.TestReservation;
 import com.mediSync.project.test.vo.TestSchedule;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/calendar")
@@ -75,10 +78,36 @@ public class CalendarController {
         }
         return calendarInfo;
     }
-    @GetMapping("/detail")
-    public CalendarDTO getScheduleDetail(@RequestParam("date") String date,
-                                         @RequestParam("patient_id") Integer patientId){
 
-        return calendarService.getScheduleDetail(date,patientId);
+    @DeleteMapping
+    public ResponseEntity<?> deleteReservation(@RequestParam("id") Long id,
+                                               @RequestParam("type") String type,
+                                               @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+                                               LocalDateTime startDate){
+        LocalDate date;
+        String time;
+        try {
+            switch (type){
+                case "진료 예약":
+                    calendarService.deleteReservation(Map.of("id",id,"date",startDate));
+                    break;
+                case "검사 예약":
+                    date = startDate.toLocalDate();
+                    time = String.format("%02d:%02d",startDate.getHour(),startDate.getMinute());
+                    calendarService.deleteTestSchedule(Map.of("id",id,"date",date,"time",time));
+                    break;
+                case "수술 예약":
+                    date = startDate.toLocalDate();
+                    time = String.format("%02d:%02d",startDate.getHour(),startDate.getMinute());
+                    calendarService.deleteOperation(Map.of("id",id,"date",date,"time",time));
+                    break;
+                default:
+                    return ResponseEntity.badRequest().body("알 수 없는 예약 유형 입니다.");
+            }
+            return ResponseEntity.ok("예약이 취소되었습니다");
+        }catch (Exception e){
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("예약 취소 중 서버 오류가 발생했습니다.");
+        }
+
     }
 }

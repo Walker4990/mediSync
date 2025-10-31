@@ -42,12 +42,36 @@
         o.operation_name as title,
         d.doctor_name,
         p.name as patientName,
+        o.operation_id as id,
         CONCAT(DATE_FORMAT(o.scheduled_date, '%Y-%m-%d'),' ', DATE_FORMAT(o.scheduled_time, '%H:%i:%s')) AS startDate
         from operation o
         join patient p using(patient_id)
         join doctor d using(doctor_id)
         where patient_id = #{patient_id}
     </select>
+
+    <delete id="deleteReservation" parameterType="map">
+        delete from reservation
+        WHERE reservation_id = #{id}
+        AND DATE(reservation_date) = DATE(#{date})
+    </delete>
+    
+    <delete id="deleteTestSchedule" parameterType="map">
+        delete from test_schedule
+        WHERE reservation_id = #{id}
+        AND test_date = #{date}
+        AND test_time = #{time}
+    </delete>
+
+    <delete id="deleteOperation" parameterType="map">
+        delete from operation
+        WHERE operation_id = #{id}
+        AND schedule_date = #{date}
+        AND schedule_time = #{time}
+    </delete>
+
+
+
 
 
 </mapper>

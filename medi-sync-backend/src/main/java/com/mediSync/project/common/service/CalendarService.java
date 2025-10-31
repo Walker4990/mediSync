@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -37,8 +38,19 @@ public class CalendarService {
         return calendarMapper.getOperation(patient_id);
     }
 
-    public CalendarDTO getScheduleDetail(String date, Integer patientId){
-        return calendarMapper.getScheduleDetail(date, patientId);
+    //진료 예약 삭제하기
+    public int deleteReservation(Map<String, Object> params){
+        return calendarMapper.deleteReservation(params);
+    }
+
+    //검사 예약 삭제하기
+    public int deleteTestSchedule(Map<String,Object> params){
+        return calendarMapper.deleteTestSchedule(params);
+    }
+
+    //수술 예약 삭제하기
+    public int deleteOperation(Map<String,Object> params){
+        return calendarMapper.deleteOperation(params);
     }
 
 

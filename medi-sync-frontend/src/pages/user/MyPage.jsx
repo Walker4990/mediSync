@@ -229,28 +229,32 @@ const ViewReservation = ({ title, icon: Icon }) => {
 
   //로그인 유저 임시 번호
   const patient_id = 1;
+  const fetchCalendarData = async () => {
+    try {
+      const res = await axios.get(
+        `http://localhost:8080/api/calendar?patient_id=${patient_id}`
+      );
+      console.log("받은 일정 데이터:", res.data);
+      const formatted = res.data.map((item) => ({
+        title: item.title,
+        start: item.startDate,
+        end: item.startDate,
+        color: item.color || "#3B82F6",
+        textColor: item.textColor || "#FFFFFF",
+        extendedProps: {
+          type: item.type,
+          patientName: item.patientName,
+          doctorName: item.doctorName,
+          id: item.id,
+        },
+      }));
+      setEvents(formatted);
+    } catch (err) {
+      console.log("일정 조회 실패", err);
+    }
+  };
   useEffect(() => {
-    axios
-      .get(`http://localhost:8080/api/calendar?patient_id=${patient_id}`)
-      .then((res) => {
-        console.log("받은 일정 데이터:", res.data);
-        const formatted = res.data.map((item) => ({
-          title: item.title,
-          start: item.startDate,
-          end: item.startDate,
-          color: item.color || "#3B82F6",
-          textColor: item.textColor || "#FFFFFF",
-          extendedProps: {
-            type: item.type,
-            patientName: item.patientName,
-            doctorName: item.doctorName,
-          },
-        }));
-        setEvents(formatted);
-      })
-      .catch((err) => {
-        console.log("일정 조회 실패", err);
-      });
+    fetchCalendarData();
   }, []);
 
   //캘린더
@@ -278,6 +282,7 @@ const ViewReservation = ({ title, icon: Icon }) => {
                 type: info.event.extendedProps.type,
                 patientName: info.event.extendedProps.patientName,
                 doctorName: info.event.extendedProps.doctorName,
+                id: info.event.extendedProps.id,
               };
 
               if (clickedEvent) {
@@ -343,6 +348,11 @@ const ViewReservation = ({ title, icon: Icon }) => {
                   </span>
                 </div>
                 <div className="flex justify-between border-b pb-2">
+                  <span className="font-semibold text-gray-600">아이디</span>
+                  <span className="text-gray-800">{selectedEvent.id}</span>
+                </div>
+
+                <div className="flex justify-between border-b pb-2">
                   <span className="font-semibold text-gray-600">예약 시간</span>
                   <span className="text-gray-800">
                     {selectedEvent.start
@@ -351,8 +361,42 @@ const ViewReservation = ({ title, icon: Icon }) => {
                   </span>
                 </div>
               </div>
-
+              {/*버튼*/}
               <div className="flex justify-end space-x-3 pt-4">
+                {new Date(selectedEvent.start) > new Date() && (
+                  <button
+                    onClick={async () => {
+                      if (!window.confirm("예약을 취소하시겠습니까?")) {
+                        return;
+                      }
+                      try {
+                        await axios.delete(
+                          `http://localhost:8080/api/calendar`,
+                          {
+                            params: {
+                              id: selectedEvent.id,
+                              type: selectedEvent.type,
+                              startDate: selectedEvent.start,
+                            },
+                          }
+                        );
+                        //모달 닫기
+                        alert("예약을 취소하였습니다.");
+                        setIsCalendarModalOpen(false);
+                        setSelectedEvent(null);
+
+                        //달력 리로드
+                        await fetchCalendarData();
+                      } catch (error) {
+                        console.log("예약 취소 오류", error);
+                        alert("예약 취소 중 오류가 발생했습니다.");
+                      }
+                    }}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    예약 취소
+                  </button>
+                )}
                 <button
                   onClick={() => {
                     setIsCalendarModalOpen(false);
@@ -361,14 +405,6 @@ const ViewReservation = ({ title, icon: Icon }) => {
                   className="px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
                 >
                   닫기
-                </button>
-                <button
-                  onClick={() => {
-                    alert("예약 취소");
-                  }}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  예약 취소
                 </button>
               </div>
             </div>

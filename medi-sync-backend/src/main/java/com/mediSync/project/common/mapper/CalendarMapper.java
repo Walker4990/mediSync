@@ -8,6 +8,7 @@ import com.mediSync.project.test.vo.TestSchedule;
 import org.apache.ibatis.annotations.Mapper;
 
 import java.util.List;
+import java.util.Map;
 
 @Mapper
 public interface CalendarMapper {
@@ -16,6 +17,8 @@ public interface CalendarMapper {
     List<TestReservation> getTestReservation(Integer patient_id);
     List<CalendarDTO> getTestSchedule(Long schedule_id);
     List<CalendarDTO> getOperation(Integer patient_id);
-    CalendarDTO getScheduleDetail(String date, Integer patientId);
 
+    int deleteReservation(Map<String, Object> params);
+    int deleteTestSchedule(Map<String, Object> params);
+    int deleteOperation(Map<String, Object> params);
 }
