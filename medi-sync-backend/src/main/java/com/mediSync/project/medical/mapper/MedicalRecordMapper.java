@@ -26,4 +26,8 @@ public interface MedicalRecordMapper {
     // 환자 처방전 조회
     MedicalRecord selectRecordById(Long recordId);
     List<MedicalRecord> selectReservedRecords(LocalDate date);
+
+    //환자 진료기록 상세 조회
+    MedicalRecord selectRecordDetailByRecordId(long recordId);
+
 }

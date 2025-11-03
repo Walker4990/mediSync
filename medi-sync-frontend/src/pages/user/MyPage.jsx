@@ -253,8 +253,12 @@ const PatientRecords = ({ title, icon: Icon }) => {
   }, [patientId]);
 
   //진료 상세 페이지 열기
-  const openRecordDetail = (medicalId) => {
-    window.open(`/medicalDetail/${medicalId}`, "_blank");
+  const openRecordDetail = (recordId) => {
+    window.open(
+      `/user/medicalDetail/${recordId}`,
+      "_blank",
+      "width=800,height=600,top=100,left=200,resizable=yes,scrollbars=yes"
+    );
   };
 
   //더보기 버튼
@@ -273,9 +277,9 @@ const PatientRecords = ({ title, icon: Icon }) => {
         <ul className="divide-y divide-gray-200">
           {records.map((item, index) => (
             <li
-              key={item.medical_id || index}
+              key={item.recordId || index}
               className="flex justify-between items-center p-4 hover:bg-gray-50 transition cursor-pointer"
-              onClick={() => openRecordDetail(item.medical_id)}
+              onClick={() => openRecordDetail(item.recordId)}
             >
               <span>{`${item.deptName}  ${item.diagnosis} 진료 `}</span>
               <span className="text-gray-400 ml-auto">{`${item.createdAt.replace(

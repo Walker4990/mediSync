@@ -41,7 +41,7 @@
         GROUP BY mr.record_id
         ORDER BY mr.created_at DESC
     </select>
-    <!--  진료기록 조회 - 담당의 정보, 환자정보, 처방내역 등 환자 선택시 가져오기  -->
+    <!-- 페이징 포함 진료기록 조회  -->
     <select id="selectRecordAllByPatientIdWithPage"
             resultType="MedicalRecord">
         SELECT
@@ -65,7 +65,27 @@
         LIMIT #{size} OFFSET #{offset}
     </select>
 
+    <!--  진료기록 상세 조회 -->
+    <select id="selectRecordDetailByRecordId" parameterType="long"
+            resultType="MedicalRecord">
+        SELECT
+        mr.record_id,
+        mr.patient_id,
+        mr.doctor_id,
+        d.doctor_name AS doctorName,
+        dept.dept_name AS deptName,
+        mr.diagnosis,
+        mr.total_cost,
+        mr.status,
+        mr.created_at,
+        COUNT(p.prescription_id) AS prescriptionCount
+        FROM medical_record mr
+        JOIN doctor d ON mr.doctor_id = d.doctor_id
+        JOIN department dept ON d.dept_id = dept.dept_id
+        LEFT JOIN prescription p ON mr.record_id = p.record_id
+        WHERE mr.record_id = #{recordId}
 
+    </select>
 
     <!-- 처방전 조회 -->
     <select id="selectRecordById" parameterType="long" resultType="MedicalRecord">

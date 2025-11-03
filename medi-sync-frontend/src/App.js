@@ -26,58 +26,67 @@ import WebSocketListener from "./component/AddNotification";
 import NotificationPanel from "./component/NotificationPanel";
 import OperationDetailPage from "./pages/admin/OperationDetailPage";
 import OperationListPage from "./pages/admin/OperationListPage";
+import MedicalDetail from "./pages/user/MedicalDetail";
+import { useLocation } from "react-router-dom";
+function AppContent() {
+  const location = useLocation();
+  const hideNotification = location.pathname.startsWith("/user/medicalDetail");
 
-function App() {
+  return (
+    <>
+      {!hideNotification && <WebSocketListener />}
+      {!hideNotification && <NotificationPanel />}
+
+      <ModalProvider>
+        <Routes>
+          {/*관리자 페이지*/}
+          <Route path="/admin" element={<Home />} />
+          <Route path="/admin/register" element={<AccountRegiForm />} />
+          <Route path="/admin/acclist" element={<AccountList />} />
+          <Route path="/admin/dashboard" element={<DashBoard />} />
+          <Route path="/admin/patients" element={<PatientList />} />
+          <Route path="/admin/staff" element={<StaffList />} />
+          <Route path="/admin/doctor" element={<DoctorList />} />
+          <Route path="/admin/history" element={<MediHistory />} />
+          <Route path="/admin/medicalRecord" element={<MedicalRecordPage />} />
+          <Route path="/admin/drug" element={<DrugPage />} />
+          <Route
+            path="/admin/test/reservation"
+            element={<TestReservationPage />}
+          />
+          <Route path="/admin/test/imaging" element={<ImagingTestPage />} />
+          <Route path="/admin/test/endoscope" element={<EndoscopeTestPage />} />
+          <Route path="/admin/test/basic" element={<BasicTestPage />} />
+          <Route path="/admin/test/other" element={<OtherTestPage />} />
+          <Route
+            path="/admin/operation/:operationId"
+            element={<OperationDetailPage />}
+          />
+          <Route path="/admin/operation" element={<OperationListPage />} />
+          {/*유저페이지*/}
+          <Route element={<UserLayout />}>
+            <Route path="/" element={<UserHome />} />/
+            <Route path="/user/mypage" element={<MyPage />} />
+            <Route path="/user/consult" element={<MedicalConsult />} />
+            <Route path="/user/reservation" element={<Reservation />} />
+          </Route>
+          {/*새창 열림*/}
+          <Route
+            path="/user/medicalDetail/:recordId"
+            element={<MedicalDetail />}
+          ></Route>
+        </Routes>
+      </ModalProvider>
+    </>
+  );
+}
+
+export default function App() {
   return (
     <NotificationProvider>
       <BrowserRouter>
-        <WebSocketListener />
-
-        <NotificationPanel />
-        <ModalProvider>
-          <Routes>
-            {/*관리자 페이지*/}
-            <Route path="/admin" element={<Home />} />
-            <Route path="/admin/register" element={<AccountRegiForm />} />
-            <Route path="/admin/acclist" element={<AccountList />} />
-            <Route path="/admin/dashboard" element={<DashBoard />} />
-            <Route path="/admin/patients" element={<PatientList />} />
-            <Route path="/admin/staff" element={<StaffList />} />
-            <Route path="/admin/doctor" element={<DoctorList />} />
-            <Route path="/admin/history" element={<MediHistory />} />
-            <Route
-              path="/admin/medicalRecord"
-              element={<MedicalRecordPage />}
-            />
-            <Route path="/admin/drug" element={<DrugPage />} />
-            <Route
-              path="/admin/test/reservation"
-              element={<TestReservationPage />}
-            />
-            <Route path="/admin/test/imaging" element={<ImagingTestPage />} />
-            <Route
-              path="/admin/test/endoscope"
-              element={<EndoscopeTestPage />}
-            />
-            <Route path="/admin/test/basic" element={<BasicTestPage />} />
-            <Route path="/admin/test/other" element={<OtherTestPage />} />
-            <Route
-              path="/admin/operation/:operationId"
-              element={<OperationDetailPage />}
-            />
-            <Route path="/admin/operation" element={<OperationListPage />} />
-            {/*유저페이지*/}
-            <Route element={<UserLayout />}>
-              <Route path="/" element={<UserHome />} />/
-              <Route path="/user/mypage" element={<MyPage />} />
-              <Route path="/user/consult" element={<MedicalConsult />} />
-              <Route path="/user/reservation" element={<Reservation />} />
-            </Route>
-          </Routes>
-        </ModalProvider>
+        <AppContent />
       </BrowserRouter>
     </NotificationProvider>
   );
 }
-
-export default App;
