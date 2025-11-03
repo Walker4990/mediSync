@@ -17,4 +17,6 @@ public interface DoctorMapper {
 
     //의사 서치
     List<Doctor> doctorSelectByDepartment(String dept_id);
+
+    String findDepartmentByDoctorId(Long doctorId);
 }

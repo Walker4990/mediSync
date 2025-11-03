@@ -18,6 +18,9 @@ import com.mediSync.project.operation.vo.OperationRoom;
 import com.mediSync.project.operation.vo.OperationStaff;
 import com.mediSync.project.patient.mapper.PatientMapper;
 import com.mediSync.project.patient.vo.Patient;
+import com.mediSync.project.room.mapper.AdmissionMapper;
+import com.mediSync.project.room.mapper.RoomMapper;
+import com.mediSync.project.room.vo.Room;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,25 +34,27 @@ import java.util.Random;
 @Service
 @RequiredArgsConstructor
 public class OperationService {
+
     private final OperationMapper operationMapper;
     private final PatientMapper patientMapper;
     private final DoctorMapper doctorMapper;
     private final FinanceTransactionMapper financeTransactionMapper;
+    private final RoomMapper roomMapper;
+    private final AdmissionMapper admissionMapper;
+
     @Transactional
     public boolean reserveOperation(Operation operation) {
-        // 1️⃣ 현재 사용 가능한 수술실 목록 조회
+        //  사용 가능한 수술실 조회
         List<OperationRoom> availableRooms = operationMapper.selectAvailableRooms();
         if (availableRooms.isEmpty()) {
             throw new IllegalStateException("현재 사용 가능한 수술실이 없습니다.");
         }
 
-        // 2️⃣ 랜덤으로 하나 선택
-        OperationRoom selectedRoom = availableRooms.get(
-                new Random().nextInt(availableRooms.size())
-        );
+        //  랜덤으로 수술실 선택
+        OperationRoom selectedRoom = availableRooms.get(new Random().nextInt(availableRooms.size()));
         operation.setRoomId(selectedRoom.getRoomId());
 
-        // 3️⃣ 중복 예약 확인
+        //  중복 예약 확인
         int conflict = operationMapper.checkScheduleConflict(
                 operation.getRoomId(),
                 operation.getScheduledDate().toString(),
@@ -59,14 +64,41 @@ public class OperationService {
             throw new IllegalStateException("이미 예약된 시간입니다.");
         }
 
-        // 4️⃣ 수술 등록 및 방 사용중 표시
+        //  수술 등록
         int inserted = operationMapper.insertOperation(operation);
-        if (inserted > 0) {
-            operationMapper.updateRoomInUse(operation.getRoomId());
-            return true;
+        if (inserted <= 0) return false;
+
+        // 수술실 상태 변경
+        operationMapper.updateRoomInUse(operation.getRoomId());
+
+        // 담당 의사 진료과 조회
+        String department = doctorMapper.findDepartmentByDoctorId(operation.getDoctorId());
+
+        // 해당 진료과 병실만 조회
+        List<Room> availableRoom = roomMapper.findAvailableRooms(department);
+        if (availableRoom.isEmpty()) {
+            throw new IllegalStateException(department + " 병실에 공실이 없습니다.");
         }
-        return false;
+
+        //  랜덤으로 병실 선택
+        Room selectedRoomForAdmission = availableRoom.get(new Random().nextInt(availableRoom.size()));
+
+        //  입원 등록
+        admissionMapper.insertAdmission(
+                operation.getPatientId(),
+                operation.getOperationId(),
+                selectedRoomForAdmission.getRoomId()
+        );
+
+        //  병실 인원 증가
+        roomMapper.incrementRoomCount(selectedRoomForAdmission.getRoomId());
+
+        //  환자 상태 변경
+        patientMapper.updatePatientAdmissionStatus(operation.getPatientId(), "INPATIENT");
+
+        return true;
     }
+
 
 
     public List<Operation> selectOperationList() {

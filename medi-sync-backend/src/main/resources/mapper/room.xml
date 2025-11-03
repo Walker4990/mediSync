@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.mediSync.project.room.mapper.RoomMapper">
+
+    <select id="findAvailableRooms" resultType="com.mediSync.project.room.vo.Room">
+        <![CDATA[
+    SELECT *
+    FROM room
+    WHERE current_count < capacity
+      AND (status = 'AVAILABLE' OR status = 'FULL')
+      AND (department = #{department} OR ward_name LIKE CONCAT('%', #{department}, '%'))
+    ]]>
+    </select>
+
+    <update id="incrementRoomCount">
+        UPDATE room
+        SET current_count = current_count + 1,
+        status = CASE WHEN current_count + 1 >= capacity THEN 'FULL' ELSE status END
+        WHERE room_id = #{roomId}
+    </update>
+
+    <select id="selectAllRooms" resultType="room">
+        SELECT * FROM room
+    </select>
+
+</mapper>

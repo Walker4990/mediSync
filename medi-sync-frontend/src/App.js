@@ -16,7 +16,6 @@ import MedicalRecordPage from "./pages/admin/MedicalRecordPage";
 import DrugPage from "./pages/admin/DrugPage";
 import Reservation from "./pages/user/Reservation";
 import TestReservationPage from "./pages/admin/TestReservationPage";
-import TestGroupPage from "./component/TestGroupPage";
 import ImagingTestPage from "./pages/admin/ImagingTestPage";
 import EndoscopeTestPage from "./pages/admin/EndoscopeTestPage";
 import BasicTestPage from "./pages/admin/BasicTestPage";
@@ -26,6 +25,9 @@ import WebSocketListener from "./component/AddNotification";
 import NotificationPanel from "./component/NotificationPanel";
 import OperationDetailPage from "./pages/admin/OperationDetailPage";
 import OperationListPage from "./pages/admin/OperationListPage";
+import AdmissionPage from "./pages/admin/AdmissionPage";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 function App() {
   return (
@@ -66,6 +68,7 @@ function App() {
               element={<OperationDetailPage />}
             />
             <Route path="/admin/operation" element={<OperationListPage />} />
+            <Route path="/admin/admission" element={<AdmissionPage />} />
             {/*유저페이지*/}
             <Route element={<UserLayout />}>
               <Route path="/" element={<UserHome />} />/
@@ -75,6 +78,7 @@ function App() {
             </Route>
           </Routes>
         </ModalProvider>
+          <ToastContainer position="top-right" autoClose={6000} theme="colored" />
       </BrowserRouter>
     </NotificationProvider>
   );

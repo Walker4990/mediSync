@@ -47,4 +47,9 @@
         JOIN department d ON a.dept_id = d.dept_id
         WHERE a.doctor_id = #{doctorId}
     </select>
+    <select id="findDepartmentByDoctorId" resultType="string">
+        SELECT dept.dept_name FROM doctor d
+        JOIN department dept ON d.dept_id = dept.dept_id
+        WHERE doctor_id = #{doctorId}
+    </select>
 </mapper>

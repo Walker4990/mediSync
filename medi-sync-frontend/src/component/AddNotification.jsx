@@ -2,11 +2,12 @@ import { Client } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
 import { toast } from "react-toastify";
 import { useNotifications } from "../context/NotificationContext";
-import { useEffect,useRef } from "react";
+import { useEffect, useRef } from "react";
 
 export default function WebSocketListener() {
     const { addNotification } = useNotifications();
     const clientRef = useRef(null);
+
     useEffect(() => {
         if (clientRef.current) return; // 중복 방지
 
@@ -17,15 +18,14 @@ export default function WebSocketListener() {
             debug: (msg) => console.log(msg),
         });
 
-        client.onConnect = (frame) => {
-            console.log("✅ WebSocket Connected:", frame);
+        client.onConnect = () => {
+            console.log("✅ WebSocket Connected");
 
-            // ✅ 연결된 이후에만 subscribe 실행
-            const subscription = client.subscribe("/topic/testResult", (message) => {
+            // ✅ 검사 결과 알림 (기존 기능)
+            const testSub = client.subscribe("/topic/testResult", (message) => {
                 if (!message.body) return;
                 const data = JSON.parse(message.body);
 
-                // Context에 추가
                 addNotification({
                     id: Date.now(),
                     patientName: data.patientName,
@@ -41,14 +41,34 @@ export default function WebSocketListener() {
                     }),
                 });
 
-                // Toast 알림
                 toast.info(`🧪 ${data.testName} 검사 결과가 도착했습니다!`, {
-                    autoClose: 2000,
+                    autoClose: 2500,
                 });
             });
 
-            // ✅ 연결 해제 시 구독도 해제
-            clientRef.current.subscription = subscription;
+            // ✅ 퇴원 예정 알림 (새 기능)
+            const dischargeSub = client.subscribe("/topic/admission/discharge", (message) => {
+                if (!message.body) return;
+                const alerts = JSON.parse(message.body);
+
+                alerts.forEach((a) => {
+                    toast.info(`🏥 오늘 퇴원 예정: ${a.patientName} (${a.roomNo})`, {
+                        position: "top-right",
+                        autoClose: 6000,
+                        theme: "colored",
+                    });
+
+                    addNotification({
+                        id: Date.now() + Math.random(), // 중복 방지용
+                        patientName: a.patientName,
+                        message: `오늘 퇴원 예정 (${a.roomNo})`,
+                        time: new Date().toLocaleString("ko-KR"),
+                    });
+                });
+            });
+
+            // ✅ 해제 시 모두 unsubscribe
+            clientRef.current.subscriptions = [testSub, dischargeSub];
         };
 
         client.onStompError = (frame) => {
@@ -65,8 +85,8 @@ export default function WebSocketListener() {
         return () => {
             console.log("🔌 WebSocketListener unmount");
             if (clientRef.current) {
-                if (clientRef.current.subscription) {
-                    clientRef.current.subscription.unsubscribe();
+                if (clientRef.current.subscriptions) {
+                    clientRef.current.subscriptions.forEach((sub) => sub.unsubscribe());
                 }
                 clientRef.current.deactivate();
                 clientRef.current = null;
