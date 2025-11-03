@@ -228,7 +228,7 @@ const ViewReservation = ({ title, icon: Icon }) => {
   const [isCalendarModalOpen, setIsCalendarModalOpen] = useState(false);
 
   //로그인 유저 임시 번호
-  const patient_id = 5;
+  const patient_id = 1;
   const fetchCalendarData = async () => {
     try {
       const res = await axios.get(
