@@ -53,7 +53,7 @@
         join doctor d using(doctor_id)
         join patient p using(patient_id)
         WHERE r.reservation_date BETWEEN #{start} AND #{end}
-        AND status NOT IN ('CANCEL', 'DONE');
+        AND r.status NOT IN ('CANCEL', 'DONE');
     </select>
 
 
