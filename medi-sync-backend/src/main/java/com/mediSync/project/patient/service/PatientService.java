@@ -1,5 +1,6 @@
 package com.mediSync.project.patient.service;
 
+import com.mediSync.project.notification.mapper.NotificationMapper;
 import com.mediSync.project.patient.dto.PatientDTO;
 import com.mediSync.project.patient.mapper.PatientMapper;
 import com.mediSync.project.medical.vo.MedicalRecord;
@@ -16,7 +17,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class PatientService {
     private final PatientMapper patientMapper;
-
+    private final NotificationMapper notificationMapper;
 
     @Transactional
     public void register(PatientDTO dto) {
@@ -35,6 +36,10 @@ public class PatientService {
         account.setUserId(dto.getUserId());
         account.setPassword(dto.getPassword());
         patientMapper.insertPatientAccount(account);
+        
+        //알림설정 테이블에 기본 정보 등록
+        notificationMapper.insertNotificationSetting(patient.getPatientId());
+
     }
     public List<Patient> allPatients(){
         return patientMapper.allPatient();

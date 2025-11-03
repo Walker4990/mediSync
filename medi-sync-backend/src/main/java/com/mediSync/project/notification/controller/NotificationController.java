@@ -15,6 +15,7 @@ import java.util.List;
 public class NotificationController {
     private final NotificationService notificationService;
 
+
     //회원의 알림설정 가져오기
     @GetMapping("/{patientId}")
     public ResponseEntity<NotificationSetting> getNotificationSetting(@PathVariable Long patientId){
@@ -34,7 +35,6 @@ public class NotificationController {
         if(dto.getKey().equals("sms")){
             return ResponseEntity.ok("알림설정이 완료되었습니다.");
         }
-
 
         notificationService.updateSetEnabled(patientId, dto.getKey(), dto.getValue());
         return  ResponseEntity.ok("알림설정이 완료되었습니다.");
