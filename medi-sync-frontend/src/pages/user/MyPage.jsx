@@ -224,39 +224,84 @@ const NotificationSettings = () => {
   );
 };
 //환자 기록 탭
-const PatientRecords = ({ title, icon: Icon }) => (
-  <div className="p-6 space-y-4">
-    {" "}
-    <h3 className="text-xl font-semibold border-b pb-2 flex items-center">
-      {" "}
-      <Icon className="w-5 h-5 mr-2" /> {title}{" "}
-    </h3>{" "}
-    <div className="bg-white rounded-lg shadow-md overflow-hidden">
-      {" "}
-      <ul className="divide-y divide-gray-200">
-        {" "}
-        {[
-          "2025-10-15 외과 진료",
-          "2025-09-20 내과 진료",
-          "2025-08-01 건강 검진",
-        ].map((item, index) => (
-          <li
-            key={index}
-            className="flex justify-between items-center p-4 hover:bg-gray-50 transition cursor-pointer"
-          >
-            {" "}
-            <span>{item}</span>{" "}
-            <ChevronRight className="w-5 h-5 text-gray-400" />{" "}
-          </li>
-        ))}{" "}
-      </ul>{" "}
-    </div>{" "}
-    <button className="w-full py-2 border border-blue-400 text-blue-600 rounded-lg hover:bg-blue-50 transition">
-      {" "}
-      더 많은 기록 보기{" "}
-    </button>{" "}
-  </div>
-);
+const PatientRecords = ({ title, icon: Icon }) => {
+  const [records, setRecords] = useState([]);
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const pageSize = 5;
+  const patientId = 1;
+
+  //진료 기록 불러오기
+  const fetchrecords = async (newPage = 0) => {
+    try {
+      const res = await axios.get(
+        `http://localhost:8080/api/records/patient/page/${patientId}`,
+        {
+          params: { page: newPage, size: pageSize },
+        }
+      );
+      console.log("진료 기록 응답 데이터 : ", res.data);
+      if (res.data.length < pageSize) setHasMore(false);
+      setRecords((prev) => (newPage === 0 ? res.data : [...prev, ...res.data]));
+    } catch (err) {
+      console.error("진료기록 조회 실패 : ", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchrecords(0);
+  }, [patientId]);
+
+  //진료 상세 페이지 열기
+  const openRecordDetail = (medicalId) => {
+    window.open(`/medicalDetail/${medicalId}`, "_blank");
+  };
+
+  //더보기 버튼
+  const loadMore = () => {
+    const nextPage = page + 1;
+    fetchrecords(nextPage);
+    setPage(nextPage);
+  };
+
+  return (
+    <div className="p-6 space-y-4">
+      <h3 className="text-xl font-semibold border-b pb-2 flex items-center">
+        <Icon className="w-5 h-5 mr-2" /> {title}
+      </h3>
+      <div className="bg-white rounded-lg shadow-md overflow-hidden">
+        <ul className="divide-y divide-gray-200">
+          {records.map((item, index) => (
+            <li
+              key={item.medical_id || index}
+              className="flex justify-between items-center p-4 hover:bg-gray-50 transition cursor-pointer"
+              onClick={() => openRecordDetail(item.medical_id)}
+            >
+              <span>{`${item.deptName}  ${item.diagnosis} 진료 `}</span>
+              <span className="text-gray-400 ml-auto">{`${item.createdAt.replace(
+                "T",
+                " "
+              )}`}</span>
+              <ChevronRight className="w-5 h-5 text-gray-400 ml-2" />
+            </li>
+          ))}
+        </ul>
+      </div>
+      {hasMore ? (
+        <button
+          onClick={loadMore}
+          className="w-full py-2 border border-blue-400 text-blue-600 rounded-lg hover:bg-blue-50 transition"
+        >
+          더 많은 기록 보기
+        </button>
+      ) : (
+        <p className="text-gray-400 text-center text-sm">
+          모든 기록을 불러왔습니다
+        </p>
+      )}
+    </div>
+  );
+};
 // 환자 일정 탭
 const ViewReservation = ({ title, icon: Icon }) => {
   const [events, setEvents] = useState([]);

@@ -27,6 +27,15 @@ public class MedicalRecordController {
     public List<MedicalRecord> selectRecordByPatientId(@PathVariable("patientId") Long patientId) {
         return medicalRecordService.selectRecordAllByPatientId(patientId);
     }
+
+    @GetMapping("/patient/page/{patientId}")
+    public List<MedicalRecord> selectRecordByPatientIdwithPage(@PathVariable("patientId") Long patientId,
+                                                                @RequestParam(defaultValue = "0") int page,
+                                                               @RequestParam(defaultValue = "10") int size) {
+        return medicalRecordService.selectRecordAllByPatientIdWithPage(patientId,page,size);
+    }
+
+
     @PostMapping
     public ResponseEntity<Map<String, Object>> insertRecord(@RequestBody MedicalRecord mr) {
         int result = medicalRecordService.insertRecord(mr);

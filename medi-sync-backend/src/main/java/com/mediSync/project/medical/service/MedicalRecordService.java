@@ -208,6 +208,13 @@ public class MedicalRecordService {
     public List<MedicalRecord> selectRecordAllByPatientId(Long patientId) {
         return medicalRecordMapper.selectRecordAllByPatientId(patientId);
     }
+    //페이징 포함 조회
+    public List<MedicalRecord> selectRecordAllByPatientIdWithPage(Long patientId, int page, int size) {
+        int offset = page * size;
+        return medicalRecordMapper.selectRecordAllByPatientIdWithPage(patientId,offset, size);
+    }
+
+
     public List<MedicalRecord> selectReservedRecords(LocalDate date) {
         return medicalRecordMapper.selectReservedRecords(date);
     }
