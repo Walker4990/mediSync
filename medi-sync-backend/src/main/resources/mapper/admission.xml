@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.mediSync.project.room.mapper.AdmissionMapper">
+
+    <insert id="insertAdmission" parameterType="admission">
+        INSERT INTO admission (patient_id, operation_id, room_id, admitted_at, discharged_at, status)
+        VALUES (#{patientId}, #{operationId}, #{roomId}, NOW(), DATE_ADD(NOW(), INTERVAL 7 DAY), 'ADMITTED')
+    </insert>
+
+    <select id="existsByOperationId" parameterType="long" resultType="boolean">
+        SELECT COUNT(*) > 0
+        FROM admission
+        WHERE operation_id = #{operationId}
+    </select>
+    <!-- 입원 환자 조회 -->
+    <select id="getAdmissionList" resultType="admission">
+        SELECT
+        a.admission_id AS admissionId,
+        a.patient_id AS patientId,
+        p.name AS patientName,
+        a.room_id AS roomId,
+        r.room_no AS roomNo,
+        r.ward_name AS wardName,
+        r.capacity AS capacity,
+        r.current_count AS currentCount,
+        a.status AS status,
+        a.admitted_at AS admittedAt
+        FROM admission a
+        JOIN patient p ON a.patient_id = p.patient_id
+        JOIN room r ON a.room_id = r.room_id
+    </select>
+    <!-- 병실 별 입원환자 조회 -->
+    <select id="getAdmissionsByRoom" resultType="admission">
+        SELECT
+        a.admission_id       AS admissionId,
+        a.patient_id         AS patientId,
+        p.name              AS patientName,
+        p.phone              AS phone,
+        a.room_id            AS roomId,
+        r.room_no            AS roomNo,
+        r.ward_name          AS wardName,
+        a.status             AS status,
+        a.admitted_at        AS admittedAt,
+        a.discharged_at      AS dischargedAt
+        FROM admission a
+        JOIN patient p ON a.patient_id = p.patient_id
+        JOIN room r ON a.room_id = r.room_id
+        WHERE a.room_id = #{roomId}
+        AND a.status = 'ADMITTED'
+    </select>
+
+    <!--  퇴원 처리 -->
+    <update id="updateDischarge" parameterType="long">
+        UPDATE admission
+        SET status = 'DISCHARGED',
+        discharged_at = NOW(),
+        updated_at = NOW()
+        WHERE admission_id = #{admissionId}
+    </update>
+    <!-- 병실 ID 조회 -->
+    <select id="findRoomIdByAdmissionId" resultType="long">
+        SELECT room_id FROM admission WHERE admission_id = #{admissionId}
+    </select>
+
+    <!-- 퇴원 시 병실 인원 감소 -->
+    <update id="decreaseRoomCount" parameterType="long">
+        <![CDATA[
+    UPDATE room
+    SET current_count = CASE
+        WHEN current_count > 0 THEN current_count - 1
+        ELSE 0
+    END,
+    status = CASE
+        WHEN current_count - 1 <= 0 THEN 'AVAILABLE'
+        WHEN current_count - 1 < capacity THEN 'AVAILABLE'
+        ELSE 'FULL'
+    END,
+    updated_at = NOW()
+    WHERE room_id = #{roomId}
+    ]]>
+    </update>
+
+    <!-- 수용 가능 시 available 처리 -->
+    <update id="updateRoomStatusIfAvailable" parameterType="long">
+        <![CDATA[
+       UPDATE room SET status = 'AVAILABLE'
+        WHERE room_id = #{roomId}
+        AND current_count < capacity
+            AND status = 'FULL'
+              ]]>
+    </update>
+
+    <!-- 퇴원예정일 수정 -->
+    <update id="updateExpectedDischargeDate" parameterType="map">
+        UPDATE admission
+        SET discharged_at = #{dischargedAt},
+        updated_at = NOW()
+        WHERE admission_id = #{admissionId}
+    </update>
+
+    <!-- 퇴원 예정일 D-1 / D-Day 환자 조회 -->
+    <select id="getDischargeAlerts" resultType="admission">
+        <![CDATA[
+        SELECT
+            a.admission_id AS admissionId,
+            a.patient_id AS patientId,
+            p.name AS patientName,
+            a.room_id AS roomId,
+            r.room_no AS roomNo,
+            r.ward_name AS wardName,
+            a.status AS status,
+            a.discharged_at AS dischargedAt
+        FROM admission a
+        JOIN patient p ON a.patient_id = p.patient_id
+        JOIN room r ON a.room_id = r.room_id
+        WHERE a.status = 'ADMITTED'
+          AND a.discharged_at IS NOT NULL
+          AND DATE(a.discharged_at) <= DATE_ADD(CURDATE(), INTERVAL 1 DAY)
+        ]]>
+    </select>
+
+    <select id="getDischargeAlertsDday" resultType="admission">
+        <![CDATA[
+        SELECT
+            a.admission_id AS admissionId,
+            a.patient_id AS patientId,
+            p.name AS patientName,
+            a.room_id AS roomId,
+            r.room_no AS roomNo,
+            r.ward_name AS wardName,
+            a.status AS status,
+            a.discharged_at AS dischargedAt
+        FROM admission a
+        JOIN patient p ON a.patient_id = p.patient_id
+        JOIN room r ON a.room_id = r.room_id
+        WHERE a.status = 'ADMITTED'
+          AND a.discharged_at IS NOT NULL
+          AND DATE(a.discharged_at) = CURDATE()
+        ]]>
+    </select>
+    <!-- 이동 가능한 병실 찾기 -->
+    <select id="findAvailableRoomsForTransfer" parameterType="map" resultType="admission">
+        <![CDATA[
+        SELECT * FROM room
+        WHERE status = 'AVAILABLE'
+          AND department = #{department}
+          AND current_count < capacity
+          AND room_id != #{currentRoomId}
+        ]]>
+    </select>
+    <select id="findRoomById" parameterType="long" resultType="com.mediSync.project.room.vo.Room">
+        <![CDATA[
+    SELECT *
+    FROM room
+    WHERE room_id = #{roomId}
+    ]]>
+    </select>
+    <!-- 병실 옮기기 -->
+    <update id="updateRoom" parameterType="map">
+        UPDATE admission
+        SET room_id = #{newRoomId}, updated_at = NOW()
+        WHERE admission_id = #{admissionId}
+    </update>
+    <select id="findAdmissionById" parameterType="long" resultType="com.mediSync.project.room.vo.Admission">
+        SELECT * FROM admission WHERE admission_id = #{admissionId}
+    </select>
+</mapper>

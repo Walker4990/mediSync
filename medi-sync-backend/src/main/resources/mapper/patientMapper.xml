@@ -115,4 +115,8 @@
         WHERE mr.patient_id = #{patientId}
         ORDER BY p.created_at DESC
     </select>
+    <update id="updatePatientAdmissionStatus" parameterType="patient">
+        UPDATE patient SET admission_status = #{admissionStatus}
+        WHERE patient_id = #{patientId}
+    </update>
 </mapper>

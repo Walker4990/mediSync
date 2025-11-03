@@ -5,7 +5,7 @@
 
 <mapper namespace="com.mediSync.project.operation.mapper.OperationMapper">
 
-   <insert id="insertOperation" parameterType="operation">
+   <insert id="insertOperation" parameterType="operation" useGeneratedKeys="true" keyProperty="operationId">
        INSERT INTO operation (
             patient_id, doctor_id, staff_id, record_id, operation_name, diagnosis, anesthesia_type,
             room_id, scheduled_date, scheduled_time, cost, status

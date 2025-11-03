@@ -27,5 +27,5 @@ public interface ReservationMapper {
     List<ReservationDTO> findReservationBetween(@Param("start") LocalDateTime start,
                                                 @Param("end")LocalDateTime end);
     // 처방시 상태변경
-    int updateStatus(Long patientId, String status);
+    int updateStatus(Long reservationId, String status);
 }

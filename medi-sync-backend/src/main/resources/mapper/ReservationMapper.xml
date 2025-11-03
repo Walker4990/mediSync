@@ -60,7 +60,7 @@
 
 
     <!-- 예약 상태 업데이트-->
-    <update id="updateStatus" parameterType="reservation">
+    <update id="updateStatus" parameterType="long">
         UPDATE reservation
         SET status = CASE
         WHEN status = 'WAIT' THEN 'CONSULT'
@@ -68,7 +68,7 @@
         ELSE status
         END,
         updated_at = NOW()
-        WHERE patient_id = #{patientId}
+        WHERE reservation_id = #{reservationId}
         AND status IN ('WAIT', 'CONSULT')
     </update>
 </mapper>
