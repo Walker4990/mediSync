@@ -52,8 +52,10 @@
         reservation r
         join doctor d using(doctor_id)
         join patient p using(patient_id)
+        join notification_setting ns ON p.patient_id = ns.patient_id
         WHERE r.reservation_date BETWEEN #{start} AND #{end}
-        AND r.status NOT IN ('CANCEL', 'DONE');
+        AND r.status NOT IN ('CANCEL', 'DONE')
+        AND ns.email_enabled = 1
     </select>
 
 

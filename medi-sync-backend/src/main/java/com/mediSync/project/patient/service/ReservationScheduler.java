@@ -20,8 +20,6 @@ public class ReservationScheduler {
     //(cron = "0 */5 * * * ?") << 5분간격
     //(cron = "0 0 9 * * ?") << 아침 9시
 
-    //null시 << 이렇게 나오는거 수정
-
     //예약 전날 오전 9시에 알림
     @Scheduled(cron = "0 0 9 * * ?")
     public void sendReservationReminders(){
@@ -34,6 +32,8 @@ public class ReservationScheduler {
 
         List<ReservationDTO> reservationList = reservationMapper
                                 .findReservationBetween(start,end);
+        if(reservationList != null && !reservationList.isEmpty()){
+
 
         for (ReservationDTO res : reservationList){
             SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm");
@@ -51,7 +51,8 @@ public class ReservationScheduler {
                     res.getDoctorName());
             emailService.sendEmail(/*res.getEmail()*/ testEmail, "예약 알림", message);
         }
-        System.out.println(reservationList);
-        System.out.println("메일 발송 완료!");
+            System.out.println(reservationList);
+            System.out.println("메일 발송 완료!");
+        }
     }
 }

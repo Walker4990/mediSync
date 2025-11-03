@@ -146,9 +146,45 @@ const NotificationSettings = () => {
     marketing: false,
   });
 
-  const toggleSetting = (key) => {
-    setSettings((prev) => ({ ...prev, [key]: !prev[key] }));
+  let patientId = 1;
+  const toggleSetting = async (key) => {
+    const newSettings = { ...settings, [key]: !settings[key] };
+    setSettings(newSettings);
+
+    try {
+      await axios.put(`http://localhost:8080/api/notification/${patientId}`, {
+        key,
+        value: newSettings[key],
+        setting: newSettings,
+      });
+    } catch (erorr) {
+      console.error("알림설정 업데이트 실패");
+    }
   };
+  //새로고침 시 가져오기
+  useEffect(() => {
+    const fatchsettings = async () => {
+      try {
+        const res = await axios.get(
+          `http://localhost:8080/api/notification/${patientId}`
+        );
+        console.log("가져온 알림설정: ", res.data);
+
+        //키에 맞게 state 업데이트
+        setSettings({
+          email: res.data.emailEnabled,
+          push: res.data.pushEnabled,
+          marketing: res.data.marketingEnabled,
+          sms: false,
+        });
+      } catch (error) {
+        console.error("알림 설정 조회 실패 : ", error);
+      }
+    };
+
+    fatchsettings();
+  }, [patientId]);
+
   //알림설정 css
   const SettingToggle = ({ label, keyName }) => (
     <div className="flex justify-between items-center p-3 border-b last:border-b-0">
