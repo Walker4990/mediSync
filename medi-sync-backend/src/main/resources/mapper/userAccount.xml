@@ -3,6 +3,28 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.mediSync.project.mapper.UserAccountMapper">
 
+    <resultMap id="userAccountMap" type="com.mediSync.project.vo.UserAccount">
+        <id property="userId" column="user_id"/>
+        <result property="loginId" column="login_id"/>
+        <result property="password" column="password"/>
+        <result property="username" column="username"/>
+        <result property="userphone" column="userphone"/>
+        <result property="role" column="role"/>
+        <result property="createdAt" column="created_at"/>
+
+        <association property="patient" javaType="com.mediSync.project.vo.Patient">
+            <id property="patientId" column="patient_id"/>
+            <result property="residentNo" column="resident_no"/>
+            <result property="address" column="address"/>
+            <result property="insurerCode" column="insurer_code"/>
+            <result property="consentInsurance" column="consent_insurance"/>
+            <result property="status" column="status"/>
+            <result property="email" column="email"/>
+            <result property="age" column="age"/>
+            <result property="gender" column="gender"/>
+        </association>
+    </resultMap>
+
     <!-- 계정 등록 -->
     <insert id="insertUser" parameterType="user" useGeneratedKeys="true" keyProperty="userId">
         INSERT INTO user_account (
@@ -19,6 +41,14 @@
     <!-- 계정 선택 조회 -->
     <select id="selectUserById" parameterType="Long" resultType="user">
         SELECT * FROM user_account WHERE user_id = #{userId}
+    </select>
+
+    <!-- 로그인 -->
+    <select id="selectUserByLoginId" parameterType="String" resultMap="userAccountMap">
+        SELECT u.user_id, u.login_id, u.password, u.name AS username, u.phone AS userphone, u.role, u.created_at,
+        p.patient_id, p.resident_no, p.address, p.insurer_code, p.consent_insurance, p.status, p.email, p.age, p.gender
+        FROM user_account u LEFT JOIN patient p on (u.user_id = p.user_id)
+        WHERE login_id = #{loginId}
     </select>
 
     <!-- 계정 정보 수정 -->

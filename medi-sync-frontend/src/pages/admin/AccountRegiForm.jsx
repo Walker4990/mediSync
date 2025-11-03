@@ -15,7 +15,7 @@ import {
   ChevronDown,
 } from "lucide-react"; // npm i lucide-react 필요
 
-const API_URL = "http://192.168.0.24:8080/api/accounts";
+const API_URL = "http://localhost:8080/api/accounts";
 
 const InputField = ({
   label,

@@ -28,4 +28,16 @@ public class UserAccountService {
     public int userDelete(Long userId) {
         return userAccountMapper.deleteUser(userId);
     }
+
+    public UserAccount login(String loginId, String password) {
+        UserAccount user = userAccountMapper.selectUserByLoginId(loginId);
+            if (user == null) {
+                return null;
+            }
+            if (user.getPassword().equals(password)) {
+                return user;
+            } else {
+                return null;
+        }
+    }
 }

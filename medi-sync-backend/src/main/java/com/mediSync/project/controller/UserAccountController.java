@@ -52,8 +52,28 @@ public class UserAccountController {
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR) // HTTP 500
                 .body(Map.of("success", false, "message", "서버 오류 발생"));
+        }
     }
-}
+
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@RequestBody Map<String, String> loginRequest) {
+        String loginId = loginRequest.get("login_id");
+        String password = loginRequest.get("password");
+
+        // 1. 서비스 호출하여 로그인 시도
+        UserAccount loggedInUser = userAccountService.login(loginId, password);
+        if (loggedInUser != null) {
+            // 2. 로그인 성공 - 실제 JWT 인증 환경이라면, 여기서 JWT 토큰을 생성하여 반환해야 합니다.
+            return ResponseEntity.ok(
+                    Map.of("success", true, "message", "로그인 성공", "user", loggedInUser)
+            );
+        } else {
+            // 3. 로그인 실패 (ID 없음 또는 비밀번호 불일치)
+            return ResponseEntity
+                    .status(HttpStatus.UNAUTHORIZED) // HTTP 401 Unauthorized
+                    .body(Map.of("success", false, "message", "아이디 또는 비밀번호가 일치하지 않습니다."));
+        }
+    }
 
     @PutMapping("/{userId}")
     public ResponseEntity<String> updateUser(@PathVariable Long userId, @RequestBody UserAccount vo) {
