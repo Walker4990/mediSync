@@ -1,9 +1,10 @@
 import React, { useContext } from "react";
 import { Link } from "react-router-dom";
-import ModalContext from "./ModalContext";
+import { LogOut, LogIn } from "lucide-react";
+import useModal from "./ModalContext";
 
 export default function Navbar() {
-  const { openModal, openLoginModal } = useContext(ModalContext);
+  const { openModal, openLoginModal, isLoggedIn, handleLogout } = useModal();
 
   return (
     <nav className="fixed top-0 left-0 w-full bg-white shadow-sm z-50 font-pretendard">
@@ -27,19 +28,37 @@ export default function Navbar() {
 
           {/* 구분선 */}
           <span className="w-px h-5 bg-gray-300 mx-2 hidden md:block"></span>
-          <div className="btn-group flex gap-x-5">
-            <button
-              onClick={openLoginModal}
-              className="text-blue-500 border border-blue-500 px-5 py-1.5 rounded-lg hover:bg-blue-500 hover:text-white transition"
-            >
-              로그인
-            </button>
-            <button
-              onClick={openModal}
-              className="text-white bg-blue-500 px-5 py-1.5 rounded-lg hover:bg-blue-600 transition"
-            >
-              회원가입
-            </button>
+
+          <div className="btn-group flex items-center gap-x-3 sm:gap-x-4">
+            {isLoggedIn ? (
+              // 🔑 로그인 상태: 로그아웃 버튼 표시
+              <button
+                onClick={handleLogout}
+                className="flex items-center space-x-1 text-red-500 border border-red-500 px-4 py-1.5 rounded-lg shadow-sm hover:bg-red-500 hover:text-white transition duration-200 text-sm font-semibold"
+                title="로그아웃"
+              >
+                <LogOut size={18} className="hidden sm:inline-block" />
+                <span>로그아웃</span>
+              </button>
+            ) : (
+              // 🔑 로그아웃 상태: 로그인 및 회원가입 버튼 표시
+              <>
+                <button
+                  onClick={openLoginModal}
+                  className="flex items-center space-x-1 text-blue-600 border border-blue-600 px-4 py-1.5 rounded-lg shadow-sm hover:bg-blue-600 hover:text-white transition duration-200 text-sm font-semibold"
+                  title="로그인"
+                >
+                  <LogIn size={18} className="hidden sm:inline-block" />
+                  <span>로그인</span>
+                </button>
+                <button
+                  onClick={openModal}
+                  className="text-white bg-blue-600 px-4 py-1.5 rounded-lg shadow-md hover:bg-blue-700 transition duration-200 text-sm font-semibold"
+                >
+                  회원가입
+                </button>
+              </>
+            )}
           </div>
         </div>
       </div>

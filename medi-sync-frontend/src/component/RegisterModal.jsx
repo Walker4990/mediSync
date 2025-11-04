@@ -1,17 +1,16 @@
 import React, { useState, useContext, useEffect } from "react";
 import axios from "axios";
 import { X } from "lucide-react";
-import ModalContext from "./ModalContext";
+import useModal from "./ModalContext";
 
 const API_URL = "http://localhost:8080/api/users";
 
 export default function RegisterModal() {
   const {
+    openLoginModal,
     isModalOpen: isOpen,
     closeModal: onClose,
-    openLoginModal,
-  } = useContext(ModalContext);
-
+  } = useModal();
   const [form, setForm] = useState({
     name: "",
     phone: "",

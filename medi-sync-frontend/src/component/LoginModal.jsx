@@ -1,16 +1,11 @@
 import React, { useState, useContext, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { X } from "lucide-react";
-import ModalContext from "./ModalContext";
+import useModal from "./ModalContext";
 
 const socialStyles = `
-  .naver-bg {
-      background-color: #03c75a;
-  }
-  .kakao-bg {
-      background-color: #fee500;
-      color: #191919;
-  }
+    .naver-bg { background-color: #03c75a; }
+    .kakao-bg { background-color: #fee500; color: #191919; }
 `;
 
 export default function LoginModal() {
@@ -18,11 +13,13 @@ export default function LoginModal() {
     isLoginModalOpen: isOpen,
     closeLoginModal: onClose,
     openModal: openRegisterModal,
-  } = useContext(ModalContext);
+    handleLoginSuccess,
+  } = useModal();
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false); // 중복 요청 방지
 
   // isOpen 상태가 변경될 때마다 실행되며 인풋값을 초기화
   useEffect(() => {
@@ -35,20 +32,63 @@ export default function LoginModal() {
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e) => {
+  // 🔑 로그인 처리 로직
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("폼 로그인 시도:", { username, password });
-    setMessage(
-      `ID: ${username}, PW: ${password}로 서버에 로그인 요청을 보냅니다.`
-    );
 
-    // fetch('/login', { method: 'POST', body: new FormData(e.target) });
+    if (isSubmitting) return; // 중복 제출 방지
+    setIsSubmitting(true);
+    setMessage("로그인 요청 중...");
+
+    const LOGIN_API_URL = "http://localhost:8080/api/users/login";
+    let response;
+    try {
+      response = await fetch(LOGIN_API_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          login_id: username,
+          password: password,
+        }),
+      });
+
+      if (response.ok) {
+        // HTTP 상태 코드 200-299 성공
+        const data = await response.json().catch(() => ({})); // 백엔드 응답 데이터 (예: JWT 토큰, 사용자 정보)
+
+        // 🔑 로그인 성공 처리: 토큰 저장 및 전역 상태 업데이트
+        // 실제 토큰을 백엔드 응답(data)에서 추출해야 하며 아래는 가상 토큰 사용
+        const token = data.token || "mock-jwt-token-12345";
+        setMessage("로그인 성공! 환영합니다.");
+
+        setTimeout(() => {
+          handleLoginSuccess(token); // 토큰 저장 및 isLoggedIn=true 설정
+          onClose(); // 모달 닫기
+        }, 800);
+      } else {
+        // HTTP 상태 코드 4xx, 5xx 에러
+        const errorData = await response.json().catch(() => ({}));
+        // 백엔드에서 보낸 에러 메시지가 있다면 사용
+        setMessage(
+          errorData.message || "로그인에 실패했습니다. ID와 PW를 확인해 주세요."
+        );
+        // 실패 시 isSubmitting 해제
+        setIsSubmitting(false);
+      }
+    } catch (error) {
+      console.error("로그인 중 네트워크 오류 발생:", error);
+      setMessage("서버와 통신할 수 없습니다. 잠시 후 다시 시도해 주세요.");
+    } finally {
+      setIsSubmitting(false); // 제출 상태 해제
+    }
   };
 
-  // OAuth2 로그인 시작 함수 (React Router 무시하고 강제 리다이렉트)
+  // OAuth2 로그인 함수 (미구현)
   const handleSocialLogin = (provider) => {
     // Spring Security OAuth2 시작 경로로 강제 이동합니다.
-    window.location.href = `http://localhost:8080/oauth2/authorization/${provider}`;
+    window.location.href = `http://localhost:3000/${provider}`;
   };
 
   // 회원가입 링크 클릭 시 로그인 모달을 닫고 회원가입 모달을 열기
@@ -57,10 +97,6 @@ export default function LoginModal() {
     onClose(); // 로그인 모달 닫기
     openRegisterModal(); // 회원가입 모달 열기
   };
-
-  // 인풋 필드 스타일
-  const inputStyle =
-    "w-full h-12 border border-gray-300 px-4 py-2 text-base rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 placeholder-gray-400";
 
   return (
     <div
@@ -87,6 +123,7 @@ export default function LoginModal() {
           </div>
           <p className="text-gray-500 mt-1">통합 병원 업무 시스템</p>
         </div>
+
         {/* ID/PW 인풋 */}
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
@@ -127,9 +164,10 @@ export default function LoginModal() {
           </div>
           <button
             type="submit"
-            className="w-full py-3 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 transition duration-200"
+            className="w-full py-3 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 transition duration-200 disabled:bg-gray-400"
+            disabled={isSubmitting} // 제출 중 버튼 비활성화
           >
-            로그인
+            {isSubmitting ? "로그인 중..." : "로그인"}
           </button>
         </form>
         {/* 메시지 박스 */}
@@ -138,7 +176,7 @@ export default function LoginModal() {
             {message}
           </div>
         )}
-        {/* 2. 구분선 */}
+        {/* 구분선 */}
         <div className="relative flex justify-center items-center my-6">
           <div className="absolute inset-0 flex items-center">
             <div className="w-full border-t border-gray-300"></div>
@@ -147,9 +185,9 @@ export default function LoginModal() {
             또는 간편 로그인
           </div>
         </div>
-        {/* 3. 소셜 로그인 버튼 (Spring Security 경로 사용) */}
+        {/* 소셜 로그인 버튼 */}
         <div className="space-y-3">
-          {/* 네이버 로그인 버튼 */}
+          {/* 네이버 로그인 */}
           <button
             onClick={() => handleSocialLogin("naver")}
             className="flex items-center justify-center w-full py-3 naver-bg text-white font-semibold rounded-lg shadow-md hover:bg-green-600 transition duration-200"
@@ -157,15 +195,7 @@ export default function LoginModal() {
             <span className="ml-2">네이버로 시작하기</span>
           </button>
 
-          {/* <a
-              // href 속성을 사용하여 브라우저 기본 동작으로 서버에 요청합니다.
-              href="http://localhost:8080/oauth2/authorization/naver"
-              className="flex items-center justify-center w-full py-3 naver-bg text-white font-semibold rounded-lg shadow-md hover:bg-green-600 transition duration-200"
-            >
-              <span className="ml-2">네이버로 시작하기</span>
-            </a> */}
-
-          {/* 카카오 로그인 버튼 */}
+          {/* 카카오 로그인 */}
           <button
             onClick={() => handleSocialLogin("kakao")}
             className="flex items-center justify-center w-full py-3 kakao-bg text-gray-900 font-semibold rounded-lg shadow-md hover:opacity-80 transition duration-200"
@@ -173,7 +203,8 @@ export default function LoginModal() {
             <span className="ml-2">카카오로 시작하기</span>
           </button>
         </div>
-        {/* 4. 기타 링크 */}
+
+        {/* 기타 링크 */}
         <div className="mt-6 text-center text-sm">
           <a
             href="#"
@@ -183,14 +214,6 @@ export default function LoginModal() {
             회원가입
           </a>
           <span className="text-gray-400 ml-4 mr-4">|</span>
-          {/* <Link
-            to="/"
-            onClick={handleHomeClick}
-            className="text-blue-600 hover:text-blue-800 font-medium ml-4 mr-4"
-          >
-            홈으로
-          </Link>
-          <span className="text-gray-400">|</span> */}
           <a
             href="/find"
             className="text-blue-600 hover:text-blue-800 font-medium"

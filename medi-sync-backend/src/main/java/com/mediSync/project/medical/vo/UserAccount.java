@@ -1,4 +1,4 @@
-package com.mediSync.project.vo;
+package com.mediSync.project.medical.vo;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

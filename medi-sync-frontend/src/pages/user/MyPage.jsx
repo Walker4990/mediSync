@@ -21,14 +21,45 @@ import {
   X,
 } from "lucide-react";
 
-// 회원정보 수정 탭
-const UserInfoEdit = () => {
-  const [isStaff, setIsStaff] = useState(false);
+// 회원정보 수정 탭 - currentUser 데이터를 prop으로 받도록 수정
+const UserInfoEdit = ({ currentUser }) => {
+  // currentUser가 null 또는 로딩 중일 때를 대비해 기본값 설정
+  const initialName = currentUser?.username || "";
+  const initialPhone = currentUser?.userphone || "";
+  const initialEmail = currentUser?.email || "";
+
+  // isStaff는 role 또는 별도의 플래그로 결정됩니다.
+  const [isStaff, setIsStaff] = useState(currentUser?.isStaff || false);
   const [isChecking, setIsChecking] = useState(false);
   const [staffId, setStaffId] = useState("");
-  const [checkResult, setCheckResult] = useState("");
+  const [checkResult, setCheckResult] = useState(
+    isStaff ? "✅ 직원 사번이 확인되었습니다." : ""
+  );
 
-  //사번 조회(직원 인증)
+  // 폼 상태 (사용자 이름, 연락처, 이메일은 여기서 관리)
+  const [formData, setFormData] = useState({
+    username: initialName,
+    userphone: initialPhone,
+    email: initialEmail,
+  });
+
+  // currentUser 정보가 업데이트될 때 폼 데이터를 초기화 (로그인 직후 데이터 반영)
+  useEffect(() => {
+    if (currentUser && typeof currentUser === "object") {
+      setFormData({
+        username: currentUser.username || "",
+        userphone: currentUser.userphone || "",
+        email: currentUser.email || "",
+      });
+      // isStaff 정보도 여기서 업데이트
+      setIsStaff(currentUser.isStaff || false);
+      if (currentUser.isStaff) {
+        setCheckResult("✅ 직원 사번이 확인되었습니다.");
+      }
+    }
+  }, [currentUser]);
+
+  // 사번 조회(직원 인증)
   const handleStaffCheck = async () => {
     if (!staffId) {
       setCheckResult("사번을 입력해주세요.");
@@ -37,7 +68,7 @@ const UserInfoEdit = () => {
     setIsChecking(true);
     setCheckResult("");
 
-    // 사번 체크
+    // 사번 체크 API 호출 시뮬레이션
     await new Promise((resolve) => setTimeout(resolve, 1000));
     setIsChecking(false);
 
@@ -51,6 +82,13 @@ const UserInfoEdit = () => {
       setCheckResult("❌ 유효하지 않은 사번입니다.");
     }
   };
+
+  // input 변경 핸들러
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
   //회원 정보 변경 클릭 시 화면 단
   return (
     <div className="p-6 space-y-6">
@@ -87,25 +125,31 @@ const UserInfoEdit = () => {
         )}
       </div>
 
-      {/* 기본 정보 입력 필드 */}
+      {/* 기본 정보 입력 필드 - currentUser 정보 반영 */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <input
           type="text"
+          name="username"
           placeholder="이름"
           className="p-3 border rounded-lg"
-          defaultValue="홍길동"
+          value={formData.username}
+          onChange={handleChange}
         />
         <input
           type="tel"
+          name="userphone"
           placeholder="연락처"
           className="p-3 border rounded-lg"
-          defaultValue="010-1234-5678"
+          value={formData.userphone}
+          onChange={handleChange}
         />
         <input
           type="email"
+          name="email"
           placeholder="이메일"
           className="p-3 border rounded-lg"
-          defaultValue="hong@medisync.com"
+          value={formData.email}
+          onChange={handleChange}
         />
       </div>
 
@@ -161,7 +205,7 @@ const NotificationSettings = () => {
         value: newSettings[key],
         setting: newSettings,
       });
-    } catch (erorr) {
+    } catch (error) {
       console.error("알림설정 업데이트 실패");
     }
   };
@@ -227,6 +271,7 @@ const NotificationSettings = () => {
     </div>
   );
 };
+
 //환자 기록 탭
 const PatientRecords = ({ title, icon: Icon }) => {
   const [records, setRecords] = useState([]);
@@ -346,58 +391,54 @@ const ViewReservation = ({ title, icon: Icon }) => {
     fetchCalendarData();
   }, []);
 
-  //캘린더
   return (
     <div className="p-6 space-y-4">
       <h3 className="text-xl font-semibold border-b pb-2 flex items-center">
         <Icon className="w-5 h-5 mr-2" /> {title}
       </h3>
-      <div className="bg-white rounded-lg shadow-md overflow-hidden">
-        {events.length === 0 ? (
-          <p className="text-center text-gray-500 py-12">
-            현재 등록된 일정이 없습니다 🗓️
-          </p>
-        ) : (
-          <FullCalendar
-            locale="ko"
-            plugins={[dayGridPlugin, timeGridPlugin]}
-            initialView="dayGridMonth"
-            themeSystem="standard"
-            eventClick={(info) => {
-              const clickedEvent = {
-                title: info.event.title,
-                start: info.event.start,
-                color: info.event.backgroundColor,
-                textColor: info.event.textColor,
-                type: info.event.extendedProps.type,
-                patientName: info.event.extendedProps.patientName,
-                doctorName: info.event.extendedProps.doctorName,
-                id: info.event.extendedProps.id,
-              };
+      <div className="bg-white rounded-lg shadow-md p-2">
+        {/* <p className="text-center text-red-500 py-4">
+            사용자 정보를 불러오는 중입니다...
+          </p> */}
+        <FullCalendar
+          locale="ko"
+          plugins={[dayGridPlugin, timeGridPlugin]}
+          initialView="dayGridMonth"
+          themeSystem="standard"
+          eventClick={(info) => {
+            const clickedEvent = {
+              title: info.event.title,
+              start: info.event.start,
+              color: info.event.backgroundColor,
+              textColor: info.event.textColor,
+              type: info.event.extendedProps.type,
+              patientName: info.event.extendedProps.patientName,
+              doctorName: info.event.extendedProps.doctorName,
+              id: info.event.extendedProps.id,
+            };
 
-              if (clickedEvent) {
-                setSelectedEvent(clickedEvent);
-                setIsCalendarModalOpen(true);
-              } else {
-                console.warn("일치하는 이벤트를 찾을 수 없습니다:", info.event);
-              }
-            }}
-            headerToolbar={{
-              left: "prev,next today",
-              center: "title",
-              right: "",
-            }}
-            buttonText={{
-              today: "오늘",
-              month: "월",
-              week: "주",
-              day: "일",
-            }}
-            events={events}
-            eventDisplay="block"
-            height={600}
-          ></FullCalendar>
-        )}
+            if (clickedEvent) {
+              setSelectedEvent(clickedEvent);
+              setIsCalendarModalOpen(true);
+            } else {
+              console.warn("일치하는 이벤트를 찾을 수 없습니다:", info.event);
+            }
+          }}
+          headerToolbar={{
+            left: "prev,next today",
+            center: "title",
+            right: "",
+          }}
+          buttonText={{
+            today: "오늘",
+            month: "월",
+            week: "주",
+            day: "일",
+          }}
+          events={events}
+          eventDisplay="block"
+          height={600}
+        ></FullCalendar>
       </div>
       {isCalendarModalOpen && selectedEvent && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
@@ -551,11 +592,19 @@ const ChatFloatingButton = () => {
 // ----------------------------------------------------
 
 const MyPage = () => {
+  const [currentUser, setCurrentUser] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  useEffect(() => {
+    setTimeout(() => {
+      setCurrentUser(null);
+      setIsLoading(false);
+    }, 500);
+  }, []);
+
   // 사용자의 현재 탭 상태 관리
   const [activeTab, setActiveTab] = useState("info_edit");
 
   // 마이페이지 메뉴 정의
-  // 환자 ID에 해당하는 메뉴들은 'patient' 그룹으로 묶음
   const menuItems = useMemo(
     () => [
       {
@@ -589,7 +638,12 @@ const MyPage = () => {
         icon: FileText,
         group: "patient",
       },
-      { id: "tests", label: "검사 결과 조회", icon: Search, group: "patient" },
+      {
+        id: "tests",
+        label: "검사 결과 조회",
+        icon: Search,
+        group: "patient",
+      },
       {
         id: "insurance_payment",
         label: "보험/수납 관련",
@@ -600,23 +654,49 @@ const MyPage = () => {
     []
   );
 
-  // 탭 콘텐츠 맵핑
+  // 탭 콘텐츠 맵핑 - currentUser를 props로 전달
   const renderContent = () => {
+    if (isLoading) {
+      return (
+        <div className="p-10 text-center text-gray-500">
+          사용자 정보를 불러오는 중입니다...
+        </div>
+      );
+    }
+
     switch (activeTab) {
       case "info_edit":
-        return <UserInfoEdit />;
+        return <UserInfoEdit currentUser={currentUser} />;
       case "password_change":
         return <PasswordChange />;
       case "notification_settings":
         return <NotificationSettings />;
       case "med_records":
-        return <ViewReservation title="예약 조회 및 변경" icon={Calendar} />;
+        return (
+          <ViewReservation
+            title="예약 조회 및 변경"
+            icon={Calendar}
+            currentUser={currentUser}
+          />
+        );
       case "reservations":
         return <PatientRecords title="진료 기록" icon={FileText} />;
       case "tests":
-        return <ViewReservation title="검사 결과 조회" icon={Search} />;
+        return (
+          <ViewReservation
+            title="검사 결과 조회"
+            icon={Search}
+            currentUser={currentUser}
+          />
+        );
       case "insurance_payment":
-        return <ViewReservation title="보험/수납 내역" icon={Wallet} />;
+        return (
+          <ViewReservation
+            title="보험/수납 내역"
+            icon={Wallet}
+            currentUser={currentUser}
+          />
+        );
       default:
         return <div className="p-6 text-gray-500">선택된 메뉴가 없습니다.</div>;
     }
@@ -626,13 +706,16 @@ const MyPage = () => {
   const activeLabel =
     menuItems.find((item) => item.id === activeTab)?.label || "마이페이지";
 
+  // 사용자 이름이 로딩 중일 때는 '...' 표시, 로딩 완료 후 값이 없으면 '사용자' 표시
+  const userName = currentUser?.name || (isLoading ? "..." : "사용자");
+
   return (
     <div className="font-pretendard">
-      {/* 상단 섹션 */}
+      {/* 상단 섹션: 사용자 이름 동적 반영 */}
       <section className="pt-12 pb-16 bg-gradient-to-l from-white to-sky-100 shadow-inner">
         <div className="max-w-6xl mx-auto px-4 md:px-8">
           <h1 className="text-3xl font-bold text-gray-800">
-            환영합니다, <span className="text-blue-600">홍길동</span> 님!
+            환영합니다, <span className="text-blue-600">{userName}</span> 님!
           </h1>
           <p className="text-gray-500 mt-1">
             이곳에서 당신의 정보를 안전하게 관리하고 기록을 확인하세요.
@@ -700,5 +783,4 @@ const MyPage = () => {
     </div>
   );
 };
-
 export default MyPage;

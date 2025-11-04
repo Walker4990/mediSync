@@ -1,4 +1,4 @@
-import { createContext } from "react";
+import { createContext, useContext } from "react";
 
 /**
  * 전역 모달 상태 관리를 위한 Context 객체입니다.
@@ -6,4 +6,9 @@ import { createContext } from "react";
  */
 const ModalContext = createContext();
 
-export default ModalContext;
+export default function useModal() {
+  const context = useContext(ModalContext);
+  return context;
+}
+
+export { ModalContext };
