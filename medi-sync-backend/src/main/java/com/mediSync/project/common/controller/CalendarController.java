@@ -36,6 +36,14 @@ public class CalendarController {
         return calendarInfo;
     }
 
+    @GetMapping("/all")
+    public List<CalendarDTO> getScheduleAll(){
+        List<CalendarDTO> calenderInfo = calendarService.viewAllReservationAll();
+
+        System.out.println("전체 일정 리스트 : " + calenderInfo);
+        return calenderInfo;
+    }
+
     //회원의 예약정보 업데이트하기
     @PutMapping
     public ResponseEntity<?> deleteReservation(@RequestParam("id") Long id,
