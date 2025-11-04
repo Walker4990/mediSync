@@ -14,8 +14,10 @@ import java.time.LocalDateTime;
 public class ChatMessage {
     private Long messageId;
     private Long senderId;
+    private String senderType;
     private Long receiverId;
-    private String text;
+    private String receiverType;
+    private String content;
     private LocalDateTime sentAt;
     private boolean readStatus;
     private String chatType;

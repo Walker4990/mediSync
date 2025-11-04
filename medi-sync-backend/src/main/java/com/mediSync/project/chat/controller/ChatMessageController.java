@@ -28,7 +28,12 @@ public class ChatMessageController {
     }
     @MessageMapping("/chat/{senderId}/{receiverId}")
     public void sendMessage(@DestinationVariable Long senderId, @DestinationVariable Long receiverId, ChatMessage chatMessage){
+        chatMessage.setSenderId(senderId);
+        chatMessage.setReceiverId(receiverId);
         chatMessage.setSentAt(LocalDateTime.now());
+        if (chatMessage.getSenderType() == null) chatMessage.setSenderType("USER");
+        if (chatMessage.getReceiverType() == null) chatMessage.setReceiverType("ADMIN");
+        System.out.println("📩 [WebSocket] 메시지 수신: " + chatMessage);
         chatMessageService.insertMessage(chatMessage);
         messagingTemplate.convertAndSend("/topic/chat/" + receiverId, chatMessage);
         }

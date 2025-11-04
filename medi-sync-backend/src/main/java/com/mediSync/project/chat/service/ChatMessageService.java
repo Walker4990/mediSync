@@ -17,7 +17,7 @@ public class ChatMessageService {
         return  chatMessageMapper.insertMessage(chatMessage);
     }
 
-    public List<ChatMessage> getMessagesBetween(Long LeceiverId, Long senderId){
-        return chatMessageMapper.getMessagesBetween(LeceiverId, senderId);
+    public List<ChatMessage> getMessagesBetween(Long receiverId, Long senderId){
+        return chatMessageMapper.getMessagesBetween(receiverId, senderId);
     }
 }
