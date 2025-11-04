@@ -13,6 +13,7 @@ import UserHome from "./pages/user/UserHome";
 import MedicalConsult from "./pages/user/MedicalConsult";
 import MediHistory from "./pages/admin/MediHistory";
 import MedicalRecordPage from "./pages/admin/MedicalRecordPage";
+import Insurance from "./pages/user/Insurance";
 import DrugPage from "./pages/admin/DrugPage";
 import Reservation from "./pages/user/Reservation";
 import TestReservationPage from "./pages/admin/TestReservationPage";
@@ -72,6 +73,7 @@ function AppContent() {
             <Route path="/user/mypage" element={<MyPage />} />
             <Route path="/user/consult" element={<MedicalConsult />} />
             <Route path="/user/reservation" element={<Reservation />} />
+            <Route path="/user/insurance" element={<Insurance />} />
           </Route>
           {/*새창 열림*/}
           <Route

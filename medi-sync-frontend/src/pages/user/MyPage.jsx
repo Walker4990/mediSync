@@ -23,11 +23,6 @@ import {
 
 // 회원정보 수정 탭 - currentUser 데이터를 prop으로 받도록 수정
 const UserInfoEdit = ({ currentUser }) => {
-  // currentUser가 null 또는 로딩 중일 때를 대비해 기본값 설정
-  const initialName = currentUser?.username || "";
-  const initialPhone = currentUser?.userphone || "";
-  const initialEmail = currentUser?.email || "";
-
   // isStaff는 role 또는 별도의 플래그로 결정됩니다.
   const [isStaff, setIsStaff] = useState(currentUser?.isStaff || false);
   const [isChecking, setIsChecking] = useState(false);
@@ -38,9 +33,9 @@ const UserInfoEdit = ({ currentUser }) => {
 
   // 폼 상태 (사용자 이름, 연락처, 이메일은 여기서 관리)
   const [formData, setFormData] = useState({
-    username: initialName,
-    userphone: initialPhone,
-    email: initialEmail,
+    username: currentUser?.username,
+    userphone: currentUser?.userphone,
+    email: currentUser?.email,
   });
 
   // currentUser 정보가 업데이트될 때 폼 데이터를 초기화 (로그인 직후 데이터 반영)
@@ -209,7 +204,7 @@ const NotificationSettings = () => {
       console.error("알림설정 업데이트 실패");
     }
   };
-  //새로고침 시 가져오기
+  // 새로고침 시 가져오기
   useEffect(() => {
     const fatchsettings = async () => {
       try {
@@ -233,7 +228,7 @@ const NotificationSettings = () => {
     fatchsettings();
   }, [patientId]);
 
-  //알림설정 css
+  // 알림설정 css
   const SettingToggle = ({ label, keyName }) => (
     <div className="flex justify-between items-center p-3 border-b last:border-b-0">
       <span className="text-gray-700">{label}</span>
@@ -251,7 +246,7 @@ const NotificationSettings = () => {
       </button>
     </div>
   );
-  //알림 설정 화면단
+  // 알림 설정 화면단
   return (
     <div className="p-6 space-y-4">
       <h3 className="text-xl font-semibold border-b pb-2 flex items-center">
@@ -272,7 +267,7 @@ const NotificationSettings = () => {
   );
 };
 
-//환자 기록 탭
+// 환자 기록 탭
 const PatientRecords = ({ title, icon: Icon }) => {
   const [records, setRecords] = useState([]);
   const [page, setPage] = useState(0);
@@ -280,7 +275,7 @@ const PatientRecords = ({ title, icon: Icon }) => {
   const pageSize = 5;
   const patientId = 1;
 
-  //진료 기록 불러오기
+  // 진료 기록 불러오기
   const fetchrecords = async (newPage = 0) => {
     try {
       const res = await axios.get(
@@ -301,7 +296,7 @@ const PatientRecords = ({ title, icon: Icon }) => {
     fetchrecords(0);
   }, [patientId]);
 
-  //진료 상세 페이지 열기
+  // 진료 상세 페이지 열기
   const openRecordDetail = (recordId) => {
     window.open(
       `/user/medicalDetail/${recordId}`,
@@ -310,7 +305,7 @@ const PatientRecords = ({ title, icon: Icon }) => {
     );
   };
 
-  //더보기 버튼
+  // 더보기 버튼
   const loadMore = () => {
     const nextPage = page + 1;
     fetchrecords(nextPage);
@@ -361,7 +356,7 @@ const ViewReservation = ({ title, icon: Icon }) => {
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [isCalendarModalOpen, setIsCalendarModalOpen] = useState(false);
 
-  //로그인 유저 임시 번호
+  // 로그인 유저 임시 번호
   const patient_id = 1;
   const fetchCalendarData = async () => {
     try {
@@ -443,7 +438,7 @@ const ViewReservation = ({ title, icon: Icon }) => {
       {isCalendarModalOpen && selectedEvent && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="bg-white rounded-2xl shadow-2xl w-[420px] overflow-hidden  animate-fadeIn ">
-            {/*상단 해더 */}
+            {/* 상단 헤더 */}
             <div
               className="h-24 flex items-center justify-center text-white text-2xl font-bold"
               style={{
@@ -459,7 +454,7 @@ const ViewReservation = ({ title, icon: Icon }) => {
             >
               {selectedEvent.title}
             </div>
-            {/*본문 내용*/}
+            {/* 본문 내용 */}
             <div className="p-6 space-y-4">
               <div className="space-y-2 text-gray-700">
                 <div className="flex justify-between border-b pb-2">
@@ -492,7 +487,7 @@ const ViewReservation = ({ title, icon: Icon }) => {
                   </span>
                 </div>
               </div>
-              {/*버튼*/}
+              {/* 버튼 */}
               <div className="flex justify-end space-x-3 pt-4">
                 {new Date(selectedEvent.start) > new Date() && (
                   <button
@@ -512,12 +507,12 @@ const ViewReservation = ({ title, icon: Icon }) => {
                             },
                           }
                         );
-                        //모달 닫기
+                        // 모달 닫기
                         alert("예약을 취소하였습니다.");
                         setIsCalendarModalOpen(false);
                         setSelectedEvent(null);
 
-                        //달력 리로드
+                        // 달력 리로드
                         await fetchCalendarData();
                       } catch (error) {
                         console.log("예약 취소 오류", error);
@@ -594,13 +589,37 @@ const ChatFloatingButton = () => {
 
 const MyPage = () => {
   const [currentUser, setCurrentUser] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
-    setTimeout(() => {
-      setCurrentUser(null);
-      setIsLoading(false);
-    }, 500);
+    // const token = localStorage.getItem("token");
+    // if (!token) {
+    //   alert("로그인이 필요합니다.");
+    //   window.location.href = "/login";
+    //   return;
+    // }
+    axios
+      .get("http://localhost:8080/api/users/mypage", {
+        // headers: { Authorization: `Bearer ${token}` },
+      })
+      .then((res) => {
+        setCurrentUser(res.data);
+      })
+      .catch(() => {
+        setCurrentUser(null);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   }, []);
+
+  const formattedDate = useMemo(() => {
+    if (!currentUser?.createdAt) return "";
+    return new Date(currentUser.createdAt).toLocaleDateString();
+  }, [currentUser]);
+
+  // if (loading) return <p>로딩 중...</p>;
+  // if (!currentUser) return <p>로그인이 필요합니다.</p>;
 
   // 사용자의 현재 탭 상태 관리
   const [activeTab, setActiveTab] = useState("info_edit");
@@ -655,9 +674,8 @@ const MyPage = () => {
     []
   );
 
-  // 탭 콘텐츠 맵핑 - currentUser를 props로 전달
   const renderContent = () => {
-    if (isLoading) {
+    if (loading) {
       return (
         <div className="p-10 text-center text-gray-500">
           사용자 정보를 불러오는 중입니다...
@@ -708,7 +726,7 @@ const MyPage = () => {
     menuItems.find((item) => item.id === activeTab)?.label || "마이페이지";
 
   // 사용자 이름이 로딩 중일 때는 '...' 표시, 로딩 완료 후 값이 없으면 '사용자' 표시
-  const userName = currentUser?.name || (isLoading ? "..." : "사용자");
+  const userName = currentUser?.name || (loading ? "..." : "사용자");
 
   return (
     <div className="font-pretendard">

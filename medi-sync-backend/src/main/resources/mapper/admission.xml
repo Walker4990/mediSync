@@ -6,8 +6,11 @@
 <mapper namespace="com.mediSync.project.room.mapper.AdmissionMapper">
 
     <insert id="insertAdmission" parameterType="admission">
-        INSERT INTO admission (patient_id, operation_id, room_id, admitted_at, discharged_at, status)
-        VALUES (#{patientId}, #{operationId}, #{roomId}, NOW(), DATE_ADD(NOW(), INTERVAL 7 DAY), 'ADMITTED')
+        INSERT INTO admission (
+        patient_id, operation_id, room_id, admitted_at, status
+        ) VALUES (
+        #{patientId}, #{operationId}, #{roomId}, #{admissionDate}, 'SCHEDULED'
+        )
     </insert>
 
     <select id="existsByOperationId" parameterType="long" resultType="boolean">
@@ -167,4 +170,20 @@
     <select id="findAdmissionById" parameterType="long" resultType="com.mediSync.project.room.vo.Admission">
         SELECT * FROM admission WHERE admission_id = #{admissionId}
     </select>
+    <!-- 오늘 입원하는 환자 조회 -->
+    <select id="findScheduledAdmissionsForToday" resultType="Admission">
+        SELECT a.admission_id, a.patient_id, a.room_id, r.room_no, p.name AS patient_name
+        FROM admission a
+        JOIN operation o ON a.operation_id = o.operation_id
+        JOIN room r ON a.room_id = r.room_id
+        JOIN patient p ON a.patient_id = p.patient_id
+        WHERE a.status = 'SCHEDULED'
+        AND o.scheduled_date = CURDATE();
+    </select>
+
+    <update id="updateAdmissionStatus">
+        UPDATE admission
+        SET status = #{status}, admitted_at = NOW()
+        WHERE admission_id = #{admissionId};
+    </update>
 </mapper>

@@ -7,10 +7,13 @@
         <id property="userId" column="user_id"/>
         <result property="loginId" column="login_id"/>
         <result property="password" column="password"/>
-        <result property="username" column="username"/>
-        <result property="userphone" column="userphone"/>
+        <result property="name" column="name"/>
+        <result property="phone" column="phone"/>
         <result property="role" column="role"/>
         <result property="createdAt" column="created_at"/>
+        <result property="username" column="username"/>
+        <result property="userphone" column="userphone"/>
+        <result property="email" column="email"/>
 
         <association property="patient" javaType="com.mediSync.project.patient.vo.Patient">
             <id property="patientId" column="patient_id"/>
@@ -43,10 +46,17 @@
         SELECT * FROM user_account WHERE user_id = #{userId}
     </select>
 
+    <!-- 중복 아이디 체크 -->
+    <select id="checkIdExists" parameterType="string" resultType="int">
+        SELECT COUNT(*)
+        FROM user_account
+        WHERE login_id = #{loginId}
+    </select>
+
     <!-- 로그인 -->
     <select id="selectUserByLoginId" parameterType="String" resultMap="userAccountMap">
         SELECT u.user_id, u.login_id, u.password, u.name AS username, u.phone AS userphone, u.role, u.created_at,
-        p.patient_id, p.resident_no, p.address, p.insurer_code, p.consent_insurance, p.status, p.email, p.age, p.gender
+        p.patient_id, p.resident_no, p.address, p.insurer_code, p.consent_insurance, p.status, p.email AS email, p.age, p.gender
         FROM user_account u LEFT JOIN patient p on (u.user_id = p.user_id)
         WHERE login_id = #{loginId}
     </select>

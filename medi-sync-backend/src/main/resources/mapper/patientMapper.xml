@@ -90,11 +90,20 @@
         p.admission_date   AS admissionDate,
         p.discharge_date   AS dischargeDate
         FROM patient p
-        LEFT JOIN room r ON p.room_id = r.room_id
-        LEFT JOIN medical_record mr ON p.patient_id = mr.patient_id
-        LEFT JOIN doctor d ON mr.doctor_id = d.doctor_id
+        LEFT JOIN room r
+        ON p.room_id = r.room_id
+        LEFT JOIN medical_record mr
+        ON mr.record_id = (
+        SELECT record_id
+        FROM medical_record
+        WHERE patient_id = p.patient_id
+        ORDER BY created_at DESC
+        LIMIT 1
+        )
+        LEFT JOIN doctor d
+        ON mr.doctor_id = d.doctor_id
         WHERE p.admission_status = 'INPATIENT'
-        ORDER BY r.room_no ASC
+        ORDER BY r.room_no ASC;
     </select>
     <!-- 환자 과거 처방 내역 조회 -->
     <select id="findByPatientId" parameterType="long" resultType="prescription">

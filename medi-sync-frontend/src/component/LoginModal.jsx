@@ -1,5 +1,6 @@
 import React, { useState, useContext, useEffect } from "react";
 import { Link } from "react-router-dom";
+import axios from "axios";
 import { X } from "lucide-react";
 import useModal from "./ModalContext";
 
@@ -16,7 +17,7 @@ export default function LoginModal() {
     handleLoginSuccess,
   } = useModal();
 
-  const [username, setUsername] = useState("");
+  const [loginId, setLoginId] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false); // 중복 요청 방지
@@ -24,7 +25,7 @@ export default function LoginModal() {
   // isOpen 상태가 변경될 때마다 실행되며 인풋값을 초기화
   useEffect(() => {
     if (isOpen) {
-      setUsername("");
+      setLoginId("");
       setPassword("");
       setMessage("");
     }
@@ -36,52 +37,21 @@ export default function LoginModal() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (isSubmitting) return; // 중복 제출 방지
-    setIsSubmitting(true);
-    setMessage("로그인 요청 중...");
-
-    const LOGIN_API_URL = "http://localhost:8080/api/users/login";
-    let response;
     try {
-      response = await fetch(LOGIN_API_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          login_id: username,
-          password: password,
-        }),
+      const res = await axios.post("/api/users/login", {
+        login_id: loginId,
+        password: password,
       });
 
-      if (response.ok) {
-        // HTTP 상태 코드 200-299 성공
-        const data = await response.json().catch(() => ({})); // 백엔드 응답 데이터 (예: JWT 토큰, 사용자 정보)
-
-        // 🔑 로그인 성공 처리: 토큰 저장 및 전역 상태 업데이트
-        // 실제 토큰을 백엔드 응답(data)에서 추출해야 하며 아래는 가상 토큰 사용
-        const token = data.token || "mock-jwt-token-12345";
-        setMessage("로그인 성공! 환영합니다.");
-
-        setTimeout(() => {
-          handleLoginSuccess(token); // 토큰 저장 및 isLoggedIn=true 설정
-          onClose(); // 모달 닫기
-        }, 800);
+      if (res.data.success) {
+        localStorage.setItem("token", res.data.token);
+        alert("로그인 성공!");
+        window.location.href = "/mypage";
       } else {
-        // HTTP 상태 코드 4xx, 5xx 에러
-        const errorData = await response.json().catch(() => ({}));
-        // 백엔드에서 보낸 에러 메시지가 있다면 사용
-        setMessage(
-          errorData.message || "로그인에 실패했습니다. ID와 PW를 확인해 주세요."
-        );
-        // 실패 시 isSubmitting 해제
-        setIsSubmitting(false);
+        alert(res.data.message);
       }
-    } catch (error) {
-      console.error("로그인 중 네트워크 오류 발생:", error);
-      setMessage("서버와 통신할 수 없습니다. 잠시 후 다시 시도해 주세요.");
-    } finally {
-      setIsSubmitting(false); // 제출 상태 해제
+    } catch (err) {
+      alert("로그인 실패");
     }
   };
 
@@ -128,18 +98,18 @@ export default function LoginModal() {
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label
-              htmlFor="username"
+              htmlFor="loginId"
               className="block text-sm font-medium text-gray-700 mb-1 pl-2"
             >
               아이디
             </label>
             <input
               type="text"
-              id="username"
-              name="username"
+              id="loginId"
+              name="loginId"
               required
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              value={loginId}
+              onChange={(e) => setLoginId(e.target.value)}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition duration-150"
               placeholder="사용자 ID 입력"
             />
