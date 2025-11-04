@@ -15,9 +15,9 @@
   position: relative;
   padding: 8px 12px;
   margin-bottom: 10px;
-  background-color: #f8fafc;
+  background-color: #ffffff;
   border-radius: 10px;
-  border: 1px solid #e2e8f0;
+  border: none;
 } /* 툴바 내부 영역을 3등분(왼/중/오) */
 
 .fc-toolbar-chunk {
@@ -38,9 +38,9 @@
   padding-left: 4px;
 }
 .fc-toolbar-title {
-  font-size: 1.25rem;
+  font-size: 0.5rem;
   font-weight: 600;
-  color: #1e40af;
+  color: #2457ff;
   text-align: center;
   margin: 0;
   white-space: nowrap;
@@ -84,6 +84,7 @@
 .fc-daygrid-day {
   background-color: #ffffff;
   border: 1px solid #f1f5f9;
+  color: #00326e;
   transition: background-color 0.15s ease;
 }
 .fc-daygrid-day:hover {
@@ -103,6 +104,7 @@
   color: white !important;
   font-size: 0.85rem;
   padding: 2px 6px;
+  margin: 1px;
   transition: transform 0.15s ease;
 }
 .fc-event:hover {
