@@ -34,7 +34,6 @@
         SELECT room_id,
         room_name,
         capacity,
-        available,
         created_at
         FROM operation_room
         WHERE room_id = #{roomId}
@@ -42,11 +41,20 @@
 
     <!-- 특정 수술 상세 조회 -->
     <select id="getOperationById" parameterType="long" resultType="operation">
-        SELECT o.*, p.name AS patient_name, d.doctor_name AS doctor_name, r.room_name AS roomName
+        SELECT
+        o.operation_id,
+        o.patient_id,
+        p.name AS patientName,
+        o.doctor_id,
+        d.doctor_name AS doctorName,
+        o.operation_name AS operationName,
+        o.cost,
+        o.status,
+        o.scheduled_date,
+        o.scheduled_time
         FROM operation o
         LEFT JOIN patient p ON o.patient_id = p.patient_id
         LEFT JOIN doctor d ON o.doctor_id = d.doctor_id
-        LEFT JOIN operation_room r ON o.room_id = r.room_id
         WHERE o.operation_id = #{operationId}
     </select>
 
@@ -148,22 +156,30 @@
     </select>
 
     <!-- 수술 등록 시 수술실 사용중으로 표시 -->
-    <update id="updateRoomInUse" parameterType="long">
-        UPDATE operation_room
-        SET available = 0
-        WHERE room_id = #{roomId};
-    </update>
+<!--    <update id="updateRoomInUse" parameterType="long">-->
+<!--        UPDATE operation_room-->
+<!--        SET available = 0-->
+<!--        WHERE room_id = #{roomId};-->
+<!--    </update>-->
 
     <!-- 수술 완료 시 다시 사용 가능으로 복귀 -->
-    <update id="updateRoomAvailable" parameterType="long">
-        UPDATE operation_room
-        SET available = 1
-        WHERE room_id = #{roomId};
-    </update>
+<!--    <update id="updateRoomAvailable" parameterType="long">-->
+<!--        UPDATE operation_room-->
+<!--        SET available = 1-->
+<!--        WHERE room_id = #{roomId};-->
+<!--    </update>-->
 
     <!-- 수술 가능한 방 고르기 -->
     <select id="selectAvailableRooms" resultType="operationRoom">
-        SELECT * FROM operation_room WHERE available = 1
+        SELECT r.*
+        FROM operation_room r
+        WHERE r.room_id NOT IN (
+        SELECT o.room_id
+        FROM operation o
+        WHERE o.scheduled_date = #{scheduledDate}
+        AND o.scheduled_time = #{scheduledTime}
+        AND o.status IN ('SCHEDULED','IN_PROGRESS')
+        )
     </select>
 
     <!-- 수술 진행상태 자동 변경 -->
@@ -186,4 +202,7 @@
       AND CONCAT(scheduled_date, ' ', scheduled_time) < NOW() - INTERVAL 4 HOUR
     ]]>
     </update>
+
+
+
 </mapper>

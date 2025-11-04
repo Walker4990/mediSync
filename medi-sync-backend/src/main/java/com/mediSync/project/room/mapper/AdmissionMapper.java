@@ -5,6 +5,7 @@ import com.mediSync.project.room.vo.Room;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -13,7 +14,8 @@ import java.util.Map;
 public interface AdmissionMapper {
     int insertAdmission(@Param("patientId") Long patientId,
                         @Param("operationId") Long operationId,
-                        @Param("roomId") Long roomId);
+                        @Param("roomId") Long roomId,
+                        @Param("admissionDate") LocalDate admissionDate);
 
     boolean existsByOperationId(Integer operationId);
 
@@ -37,4 +39,9 @@ public interface AdmissionMapper {
     int updateRoom(@Param("admissionId") Long admissionId,
                    @Param("newRoomId") Long newRoomId);
     Admission findAdmissionById(Long admissionId);
+
+    // 오늘 입원하는 환자 조회
+    List<Admission> findScheduledAdmissionsForToday();
+    int updateAdmissionStatus(Long admissionId, String status);
+
 }

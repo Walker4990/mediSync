@@ -18,17 +18,22 @@ import com.mediSync.project.operation.vo.OperationRoom;
 import com.mediSync.project.operation.vo.OperationStaff;
 import com.mediSync.project.patient.mapper.PatientMapper;
 import com.mediSync.project.patient.vo.Patient;
+import com.mediSync.project.room.mapper.AdmissionHistoryMapper;
 import com.mediSync.project.room.mapper.AdmissionMapper;
 import com.mediSync.project.room.mapper.RoomMapper;
 import com.mediSync.project.room.vo.Room;
 import lombok.RequiredArgsConstructor;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.ByteArrayOutputStream;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 @Service
@@ -41,60 +46,71 @@ public class OperationService {
     private final FinanceTransactionMapper financeTransactionMapper;
     private final RoomMapper roomMapper;
     private final AdmissionMapper admissionMapper;
-
+    private final AdmissionHistoryMapper admissionHistoryMapper;
+    private final SimpMessagingTemplate messagingTemplate;
     @Transactional
     public boolean reserveOperation(Operation operation) {
-        //  사용 가능한 수술실 조회
-        List<OperationRoom> availableRooms = operationMapper.selectAvailableRooms();
-        if (availableRooms.isEmpty()) {
-            throw new IllegalStateException("현재 사용 가능한 수술실이 없습니다.");
+// ✅ 날짜, 시간 필수값 확인
+        if (operation.getScheduledDate() == null || operation.getScheduledTime() == null) {
+            throw new IllegalArgumentException("수술 날짜 및 시간이 지정되지 않았습니다.");
         }
 
-        //  랜덤으로 수술실 선택
+        // ✅ 날짜+시간 기준으로 사용 가능한 수술실 조회
+        List<OperationRoom> availableRooms = operationMapper.selectAvailableRooms(
+                operation.getScheduledDate(),
+                operation.getScheduledTime()
+        );
+        if (availableRooms.isEmpty()) {
+            throw new IllegalStateException("해당 시간대에 사용 가능한 수술실이 없습니다.");
+        }
+
+        // ✅ 랜덤 수술실 배정
         OperationRoom selectedRoom = availableRooms.get(new Random().nextInt(availableRooms.size()));
         operation.setRoomId(selectedRoom.getRoomId());
 
-        //  중복 예약 확인
+        // ✅ 중복 예약 체크 (날짜+시간 기준)
         int conflict = operationMapper.checkScheduleConflict(
                 operation.getRoomId(),
-                operation.getScheduledDate().toString(),
-                operation.getScheduledTime().toString()
+                operation.getScheduledDate(),
+                operation.getScheduledTime()
         );
         if (conflict > 0) {
             throw new IllegalStateException("이미 예약된 시간입니다.");
         }
 
-        //  수술 등록
+        // ✅ 수술 예약 등록 (당일 진행 아님)
         int inserted = operationMapper.insertOperation(operation);
         if (inserted <= 0) return false;
 
-        // 수술실 상태 변경
-        operationMapper.updateRoomInUse(operation.getRoomId());
-
-        // 담당 의사 진료과 조회
+        // ✅ 수술 전날 입원 예약 로직
+        LocalDate admissionDate = operation.getScheduledDate().minusDays(1);
         String department = doctorMapper.findDepartmentByDoctorId(operation.getDoctorId());
-
-        // 해당 진료과 병실만 조회
         List<Room> availableRoom = roomMapper.findAvailableRooms(department);
         if (availableRoom.isEmpty()) {
             throw new IllegalStateException(department + " 병실에 공실이 없습니다.");
         }
 
-        //  랜덤으로 병실 선택
+        // ✅ 랜덤 병실 선택
         Room selectedRoomForAdmission = availableRoom.get(new Random().nextInt(availableRoom.size()));
 
-        //  입원 등록
+        // ✅ 입원 “예약”으로 등록 (상태: RESERVED)
         admissionMapper.insertAdmission(
                 operation.getPatientId(),
                 operation.getOperationId(),
-                selectedRoomForAdmission.getRoomId()
+                selectedRoomForAdmission.getRoomId(),
+                admissionDate
         );
 
-        //  병실 인원 증가
-        roomMapper.incrementRoomCount(selectedRoomForAdmission.getRoomId());
-
-        //  환자 상태 변경
-        patientMapper.updatePatientAdmissionStatus(operation.getPatientId(), "INPATIENT");
+        // ✅ 알림 전송 (수술 전날 입원 예정)
+        Patient patient = patientMapper.getPatientDetail(operation.getPatientId());
+        Map<String, Object> payload = Map.of(
+                "event", "ADMISSION_RESERVED",
+                "patientId", patient.getPatientId(),
+                "patientName", patient.getName(),
+                "roomNo", selectedRoomForAdmission.getRoomNo(),
+                "admissionDate", admissionDate.toString()
+        );
+        messagingTemplate.convertAndSend("/topic/admission/update", payload);
 
         return true;
     }
@@ -111,12 +127,10 @@ public class OperationService {
     public int updateOperationStatus(Long operationId, String status) {
         return operationMapper.updateOperationStatus(operationId, status);
     }
-    public int completeOperation(Operation operation){
-        return operationMapper.updateResult(operation);
-    }
+
 
     // ✅ 예약 가능 여부 조회
-    public boolean isAvailable(String scheduledDate, String scheduledTime, int roomId) {
+    public boolean isAvailable(LocalDate scheduledDate, LocalTime scheduledTime, int roomId) {
         int count = operationMapper.checkScheduleConflict((long) roomId, scheduledDate, scheduledTime);
         return count == 0; // 0이면 예약 가능
     }
@@ -178,7 +192,6 @@ public class OperationService {
 
         operationMapper.updateOperationStatus(operationId, "COMPLETED");
 
-        operationMapper.updateRoomAvailable(op.getRoomId());
 
         OperationLog log = new OperationLog();
         log.setOperationId(operationId);
@@ -199,6 +212,15 @@ public class OperationService {
         ft.setCreatedAt(LocalDate.now());
         financeTransactionMapper.insertFinance(ft);
 
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("event", "OPERATION_COMPLETED");
+        payload.put("operationId", operationId);
+        payload.put("patientName", op.getPatientName());
+        payload.put("doctorName", op.getDoctorName());
+        payload.put("operationName", op.getOperationName());
+        payload.put("message", op.getPatientId() + " 환자의 " + op.getOperationName() + " 수술이 종료되었습니다.");
+
+        messagingTemplate.convertAndSend("/topic/operation/update", payload);
     }
 
 

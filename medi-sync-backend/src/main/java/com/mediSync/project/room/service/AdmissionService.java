@@ -2,11 +2,14 @@ package com.mediSync.project.room.service;
 
 import com.mediSync.project.operation.mapper.OperationMapper;
 import com.mediSync.project.operation.vo.Operation;
+import com.mediSync.project.patient.mapper.PatientMapper;
+import com.mediSync.project.room.mapper.AdmissionHistoryMapper;
 import com.mediSync.project.room.mapper.AdmissionMapper;
 import com.mediSync.project.room.mapper.RoomMapper;
 import com.mediSync.project.room.vo.Admission;
 import com.mediSync.project.room.vo.Room;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -17,14 +20,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AdmissionService {
 
     private final RoomMapper roomMapper;
     private final AdmissionMapper admissionMapper;
+    private final AdmissionHistoryMapper admissionHistoryMapper;
     private final SimpMessagingTemplate messagingTemplate;
-
+    private final PatientMapper patientMapper;
     public List<Admission> getAdmissionList(){
         return  admissionMapper.getAdmissionList();
     }
@@ -44,7 +49,10 @@ public class AdmissionService {
             // 인원 확인 후 병실 상태 AVAILABLE로 변경
             admissionMapper.updateRoomStatusIfAvailable(roomId);
         }
+        // ✅ patientId도 함께 조회
+        Admission ad = admissionMapper.findAdmissionById(admissionId);
 
+        admissionHistoryMapper.updateDischargeHistory(ad.getPatientId());
         return updated;
     }
     public List<Admission> getAdmissionsByRoom(Long roomId){
@@ -93,5 +101,37 @@ public class AdmissionService {
         return updateResult;
     }
 
+    @Transactional
+    @Scheduled(cron = "0 0 11 * * *", zone = "Asia/Seoul")
+    public void processScheduledAdmission(){
+        log.info("[Scheduler] 매일 11시 입원 수속 시작");
+        // 오늘 입원 예정자 조회
+        var scheduledList = admissionMapper.findScheduledAdmissionsForToday();
+        if (scheduledList.isEmpty()) {
+            log.info("✅ 오늘 입원 예정 환자 없음");
+            return;
+        }
+
+        scheduledList.forEach(a -> {
+            // 1. 상태 변경
+            admissionMapper.updateAdmissionStatus(a.getAdmissionId(), "ADMITTED");
+
+            // 2. 병실 인원 증가
+            roomMapper.incrementRoomCount(a.getRoomId());
+
+            // 3. 환자 상태 변경
+            patientMapper.updatePatientAdmissionStatus(a.getPatientId(), "INPATIENT");
+
+            // 4. 실시간 알림 전송 (웹소켓)
+            messagingTemplate.convertAndSend("/topic/admission/update", Map.of(
+                    "event", "ADMIT",
+                    "patientId", a.getPatientId(),
+                    "patientName", a.getPatientName(),
+                    "roomNo", a.getRoomNo()
+            ));
+        });
+
+        log.info("🏥 [Scheduler] 입원 수속 완료 ({}명)", scheduledList.size());
+    }
 }
 

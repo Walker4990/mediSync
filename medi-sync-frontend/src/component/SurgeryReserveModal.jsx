@@ -88,7 +88,7 @@ export default function ReserveModal({
                     patientId: test.patientId,
                     operationName: operationName || "수술",
                     scheduledDate: date,
-                    scheduledTime: `${date}T${selectedTime}:00`,
+                    scheduledTime: selectedTime + ":00",
                     roomId: 1,
                     cost: 1000000,
                 };

@@ -29,7 +29,7 @@ export default function MedicalRecordPage() {
     const { notifications } = useNotifications();
     const [selectedSurgery, setSelectedSurgery] = useState(null);
     const [surgeryModalOpen, setSurgeryModalOpen] = useState(false);
-
+    const testNotifications = notifications.filter((n) => n.testName);
 
    
 
@@ -1029,28 +1029,28 @@ export default function MedicalRecordPage() {
                     <h2 className="text-lg font-bold text-blue-700 mb-3 flex items-center">
                         🧪 검사 결과 알림
                         <span className="ml-2 text-sm text-gray-500 font-normal">
-    ({notifications.length})
-  </span>
+      ({testNotifications.length})
+    </span>
                     </h2>
 
-                    {notifications.length === 0 ? (
+                    {testNotifications.length === 0 ? (
                         <p className="text-gray-500 text-sm text-center">
                             아직 수신된 검사 결과가 없습니다.
                         </p>
                     ) : (
                         <ul className="space-y-2 max-h-64 overflow-y-auto">
-                            {notifications.map((n) => (
+                            {testNotifications.map((n) => (
                                 <li
                                     key={n.id}
                                     className="flex justify-between items-center border-b pb-2 text-sm hover:bg-blue-50 transition"
                                 >
                                     <div>
-          <span className="font-semibold text-gray-800">
-            {n.patientName}
-          </span>
+            <span className="font-semibold text-gray-800">
+              {n.patientName}
+            </span>
                                         <span className="font-semibold text-gray-800 ml-2">
-            {n.testName}
-          </span>
+              {n.testName}
+            </span>
                                         <span className="text-gray-500 ml-2">{n.time}</span>
                                     </div>
                                     <button

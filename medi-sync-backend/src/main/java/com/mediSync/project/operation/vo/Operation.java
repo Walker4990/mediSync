@@ -8,6 +8,7 @@ import org.apache.ibatis.type.Alias;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 
 @Data
 @AllArgsConstructor
@@ -30,7 +31,7 @@ public class Operation {
     private LocalDateTime updatedAt;
     private Long roomId; // 수술방
     private String diagnosis; // 진단명
-    private LocalDateTime scheduledTime; // 수술 예정 시간
+    private LocalTime scheduledTime; // 수술 예정 시간
 
     private String patientName;
     private String doctorName;
