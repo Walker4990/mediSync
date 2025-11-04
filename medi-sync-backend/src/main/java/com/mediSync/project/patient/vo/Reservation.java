@@ -14,10 +14,12 @@ import java.util.Date;
 @AllArgsConstructor
 @Alias("reservation")
 public class Reservation {
-    private Integer reservationId;
-    private Integer patientId;
-    private Integer doctorId;
+    private long reservationId;
+    private long patientId;
+    private long doctorId;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss", timezone = "Asia/Seoul")
     private Date  reservationDate;
     private String status;
     private Date createdAt;
+    private String type;
 }

@@ -183,6 +183,8 @@ const TimeModal = ({
   //const [selectedDate, setSelectedDate] = useState(sevenDays[0].dateValue);
   const [selectedTime, setSelectedTime] = useState(null);
   const [localreservedTimes, setLocalReservedTimes] = useState(reservedTimes);
+
+  const [type, setType] = useState(false);
   //예약된 시간을 가져오는 리스트
   // const [reservedTimes, setReservedTimes] = useState([]);
   // const [selectedDate, setSelectedDate] = useState(
@@ -232,11 +234,13 @@ const TimeModal = ({
     // );
 
     // "11:00~12:00" → "11:00"
+
     const startTime = selectedTime.split("~")[0];
     const dataToSend = {
-      patient_id: 1,
-      doctor_id: selectedDoctor.doctorId,
-      reservation_date: `${selectedDate} ${startTime}:00`,
+      patientId: 1,
+      doctorId: selectedDoctor.doctorId,
+      reservationDate: `${selectedDate} ${startTime}:00`,
+      type: type ? "ONLINE" : "OFFLINE",
     };
     console.log("📤 보내는 데이터:", JSON.stringify(dataToSend, null, 2));
     try {
@@ -352,6 +356,15 @@ const TimeModal = ({
               </button>
             );
           })}
+        </div>
+        <div className=" translate-y-[-15px] flex items-center text-gray-500 font-bole space-x-2">
+          <span className="leading-none"> 비대면으로 진료받고 싶습니다.</span>
+          <input
+            className="align-middle  ml-2 w-5 h-5 accent-blue-500 cursor-pointer"
+            type="checkbox"
+            checked={type}
+            onChange={(e) => setType(e.target.checked)}
+          />
         </div>
 
         {/* 하단 버튼 */}
