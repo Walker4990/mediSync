@@ -355,6 +355,11 @@ export default function MedicalStaffList() {
     }
   };
 
+  const StaffDetail = (id) => {
+    alert(id);
+    return <div>인사정보 페이지</div>;
+  };
+
   // 폼 닫기 핸들러 (isRefreshed가 true면 목록 새로고침)
   const handleCloseForm = (isRefreshed = false) => {
     setViewMode("list");
@@ -511,7 +516,12 @@ export default function MedicalStaffList() {
                   className="border-b border-gray-100 hover:bg-indigo-50/50 text-gray-700 transition-colors"
                 >
                   <td className="py-2 px-4 text-gray-600">{s.staffId}</td>
-                  <td className="py-2 px-4 font-bold text-gray-900">
+                  <td
+                    className="py-2 px-4 font-bold text-gray-900"
+                    onClick={() => {
+                      StaffDetail(s.staffId);
+                    }}
+                  >
                     {s.staffName}
                   </td>
                   <td className="py-2 px-4">

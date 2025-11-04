@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mediSync.project.medical.mapper.AdminAccountMapper">
+
+    <!-- erp 계정 등록 -->
+    <insert id="insertAdmin" parameterType="admin" useGeneratedKeys="true" keyProperty="adminId">
+        INSERT INTO admin_account (
+        emp_id, password, name, phone, email, role, profile_img_url, doctor_id, staff_id, created_at
+        ) VALUES (
+        #{empId}, #{password}, #{name}, #{phone}, #{email}, 'ADMIN', #{profileImgUrl}, #{doctorId}, #{staffId}, NOW())
+    </insert>
+
+    <!-- 전체 사원 조회 -->
+    <select id="selectAllAdmin" resultType="admin">
+        SELECT * FROM admin_account
+    </select>
+
+</mapper>
