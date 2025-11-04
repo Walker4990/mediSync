@@ -31,6 +31,8 @@ import { useLocation } from "react-router-dom";
 import AdmissionPage from "./pages/admin/AdmissionPage";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import SupportChatPage from "./pages/user/SupportChatPage";
+
 
 function AppContent() {
   const location = useLocation();
@@ -74,6 +76,7 @@ function AppContent() {
             <Route path="/user/consult" element={<MedicalConsult />} />
             <Route path="/user/reservation" element={<Reservation />} />
             <Route path="/user/insurance" element={<Insurance />} />
+            <Route path="/user/support" element={<SupportChatPage />} />
           </Route>
           {/*새창 열림*/}
           <Route
