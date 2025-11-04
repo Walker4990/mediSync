@@ -20,10 +20,13 @@ export default function Navbar() {
             보험청구
           </Link>
           <Link to="/user/consult" className="hover:text-blue-500 transition">
-            의료상담
+            진료예약
           </Link>
           <Link to="/user/mypage" className="hover:text-blue-500 transition">
             마이페이지
+          </Link>
+          <Link to="/user/support" className="hover:text-blue-500 transition">
+                고객센터
           </Link>
 
           {/* 구분선 */}

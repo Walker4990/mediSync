@@ -50,7 +50,7 @@ export default function TimeSlotModal({ testCode, testDate, open, onClose, onSel
                 const res = await axios.post("http://192.168.0.24:8080/api/testSchedule/reserve", {
                     testCode,
                     testDate,
-                    testTime: selectedTime
+                    testTime: selectedTime + ":00"
                 });
                 alert(res.data.message);
                 onClose();

@@ -15,6 +15,7 @@
         join doctor d using(doctor_id)
         join patient p using(patient_id)
         where r.patient_id = #{patient_id}
+        AND r.status != "CANCEL"
     </select>
 
     <select id="getTestReservation" parameterType="long" resultType="testReservation">
@@ -35,6 +36,7 @@
         join doctor d using(doctor_id)
         join reservation r using(reservation_id)
         where schedule_id = #{schedule_id}
+        AND tr.status != "CANCELED"
     </select>
 
     <select id="getOperation" parameterType="long" resultType="calendar">
@@ -48,27 +50,27 @@
         join patient p using(patient_id)
         join doctor d using(doctor_id)
         where patient_id = #{patient_id}
+        AND o.status != "CANCELED"
     </select>
-
-    <delete id="deleteReservation" parameterType="map">
-        delete from reservation
+    <!-- 예약 취소 업데이트 -->
+    <update id="cancelReservation" parameterType="map">
+        update reservation
+        set status = "CANCEL"
         WHERE reservation_id = #{id}
         AND DATE(reservation_date) = DATE(#{date})
-    </delete>
+    </update>
     
-    <delete id="deleteTestSchedule" parameterType="map">
-        delete from test_schedule
+    <update id="cancelTestReservation" parameterType="map">
+        update test_reservation
+        set status = "CANCELED"
         WHERE reservation_id = #{id, jdbcType=BIGINT}
-        AND test_date = #{date}
-        AND test_time = #{time}
-    </delete>
+    </update>
 
-    <delete id="deleteOperation" parameterType="map">
-        delete from operation
+    <update id="cancelOperation" parameterType="map">
+        update operation
+        set status = "CANCELED"
         WHERE operation_id = #{id, jdbcType=BIGINT}
-        AND schedule_date = #{date}
-        AND schedule_time = #{time}
-    </delete>
+    </update>
 
 
 

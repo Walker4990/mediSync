@@ -92,17 +92,17 @@ public class CalendarService {
 
             switch (type){
                 case "진료 예약":
-                    calendarMapper.deleteReservation(Map.of("id",id,"date",startDate));
+                    calendarMapper.cancelReservation(Map.of("id",id,"date",startDate));
                     break;
                 case "검사 예약":
                     date = startDate.toLocalDate();
                     time = String.format("%02d:%02d",startDate.getHour(),startDate.getMinute());
-                    calendarMapper.deleteTestSchedule(Map.of("id",id,"date",date,"time",time));
+                    calendarMapper.cancelTestReservation(Map.of("id",id,"date",date,"time",time));
                     break;
                 case "수술 예약":
                     date = startDate.toLocalDate();
                     time = String.format("%02d:%02d",startDate.getHour(),startDate.getMinute());
-                    calendarMapper.deleteOperation(Map.of("id",id,"date",date,"time",time));
+                    calendarMapper.cancelOperation(Map.of("id",id));
                     break;
                 default:throw new IllegalArgumentException("알 수 없는 예약 유형: " + type);
 

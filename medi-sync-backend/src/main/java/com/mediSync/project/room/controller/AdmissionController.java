@@ -101,4 +101,9 @@ public class AdmissionController {
         int result = admissionService.transferRoom(admissionId, newRoomId);
         return ResponseEntity.ok(Map.of("success", result > 0));
     }
+    @PostMapping("/process-scheduled")
+    public ResponseEntity<String> processScheduledAdmissions() {
+        admissionService.processScheduledAdmission();
+        return ResponseEntity.ok("🏥 수동 입원 스케줄 실행 완료");
+    }
 }

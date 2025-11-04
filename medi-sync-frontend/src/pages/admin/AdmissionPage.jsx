@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import AdminHeader from "../../component/AdminHeader";
+import PatientDetailModal from "../../component/PatientDetailModal";
 
 
 export default function AdmissionPage() {
@@ -122,6 +123,20 @@ export default function AdmissionPage() {
             alert("이동 중 오류가 발생했습니다.");
         }
     };
+    const [noteModalOpen, setNoteModalOpen] = useState(false);
+    const [selectedPatient, setSelectedPatient] = useState(null);
+
+    const handleNoteModal = (patientId) => {
+        setSelectedPatient(patientId);
+        setNoteModalOpen(true);
+    };
+
+// ✅ 모달 닫기
+    const handleCloseNoteModal = () => {
+        setNoteModalOpen(false);
+        setSelectedPatient(null);
+    };
+
     return (
         <div className="font-pretendard bg-gray-50 min-h-screen">
             <AdminHeader />
@@ -250,6 +265,12 @@ export default function AdmissionPage() {
                                                     >
                                                         병실이동
                                                     </button>
+                                                    <button
+                                                        onClick={() => handleNoteModal(a.patientId)}
+                                                        className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded ml-2"
+                                                    >
+                                                        특이사항
+                                                    </button>
                                                 </>
                                             )}
                                         </td>
@@ -300,6 +321,20 @@ export default function AdmissionPage() {
                     </div>
                 </div>
             )}
+            {noteModalOpen && selectedPatient && (
+                <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50">
+                    <div className="bg-white rounded-lg shadow-xl w-[600px] relative p-6">
+                        <button
+                            onClick={handleCloseNoteModal}
+                            className="absolute top-3 right-3 text-gray-400 hover:text-gray-600"
+                        >
+                            ✕
+                        </button>
+                        <PatientDetailModal patient={{ patientId: selectedPatient }} />
+                    </div>
+                </div>
+            )}
+
         </div>
     );
 }

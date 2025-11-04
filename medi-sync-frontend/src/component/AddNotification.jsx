@@ -43,6 +43,7 @@ export default function WebSocketListener() {
 
                 toast.info(`🧪 ${data.testName} 검사 결과가 도착했습니다!`, {
                     autoClose: 2500,
+                    onClose: () => {},
                 });
             });
 
@@ -56,6 +57,7 @@ export default function WebSocketListener() {
                         position: "top-right",
                         autoClose: 6000,
                         theme: "colored",
+                        onClose: () => {},
                     });
 
                     addNotification({
@@ -66,9 +68,65 @@ export default function WebSocketListener() {
                     });
                 });
             });
+            const admissionSub = client.subscribe("/topic/admission/update", (message) => {
+                if (!message.body) return;
+                const data = JSON.parse(message.body);
+                console.log("🏥 실시간 입원 알림 수신:", data);
 
+                let toastMsg = "";
+                if (data.event === "ADMIT") {
+                    toastMsg = `🟢 ${data.patientName || "환자"} 님이 입원했습니다.`;
+                } else if (data.event === "DISCHARGE") {
+                    toastMsg = `🔴 ${data.patientName || "환자"} 님이 퇴원했습니다.`;
+                } else if (data.event === "TRANSFER") {
+                    toastMsg = `🟡 ${data.patientName || "환자"} 님이 병실을 이동했습니다.`;
+                }
+
+                if (toastMsg) {
+                    toast.info(toastMsg, {
+                        position: "top-right",
+                        autoClose: 5000,
+                        theme: "colored",
+                        onClose: () => {},
+                    });
+
+                    addNotification({
+                        id: Date.now() + Math.random(),
+                        title: "입원 관리 알림",
+                        message: toastMsg,
+                        time: new Date().toLocaleString("ko-KR"),
+                        read: false,
+                    });
+                }
+            });
+
+            // 수술 완료 알림
+            const operationSub = client.subscribe("/topic/operation/update", (message) => {
+                if (!message.body) return;
+                const data = JSON.parse(message.body);
+                console.log("수술 완료 알림 수신: ", data);
+
+                if(data.event === "OPERATION_COMPLETED") {
+                    const toastMsg = `${data.patientName} 환자의 ${data.operationName} 수술이 종료되었습니다.`
+
+                    toast.success(toastMsg, {
+                        postion: "top-right",
+                        autoClose: 5000,
+                        theme: "colored",
+                        onClose: () => {},
+                    });
+                    addNotification({
+                        id : Date.now() + Math.random(),
+                        title : "수술 완료 알림",
+                        message: toastMsg,
+                        time : new Date().toLocaleString("ko-KR"),
+                        read: false,
+
+                    })
+                }
+            })
             // ✅ 해제 시 모두 unsubscribe
-            clientRef.current.subscriptions = [testSub, dischargeSub];
+            clientRef.current.subscriptions = [testSub, dischargeSub, admissionSub, operationSub];
         };
 
         client.onStompError = (frame) => {

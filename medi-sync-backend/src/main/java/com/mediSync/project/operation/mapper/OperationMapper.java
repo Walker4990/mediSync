@@ -8,17 +8,26 @@ import com.mediSync.project.operation.vo.OperationStaff;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 
 @Mapper
 public interface OperationMapper {
     int insertOperation(Operation op);
+
     List<Operation> selectOperationList();
+
     Operation getOperationById(Long operationId);
+
     int checkScheduleConflict(@Param("roomId") Long roomId,
-                              @Param("scheduledDate") String scheduledDate,
-                              @Param("scheduledTime") String scheduledTime);
+                              @Param("scheduledDate") LocalDate scheduledDate,
+                              @Param("scheduledTime") LocalTime scheduledTime);
+
+
     int updateOperationStatus(@Param("operationId") Long operationId, @Param("status") String status);
+
     int updateResult(Operation op);
 
     int updateOperation(Operation op);
@@ -41,8 +50,7 @@ public interface OperationMapper {
     int checkDuplicateStaff(@Param("operationId") Long operationId,
                             @Param("medicalStaffId") Long medicalStaffId);
 
-    int updateRoomInUse(Long roomId);
-    List<OperationRoom> selectAvailableRooms();
+    List<OperationRoom> selectAvailableRooms(LocalDate scheduledDate, LocalTime scheduledTime);
     int updateScheduledToProgress();
     int updateProgressToCompleted();
 

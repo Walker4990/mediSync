@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.mediSync.project.room.mapper.AdmissionHistoryMapper">
+    <!-- 전체 환자 입/퇴원 내역 -->
+    <select id="selectAllHistory" resultType="history">
+        SELECT ah.*, p.name AS patientName, r.room_no AS roomNo, r.ward_name AS wardName
+        FROM admission_history ah
+        LEFT JOIN patient p ON ah.patient_id = p.patient_id
+        LEFT JOIN room r ON ah.room_id = r.room_id
+        ORDER BY ah.admission_date DESC
+    </select>
+    <!-- 특정 환자 입/퇴원 내역 -->
+    <select id="selectHistoryByPatient" parameterType="long" resultType="history">
+        SELECT ah.*, r.room_no AS roomNo, r.ward_name AS wardName
+        FROM admission_history ah
+        LEFT JOIN room r ON ah.room_id = r.room_id
+        WHERE ah.patient_id = #{patientId}
+        ORDER BY ah.admission_date DESC
+    </select>
+    <!-- 입퇴원 내역 기록 -->
+    <insert id="insertAdmissionHistory" parameterType="history">
+        INSERT INTO admission_history (patient_id, room_id, admission_date, reason, status)
+        VALUES (#{patientId}, #{roomId}, NOW(), #{reason}, 'ADMITTED')
+    </insert>
+    <!-- 퇴원 기록 업데이트 -->
+    <update id="updateDischargeHistory" parameterType="history">
+        UPDATE admission_history
+        SET discharge_date = NOW(),
+        status = 'DISCHARGED',
+        updated_at = NOW()
+        WHERE patient_id = #{patientId}
+        AND status = 'ADMITTED'
+    </update>
+</mapper>

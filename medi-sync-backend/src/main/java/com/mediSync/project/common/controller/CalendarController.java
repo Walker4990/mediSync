@@ -36,8 +36,8 @@ public class CalendarController {
         return calendarInfo;
     }
 
-    //회원의 예약정보 삭제하기
-    @DeleteMapping
+    //회원의 예약정보 업데이트하기
+    @PutMapping
     public ResponseEntity<?> deleteReservation(@RequestParam("id") Long id,
                                                @RequestParam("type") String type,
                                                @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)

@@ -15,6 +15,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Map;
 
@@ -54,14 +57,14 @@ public class OperationController {
     public ResponseEntity<?> complete(@PathVariable Long operationId,
                                       @RequestBody Operation operation) {
         operation.setOperationId(operationId);
-        operationService.completeOperation(operation);
+        operationService.completeOperation(operationId);
         return ResponseEntity.ok("✅ 수술 결과가 등록되었습니다.");
     }
     // ✅ 중복 체크용
     @GetMapping("/check")
     public ResponseEntity<?> checkAvailability(
-            @RequestParam String scheduledDate,
-            @RequestParam String scheduledTime,
+            @RequestParam LocalDate scheduledDate,
+            @RequestParam LocalTime scheduledTime,
             @RequestParam(required = false, defaultValue = "1") int roomId
     ) {
         boolean available = operationService.isAvailable(scheduledDate, scheduledTime, roomId);
