@@ -78,10 +78,11 @@
         mr.total_cost,
         mr.status,
         mr.created_at,
-        COUNT(p.prescription_id) AS prescriptionCount
+        pa.name AS patientName
         FROM medical_record mr
         JOIN doctor d ON mr.doctor_id = d.doctor_id
         JOIN department dept ON d.dept_id = dept.dept_id
+        JOIN patient pa ON mr.patient_id = pa.patient_id
         LEFT JOIN prescription p ON mr.record_id = p.record_id
         WHERE mr.record_id = #{recordId}
 

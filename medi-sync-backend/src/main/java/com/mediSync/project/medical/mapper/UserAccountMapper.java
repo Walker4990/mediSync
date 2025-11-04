@@ -10,6 +10,7 @@ import java.util.List;
 public interface UserAccountMapper {
     List<UserAccount> selectAllUser();
     UserAccount selectUserById(Long userId);
+    int checkIdExists(@Param("loginId") String loginId);
     UserAccount selectUserByLoginId(@Param("loginId") String loginId);
     void insertUser(UserAccount vo);
     int updateUser(UserAccount vo);

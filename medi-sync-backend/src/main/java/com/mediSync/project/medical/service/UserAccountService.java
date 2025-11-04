@@ -20,6 +20,10 @@ public class UserAccountService {
     public UserAccount userSelectOne(Long userId) {
         return userAccountMapper.selectUserById(userId);
     }
+    public boolean isLoginIdAvailable(String loginId){
+        int count = userAccountMapper.checkIdExists(loginId);
+        return count == 0; // 0이면 사용 가능
+    }
     public void userInsert(UserAccount vo){
         userAccountMapper.insertUser(vo);
     }
@@ -30,6 +34,9 @@ public class UserAccountService {
         return userAccountMapper.deleteUser(userId);
     }
 
+    public UserAccount selectUserByLoginId(String loginId) {
+        return userAccountMapper.selectUserByLoginId(loginId);
+    }
     public UserAccount login(String loginId, String password) {
         UserAccount user = userAccountMapper.selectUserByLoginId(loginId);
             if (user == null) {

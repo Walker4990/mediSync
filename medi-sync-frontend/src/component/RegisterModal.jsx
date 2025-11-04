@@ -11,6 +11,7 @@ export default function RegisterModal() {
     isModalOpen: isOpen,
     closeModal: onClose,
   } = useModal();
+
   const [form, setForm] = useState({
     name: "",
     phone: "",
@@ -20,8 +21,12 @@ export default function RegisterModal() {
   });
   const [isAgreed, setIsAgreed] = useState(false);
   const [message, setMessage] = useState("");
-  // 비밀번호 일치 오류 메시지 상태
   const [passwordMatchError, setPasswordMatchError] = useState("");
+
+  // ✅ 아이디 중복 확인 관련 상태
+  const [idCheckMessage, setIdCheckMessage] = useState("");
+  const [isIdAvailable, setIsIdAvailable] = useState(null);
+  const [isCheckingId, setIsCheckingId] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -34,19 +39,23 @@ export default function RegisterModal() {
       });
       setIsAgreed(false);
       setMessage("");
+      setIdCheckMessage("");
+      setIsIdAvailable(null);
     }
-  }, [isOpen]); // isOpen 상태가 바뀔 때마다 실행
+  }, [isOpen]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-
-    const newForm = {
-      ...form,
-      [name]: value,
-    };
+    const newForm = { ...form, [name]: value };
     setForm(newForm);
 
-    // 비밀번호 변경 시 실시간 일치 검사 로직
+    // 아이디 입력 변경 시 중복확인 초기화
+    if (name === "loginId") {
+      setIsIdAvailable(null);
+      setIdCheckMessage("");
+    }
+
+    // 비밀번호 일치 검사
     const currentPassword = name === "password" ? value : newForm.password;
     const currentConfirmPassword =
       name === "confirmPassword" ? value : newForm.confirmPassword;
@@ -55,10 +64,40 @@ export default function RegisterModal() {
       if (currentPassword !== currentConfirmPassword) {
         setPasswordMatchError("비밀번호가 일치하지 않습니다.");
       } else {
-        setPasswordMatchError(""); // 일치하면 오류 메시지 제거
+        setPasswordMatchError("");
       }
     } else {
-      setPasswordMatchError(""); // 둘 중 하나가 비어있으면 오류 메시지 제거
+      setPasswordMatchError("");
+    }
+  };
+
+  // ✅ 아이디 중복 확인 함수
+  const handleCheckLoginId = async () => {
+    if (!form.loginId.trim()) {
+      setIdCheckMessage("⚠️ 아이디를 입력해주세요.");
+      setIsIdAvailable(false);
+      return;
+    }
+
+    setIsCheckingId(true);
+    setIdCheckMessage("");
+    try {
+      const res = await axios.get(`${API_URL}/check-id`, {
+        params: { loginId: form.loginId },
+      });
+
+      if (res.data.available) {
+        setIsIdAvailable(true);
+        setIdCheckMessage("✅ 사용 가능한 아이디입니다.");
+      } else {
+        setIsIdAvailable(false);
+        setIdCheckMessage("❌ 이미 사용 중인 아이디입니다.");
+      }
+    } catch (err) {
+      setIsIdAvailable(false);
+      setIdCheckMessage("⚠️ 서버와 통신 중 오류가 발생했습니다.");
+    } finally {
+      setIsCheckingId(false);
     }
   };
 
@@ -68,7 +107,6 @@ export default function RegisterModal() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // 비밀번호 오류/미입력 시 리턴
     if (passwordMatchError) {
       alert("⚠️ 비밀번호 일치 여부를 확인해 주세요.");
       return;
@@ -81,10 +119,16 @@ export default function RegisterModal() {
       setMessage("⚠️ 이용 약관에 동의해야 합니다.");
       return;
     }
-
-    // 모든 필수 필드 검사
     if (!form.name || !form.phone || !form.loginId) {
       alert("⚠️ 모든 필수 정보를 입력해 주세요.");
+      return;
+    }
+    if (isIdAvailable === null) {
+      alert("⚠️ 아이디 중복 확인을 해주세요.");
+      return;
+    }
+    if (isIdAvailable === false) {
+      alert("⚠️ 이미 사용 중인 아이디입니다. 다른 아이디를 입력해주세요.");
       return;
     }
 
@@ -102,8 +146,6 @@ export default function RegisterModal() {
         alert(
           res.data.message || "회원가입이 완료되었습니다. 로그인해 주세요."
         );
-
-        // 폼 초기화 및 모달 닫기
         setForm({
           name: "",
           phone: "",
@@ -112,7 +154,7 @@ export default function RegisterModal() {
           confirmPassword: "",
         });
         setPasswordMatchError("");
-        onClose(); // 성공 시 모달 닫기
+        onClose();
       } else {
         alert(
           "⚠️ 등록 실패: " +
@@ -127,7 +169,7 @@ export default function RegisterModal() {
         if (errorData && errorData.message) {
           errorMessage = errorData.message;
         } else {
-          errorMessage = `서버 오류 (${err.response.status}): 요청에 실패했습니다.`;
+          errorMessage = `서버 오류 (${err.response.status})`;
         }
       } else if (err.message) {
         errorMessage = err.message;
@@ -137,39 +179,36 @@ export default function RegisterModal() {
     }
   };
 
-  // 로그인 링크 클릭 시 회원가입 모달을 닫고 로그인 모달을 열기
   const handleLoginClick = (e) => {
     e.preventDefault();
-    onClose(); // 회원가입 모달 닫기
-    openLoginModal(); // 로그인 모달 열기
+    onClose();
+    openLoginModal();
   };
 
   const inputStyle =
-    "w-full **h-12** border **border-gray-300** px-4 py-2 **text-base** rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 **placeholder-gray-400**";
+    "w-full h-12 border border-gray-300 px-4 py-2 text-base rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 placeholder-gray-400";
   const errorInputStyle =
-    "w-full **h-12** border **border-red-500** px-4 py-2 **text-base** rounded-lg focus:ring-2 focus:ring-red-400 focus:border-red-500 transition duration-150 **placeholder-gray-400**";
+    "w-full h-12 border border-red-500 px-4 py-2 text-base rounded-lg focus:ring-2 focus:ring-red-400 focus:border-red-500 transition duration-150 placeholder-gray-400";
 
   return (
-    // 모달 배경 오버레이
     <div
-      className="fixed inset-0 z-50 bg-gray-900 bg-opacity-75 flex justify-center items-center backdrop-blur-sm p-4 transition-opacity duration-300"
-      onClick={onClose} // 배경 클릭 시 닫기
+      className="fixed inset-0 z-50 bg-gray-900 bg-opacity-75 flex justify-center items-center backdrop-blur-sm p-4"
+      onClick={onClose}
     >
-      {/* 모달 컨테이너 */}
       <div
-        className="bg-white rounded-xl shadow-2xl w-full max-w-md **p-0** max-h-[95vh] overflow-y-auto transform transition-all duration-300 scale-100 opacity-100"
-        onClick={(e) => e.stopPropagation()} // 내부 클릭 시 배경 닫힘 방지
+        className="bg-white rounded-xl shadow-2xl w-full max-w-md p-0 max-h-[95vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
       >
         <div className="pt-8 px-8 pb-4 relative text-center">
           <button
             type="button"
             onClick={onClose}
-            className="absolute top-4 right-4 text-gray-400 hover:text-gray-700 transition"
+            className="absolute top-4 right-4 text-gray-400 hover:text-gray-700"
             aria-label="닫기"
           >
             <X size={24} />
           </button>
-          <div className="text-3xl font-extrabold text-blue-600 mb-1 tracking-tight">
+          <div className="text-3xl font-extrabold text-blue-600 mb-1">
             MediSync
           </div>
           <div className="text-sm text-gray-600 mb-4">
@@ -212,20 +251,39 @@ export default function RegisterModal() {
               />
             </label>
 
-            {/* 아이디 (loginId) */}
+            {/* 아이디 + 중복확인 */}
             <label className="block">
               <span className="block text-gray-700 font-medium text-sm mb-1 text-left pl-2">
                 아이디
               </span>
-              <input
-                type="text"
-                name="loginId"
-                value={form.loginId}
-                onChange={handleChange}
-                className={inputStyle}
-                placeholder="사용자 ID 입력"
-                required
-              />
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  name="loginId"
+                  value={form.loginId}
+                  onChange={handleChange}
+                  className={inputStyle}
+                  placeholder="사용자 ID 입력"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={handleCheckLoginId}
+                  disabled={isCheckingId}
+                  className="px-5 h-12 flex-shrink-0 bg-white border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-700 hover:text-white transition duration-150 disabled:bg-gray-200 disabled:border-gray-400 disabled:text-gray-400 disabled:cursor-not-allowed"
+                >
+                  {isCheckingId ? "확인 중..." : "중복 확인"}
+                </button>
+              </div>
+              {idCheckMessage && (
+                <p
+                  className={`mt-1 text-sm ${
+                    isIdAvailable ? "text-green-600" : "text-red-500"
+                  }`}
+                >
+                  {idCheckMessage}
+                </p>
+              )}
             </label>
 
             {/* 비밀번호 */}
@@ -258,7 +316,6 @@ export default function RegisterModal() {
                 placeholder="비밀번호 재입력"
                 required
               />
-              {/* 오류 메시지 출력 */}
               {passwordMatchError && (
                 <p className="text-red-500 text-sm mt-1">
                   {passwordMatchError}
@@ -286,7 +343,6 @@ export default function RegisterModal() {
               </label>
             </div>
 
-            {/* 메시지 박스 (일반 메시지) */}
             {message && (
               <div className="mt-4 p-3 bg-red-50 text-red-700 border border-red-200 rounded-lg text-sm text-left">
                 {message}
@@ -305,7 +361,7 @@ export default function RegisterModal() {
               가입하기
             </button>
           </form>
-          {/* 로그인 링크 */}
+
           <div className="mt-6 text-center text-sm">
             이미 계정이 있으신가요?
             <button
