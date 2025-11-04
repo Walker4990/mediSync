@@ -501,8 +501,9 @@ const ViewReservation = ({ title, icon: Icon }) => {
                         return;
                       }
                       try {
-                        await axios.delete(
+                        await axios.put(
                           `http://localhost:8080/api/calendar`,
+                          null,
                           {
                             params: {
                               id: selectedEvent.id,
