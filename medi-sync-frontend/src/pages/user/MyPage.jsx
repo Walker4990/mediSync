@@ -1,8 +1,12 @@
 import React, { useEffect, useState, useMemo } from "react";
 import axios from "axios";
+
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
+
+import "../../style/calendar.css";
+
 import {
   User,
   Lock,
@@ -257,7 +261,7 @@ const PatientRecords = ({ title, icon: Icon }) => {
     window.open(
       `/user/medicalDetail/${recordId}`,
       "_blank",
-      "width=800,height=600,top=100,left=200,resizable=yes,scrollbars=yes"
+      "width=800,height=1000,top=100,left=200,resizable=no,scrollbars=yes"
     );
   };
 
@@ -381,7 +385,7 @@ const ViewReservation = ({ title, icon: Icon }) => {
             headerToolbar={{
               left: "prev,next today",
               center: "title",
-              right: "dayGridMonth,timeGridWeek,timeGridDay",
+              right: "",
             }}
             buttonText={{
               today: "오늘",
