@@ -18,7 +18,7 @@ public interface CalendarMapper {
     List<CalendarDTO> getTestSchedule(Long schedule_id);
     List<CalendarDTO> getOperation(Long patient_id);
 
-    int deleteReservation(Map<String, Object> params);
-    int deleteTestSchedule(Map<String, Object> params);
-    int deleteOperation(Map<String, Object> params);
+    int cancelReservation(Map<String, Object> params);
+    int cancelTestReservation(Map<String, Object> params);
+    int cancelOperation(Map<String, Object> params);
 }

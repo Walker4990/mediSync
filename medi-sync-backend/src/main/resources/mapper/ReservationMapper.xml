@@ -8,7 +8,7 @@
     <!--  선택한 날짜의 예약 정보 가져오기  -->
     <select id="getReservedTimesByDate" resultType="String" parameterType="reservation">
         <![CDATA[
-        SELECT TIME(reservationDate)
+        SELECT TIME(reservation_date)
         FROM reservation
         WHERE reservation_date >= #{reservationDate}
         AND reservation_date < DATE_ADD(#{reservationDate}, INTERVAL 1 DAY)
@@ -18,8 +18,8 @@
     </select>
     <!--  예약하기  -->
     <insert id="addReservation" parameterType="reservation">
-        insert into reservation(patient_id,doctor_id,reservation_date,status,created_at)
-        values(#{patientId},#{doctorId},#{reservationDate}, 'WAIT', now())
+        insert into reservation(patient_id,doctor_id,reservation_date,status,created_at,type)
+        values(#{patientId},#{doctorId},#{reservationDate}, 'WAIT', now(), #{type})
     </insert>
 
     <!-- 예약 취소하기 -->
