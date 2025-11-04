@@ -1,0 +1,122 @@
+/* 캘린더 전체 */
+.fc {
+  background-color: #ffffff;
+  border-radius: 14px;
+  padding: 10px;
+  font-family: "Pretendard", "Noto Sans KR", sans-serif;
+  color: #1e293b;
+}
+
+/* 상단 툴바 */
+.fc-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+  padding: 8px 12px;
+  margin-bottom: 10px;
+  background-color: #ffffff;
+  border-radius: 10px;
+  border: none;
+} /* 툴바 내부 영역을 3등분(왼/중/오) */
+
+.fc-toolbar-chunk {
+  flex: 1; /* 각 chunk가 동일 너비 차지하도록 */
+  display: flex;
+  align-items: center;
+  justify-content: center; /* 기본은 중앙 정렬 (중앙 chunk의 타이틀을 가운데로) */
+  gap: 6px;
+}
+
+.fc-toolbar-chunk:first-child {
+  justify-content: flex-start;
+  padding-left: 4px;
+}
+
+.fc-toolbar-chunk:last-child {
+  justify-content: flex-end;
+  padding-left: 4px;
+}
+.fc-toolbar-title {
+  font-size: 0.5rem;
+  font-weight: 600;
+  color: #2457ff;
+  text-align: center;
+  margin: 0;
+  white-space: nowrap;
+}
+
+/* 버튼 */
+.fc-button {
+  background-color: #ffffff !important;
+  color: #7595ff !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 6px !important;
+  font-weight: 500;
+  padding: 4px 8px;
+  transition: all 0.2s ease;
+}
+
+.fc-button:hover {
+  background-color: #eff6ff !important;
+  border-color: #93c5fd !important;
+}
+
+.fc-today-button {
+  background-color: #3b82f6 !important;
+  color: #ffffff !important;
+  border: none !important;
+}
+.fc-today-button:hover {
+  background-color: #2563eb !important;
+}
+
+/* 요일 헤더 */
+.fc-col-header-cell {
+  background-color: #1d65ff;
+  color: #ecf4ff;
+  font-weight: 600;
+  border: 1px solid #e2e8f0;
+  padding: 6px 0;
+}
+
+/* 날짜 셀 */
+.fc-daygrid-day {
+  background-color: #ffffff;
+  border: 1px solid #f1f5f9;
+  color: #00326e;
+  transition: background-color 0.15s ease;
+}
+.fc-daygrid-day:hover {
+  background-color: #f8fafc;
+}
+
+/* 오늘 날짜 강조 */
+.fc-day-today {
+  background-color: #f0f9ff !important;
+  border: 2px solid #60a5fa !important;
+}
+
+/* 이벤트 스타일 */
+.fc-event {
+  border: none !important;
+  border-radius: 6px !important;
+  color: white !important;
+  font-size: 0.85rem;
+  padding: 2px 6px;
+  margin: 1px;
+  transition: transform 0.15s ease;
+}
+.fc-event:hover {
+  transform: scale(1.03);
+  background-color: #2563eb !important;
+}
+
+/* 스크롤바 제거 */
+.fc-scroller::-webkit-scrollbar {
+  display: none;
+}
+.fc-scroller {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
