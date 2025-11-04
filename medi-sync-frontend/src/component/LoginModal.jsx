@@ -1,7 +1,7 @@
 import React, { useState, useContext, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { X } from "lucide-react";
-import { useModal } from "./ModalContext";
+import useModal from "./ModalContext";
 
 const socialStyles = `
     .naver-bg { background-color: #03c75a; }

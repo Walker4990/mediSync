@@ -201,7 +201,7 @@ const NotificationSettings = () => {
         value: newSettings[key],
         setting: newSettings,
       });
-    } catch (erorr) {
+    } catch (error) {
       console.error("알림설정 업데이트 실패");
     }
   };
@@ -387,581 +387,396 @@ const ViewReservation = ({ title, icon: Icon }) => {
     fetchCalendarData();
   }, []);
 
-  // ----------------------------------------------------
-  // Tailwind로 구현된 간단한 달력 그리드 컴포넌트
-  // FullCalendar 대신 예약 일정을 표시하기 위해 사용됩니다.
-  // ----------------------------------------------------
-  const SimpleCalendarGrid = ({ events }) => {
-    // 현재 날짜 기준 달력 데이터 생성
-    const today = new Date();
-    const currentMonth = today.getMonth();
-    const currentYear = today.getFullYear();
-    const daysInMonth = (y, m) => new Date(y, m + 1, 0).getDate();
-    const firstDayOfMonth = new Date(currentYear, currentMonth, 1).getDay(); // 0 for Sunday
+  return (
+    <div className="p-6 space-y-4">
+      <h3 className="text-xl font-semibold border-b pb-2 flex items-center">
+        <Icon className="w-5 h-5 mr-2" /> {title}
+      </h3>
+      <div className="bg-white rounded-lg shadow-md p-2">
+        {/* <p className="text-center text-red-500 py-4">
+            사용자 정보를 불러오는 중입니다...
+          </p> */}
+        <FullCalendar
+          locale="ko"
+          plugins={[dayGridPlugin, timeGridPlugin]}
+          initialView="dayGridMonth"
+          themeSystem="standard"
+          eventClick={(info) => {
+            const clickedEvent = {
+              title: info.event.title,
+              start: info.event.start,
+              color: info.event.backgroundColor,
+              textColor: info.event.textColor,
+              type: info.event.extendedProps.type,
+              patientName: info.event.extendedProps.patientName,
+              doctorName: info.event.extendedProps.doctorName,
+              id: info.event.extendedProps.id,
+            };
 
-    const days = [];
-    for (let i = 1; i <= daysInMonth(currentYear, currentMonth); i++) {
-      days.push(i);
+            if (clickedEvent) {
+              setSelectedEvent(clickedEvent);
+              setIsCalendarModalOpen(true);
+            } else {
+              console.warn("일치하는 이벤트를 찾을 수 없습니다:", info.event);
+            }
+          }}
+          headerToolbar={{
+            left: "prev,next today",
+            center: "title",
+            right: "dayGridMonth,timeGridWeek,timeGridDay",
+          }}
+          buttonText={{
+            today: "오늘",
+            month: "월",
+            week: "주",
+            day: "일",
+          }}
+          events={events}
+          eventDisplay="block"
+          height={600}
+        ></FullCalendar>
+      </div>
+      {isCalendarModalOpen && selectedEvent && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl shadow-2xl w-[420px] overflow-hidden  animate-fadeIn ">
+            {/*상단 해더 */}
+            <div
+              className="h-24 flex items-center justify-center text-white text-2xl font-bold"
+              style={{
+                backgroundColor:
+                  selectedEvent.type === "진료 예약"
+                    ? "#3B82F6"
+                    : selectedEvent.type === "검사 예약"
+                    ? "#60A5FA"
+                    : selectedEvent.type === "수술 예약"
+                    ? "#1E40AF"
+                    : "#64748B",
+              }}
+            >
+              {selectedEvent.title}
+            </div>
+            {/*본문 내용*/}
+            <div className="p-6 space-y-4">
+              <div className="space-y-2 text-gray-700">
+                <div className="flex justify-between border-b pb-2">
+                  <span className="font-semibold text-gray-600">예약종류</span>
+                  <span className="text-gray-800">{selectedEvent.type}</span>
+                </div>
+                <div className="flex justify-between border-b pb-2">
+                  <span className="font-semibold text-gray-600">환자</span>
+                  <span className="text-gray-800">
+                    {selectedEvent.patientName}
+                  </span>
+                </div>
+                <div className="flex justify-between border-b pb-2">
+                  <span className="font-semibold text-gray-600">담당 의사</span>
+                  <span className="text-gray-800">
+                    {selectedEvent.doctorName}
+                  </span>
+                </div>
+                <div className="flex justify-between border-b pb-2">
+                  <span className="font-semibold text-gray-600">아이디</span>
+                  <span className="text-gray-800">{selectedEvent.id}</span>
+                </div>
+
+                <div className="flex justify-between border-b pb-2">
+                  <span className="font-semibold text-gray-600">예약 시간</span>
+                  <span className="text-gray-800">
+                    {selectedEvent.start
+                      ? new Date(selectedEvent.start).toLocaleString("ko-KR")
+                      : "시간 정보 없음"}
+                  </span>
+                </div>
+              </div>
+              {/*버튼*/}
+              <div className="flex justify-end space-x-3 pt-4">
+                {new Date(selectedEvent.start) > new Date() && (
+                  <button
+                    onClick={async () => {
+                      if (!window.confirm("예약을 취소하시겠습니까?")) {
+                        return;
+                      }
+                      try {
+                        await axios.delete(
+                          `http://localhost:8080/api/calendar`,
+                          {
+                            params: {
+                              id: selectedEvent.id,
+                              type: selectedEvent.type,
+                              startDate: selectedEvent.start,
+                            },
+                          }
+                        );
+                        //모달 닫기
+                        alert("예약을 취소하였습니다.");
+                        setIsCalendarModalOpen(false);
+                        setSelectedEvent(null);
+
+                        //달력 리로드
+                        await fetchCalendarData();
+                      } catch (error) {
+                        console.log("예약 취소 오류", error);
+                        alert("예약 취소 중 오류가 발생했습니다.");
+                      }
+                    }}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    예약 취소
+                  </button>
+                )}
+                <button
+                  onClick={() => {
+                    setIsCalendarModalOpen(false);
+                    setSelectedEvent(null);
+                  }}
+                  className="px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                >
+                  닫기
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// 실시간 상담 아이콘 -> 클릭 시 채팅 시작 (임의 구현)
+const ChatFloatingButton = () => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <div className="fixed bottom-8 right-8 z-20">
+      {isOpen && (
+        <div className="absolute bottom-16 right-0 w-80 h-96 bg-white rounded-xl shadow-2xl border border-gray-200 flex flex-col overflow-hidden">
+          <header className="bg-blue-600 text-white p-3 flex justify-between items-center">
+            <span className="font-semibold">실시간 상담</span>
+            <button onClick={() => setIsOpen(false)}>
+              <X className="w-5 h-5" />
+            </button>
+          </header>
+          <div className="flex-grow p-4 overflow-y-auto text-sm text-gray-600">
+            {/* Chat Messages Mock */}
+            <p className="mb-2 text-right">안녕하세요, 무엇을 도와드릴까요?</p>
+            <p className="mb-2 text-left bg-gray-100 p-2 rounded-lg inline-block">
+              예약 변경 문의드립니다.
+            </p>
+          </div>
+          <footer className="p-3 border-t">
+            <input
+              type="text"
+              placeholder="메시지 입력..."
+              className="w-full p-2 border rounded-lg"
+            />
+          </footer>
+        </div>
+      )}
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-14 h-14 bg-green-500 text-white rounded-full shadow-xl flex items-center justify-center hover:bg-green-600 transition transform hover:scale-105"
+        title="실시간 상담"
+      >
+        <MessageSquare className="w-7 h-7" />
+      </button>
+    </div>
+  );
+};
+
+// ----------------------------------------------------
+// Main Component
+// ----------------------------------------------------
+
+const MyPage = () => {
+  const [currentUser, setCurrentUser] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  useEffect(() => {
+    setTimeout(() => {
+      setCurrentUser(null);
+      setIsLoading(false);
+    }, 500);
+  }, []);
+
+  // 사용자의 현재 탭 상태 관리
+  const [activeTab, setActiveTab] = useState("info_edit");
+
+  // 마이페이지 메뉴 정의
+  const menuItems = useMemo(
+    () => [
+      {
+        id: "info_edit",
+        label: "회원 정보 변경",
+        icon: User,
+        group: "profile",
+      },
+      {
+        id: "password_change",
+        label: "비밀번호 변경",
+        icon: Lock,
+        group: "profile",
+      },
+      {
+        id: "notification_settings",
+        label: "알림 수신 설정",
+        icon: Bell,
+        group: "profile",
+      },
+
+      {
+        id: "med_records",
+        label: "예약 조회 및 변경",
+        icon: Calendar,
+        group: "patient",
+      },
+      {
+        id: "reservations",
+        label: "진료 기록 조회",
+        icon: FileText,
+        group: "patient",
+      },
+      {
+        id: "tests",
+        label: "검사 결과 조회",
+        icon: Search,
+        group: "patient",
+      },
+      {
+        id: "insurance_payment",
+        label: "보험/수납 관련",
+        icon: Wallet,
+        group: "patient",
+      },
+    ],
+    []
+  );
+
+  // 탭 콘텐츠 맵핑 - currentUser를 props로 전달
+  const renderContent = () => {
+    if (isLoading) {
+      return (
+        <div className="p-10 text-center text-gray-500">
+          사용자 정보를 불러오는 중입니다...
+        </div>
+      );
     }
 
-    const dayNames = ["일", "월", "화", "수", "목", "금", "토"];
+    switch (activeTab) {
+      case "info_edit":
+        return <UserInfoEdit currentUser={currentUser} />;
+      case "password_change":
+        return <PasswordChange />;
+      case "notification_settings":
+        return <NotificationSettings />;
+      case "med_records":
+        return (
+          <ViewReservation
+            title="예약 조회 및 변경"
+            icon={Calendar}
+            currentUser={currentUser}
+          />
+        );
+      case "reservations":
+        return <PatientRecords title="진료 기록" icon={FileText} />;
+      case "tests":
+        return (
+          <ViewReservation
+            title="검사 결과 조회"
+            icon={Search}
+            currentUser={currentUser}
+          />
+        );
+      case "insurance_payment":
+        return (
+          <ViewReservation
+            title="보험/수납 내역"
+            icon={Wallet}
+            currentUser={currentUser}
+          />
+        );
+      default:
+        return <div className="p-6 text-gray-500">선택된 메뉴가 없습니다.</div>;
+    }
+  };
 
-    // 이벤트 매핑: 이벤트 시작일이 특정 날짜와 일치하는지 확인
-    const getEventsForDate = (day) => {
-      const dateString = `${currentYear}-${String(currentMonth + 1).padStart(
-        2,
-        "0"
-      )}-${String(day).padStart(2, "0")}`;
-      return events.filter(
-        (event) => event.start && event.start.startsWith(dateString)
-      );
-    };
+  // 현재 선택된 메뉴 항목의 라벨을 헤더에 표시
+  const activeLabel =
+    menuItems.find((item) => item.id === activeTab)?.label || "마이페이지";
 
-    return (
-      <div className="space-y-4">
-        <div className="text-xl font-bold text-center text-gray-700">
-          {currentYear}년 {currentMonth + 1}월
+  // 사용자 이름이 로딩 중일 때는 '...' 표시, 로딩 완료 후 값이 없으면 '사용자' 표시
+  const userName = currentUser?.name || (isLoading ? "..." : "사용자");
+
+  return (
+    <div className="font-pretendard">
+      {/* 상단 섹션: 사용자 이름 동적 반영 */}
+      <section className="pt-12 pb-16 bg-gradient-to-l from-white to-sky-100 shadow-inner">
+        <div className="max-w-6xl mx-auto px-4 md:px-8">
+          <h1 className="text-3xl font-bold text-gray-800">
+            환영합니다, <span className="text-blue-600">{userName}</span> 님!
+          </h1>
+          <p className="text-gray-500 mt-1">
+            이곳에서 당신의 정보를 안전하게 관리하고 기록을 확인하세요.
+          </p>
         </div>
-        <div className="grid grid-cols-7 gap-1 text-center text-sm font-semibold border-b pb-2">
-          {dayNames.map((name, index) => (
-            <div
-              key={name}
-              className={
-                index === 0
-                  ? "text-red-500"
-                  : index === 6
-                  ? "text-blue-500"
-                  : "text-gray-600"
-              }
-            >
-              {name}
-            </div>
-          ))}
-        </div>
-        <div className="grid grid-cols-7 gap-1 h-[450px]">
-          {/* 첫날 공백 패딩 */}
-          {[...Array(firstDayOfMonth)].map((_, i) => (
-            <div key={`pad-${i}`} className="p-2"></div>
-          ))}
-
-          {/* 날짜 셀 */}
-          {days.map((day) => {
-            const isToday =
-              day === today.getDate() && currentMonth === today.getMonth();
-            const dayEvents = getEventsForDate(day);
-
-            return (
-              <div
-                key={day}
-                className={`p-1 border rounded-lg overflow-hidden cursor-pointer transition duration-100 ease-in-out ${
-                  isToday
-                    ? "bg-blue-100 border-blue-500"
-                    : "bg-white hover:bg-gray-50"
-                } ${
-                  dayEvents.length > 0 ? "border-green-400 bg-green-50" : ""
-                }`}
-              >
-                <div
-                  className={`text-xs font-bold ${
-                    isToday ? "text-blue-800" : "text-gray-800"
+      </section>
+      {/* 메인 콘텐츠 영역 (사이드바 + 내용) */}
+      <div className="max-w-6xl mx-auto flex flex-col md:flex-row mt-8 px-4 md:px-8">
+        {/* 사이드바 (메뉴 목록) */}
+        <aside className="w-full md:w-64 mb-8 md:mb-0 md:mr-8 bg-white rounded-xl shadow-lg border border-gray-200 p-4">
+          <nav className="space-y-2">
+            {/* 섹션 1: 프로필 관리 */}
+            <p className="text-sm font-bold text-gray-500 uppercase mt-4 mb-2 border-b pb-1">
+              내 정보 관리
+            </p>
+            {menuItems
+              .filter((item) => item.group === "profile")
+              .map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveTab(item.id)}
+                  className={`w-full text-left flex items-center p-3 rounded-lg transition duration-150 ${
+                    activeTab === item.id
+                      ? "bg-blue-600 text-white shadow-md"
+                      : "text-gray-700 hover:bg-gray-100"
                   }`}
                 >
-                  {day}
-                </div>
-                {dayEvents.slice(0, 2).map((event, index) => (
-                  <p
-                    key={index}
-                    className="text-[10px] text-left text-green-700 truncate mt-0.5"
-                    title={event.title}
-                  >
-                    • {event.title.substring(0, 10)}
-                  </p>
-                ))}
-                {dayEvents.length > 2 && (
-                  <p className="text-[10px] text-left text-green-700 mt-0.5">
-                    + {dayEvents.length - 2}개
-                  </p>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    );
-  };
+                  <item.icon className="w-5 h-5 mr-3" />
+                  <span className="font-medium">{item.label}</span>
+                </button>
+              ))}
 
-  // 환자 일정 탭 - FullCalendar 대신 SimpleCalendarGrid 사용
-  const ViewReservation = ({ title, icon: Icon, currentUser }) => {
-    const today = new Date();
-    const currentMonth = today.getMonth();
-    const currentYear = today.getFullYear();
-    const monthString = String(currentMonth + 1).padStart(2, "0");
-
-    // 이벤트 목업 데이터 (SimpleCalendarGrid 테스트용)
-    const mockEvents = useMemo(
-      () => [
-        {
-          title: "내과 진료 예약",
-          start: `${currentYear}-${monthString}-05`,
-          color: "blue",
-        },
-        {
-          title: "건강 검진",
-          start: `${currentYear}-${monthString}-15`,
-          color: "red",
-        },
-        {
-          title: "약물 수령",
-          start: `${currentYear}-${monthString}-15`,
-          color: "orange",
-        }, // 다중 이벤트 테스트
-        {
-          title: "정기 검진",
-          start: `${currentYear}-${monthString}-15`,
-          color: "purple",
-        }, // 다중 이벤트 테스트
-        {
-          title: "재활 치료",
-          start: `${currentYear}-${monthString}-28`,
-          color: "green",
-        },
-      ],
-      [currentUser]
-    );
-
-    const [events, setEvents] = useState(mockEvents);
-    const userId = currentUser?.userId;
-
-    useEffect(() => {
-      if (!userId) return; // userId가 없으면 API 호출 방지
-
-      // axios를 통한 일정 데이터 호출 로직은 유지 (API가 실제로 작동한다면)
-      // 현재는 목업 데이터로 대체되어 있어 이 부분은 테스트되지 않음.
-      // axios
-      //     .get(`/api/calender/?userId=${userId}`)
-      //     .then((res) => {
-      //         const formatted = res.data.map((item) => ({
-      //             title: item.title,
-      //             start: item.startDate,
-      //             end: item.startDate,
-      //             color: item.color || "blue",
-      //         }));
-      //         setEvents(formatted);
-      //     })
-      //     .catch((err) => {
-      //         console.log(`[USER_ID: ${userId}] 일정 조회 실패`, err);
-      //     });
-    }, [userId]);
-
-    return (
-      <div className="p-6 space-y-4">
-        <h3 className="text-xl font-semibold border-b pb-2 flex items-center">
-          <Icon className="w-5 h-5 mr-2" /> {title}
-        </h3>
-        <div className="bg-white rounded-lg shadow-md p-2">
-          {!userId ? (
-            <p className="text-center text-red-500 py-4">
-              사용자 정보를 불러오는 중입니다...
+            {/* 섹션 2: 환자 기록 */}
+            <p className="text-sm font-bold text-gray-500 uppercase mt-6 mb-2 border-b pb-1">
+              나의 진료 기록
             </p>
-          ) : (
-            <FullCalendar
-              locale="ko"
-              plugins={[dayGridPlugin, timeGridPlugin]}
-              initialView="dayGridMonth"
-              themeSystem="standard"
-              eventClick={(info) => {
-                const clickedEvent = {
-                  title: info.event.title,
-                  start: info.event.start,
-                  color: info.event.backgroundColor,
-                  textColor: info.event.textColor,
-                  type: info.event.extendedProps.type,
-                  patientName: info.event.extendedProps.patientName,
-                  doctorName: info.event.extendedProps.doctorName,
-                  id: info.event.extendedProps.id,
-                };
+            {menuItems
+              .filter((item) => item.group === "patient")
+              .map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveTab(item.id)}
+                  className={`w-full text-left flex items-center p-3 rounded-lg transition duration-150 ${
+                    activeTab === item.id
+                      ? "bg-blue-600 text-white shadow-md"
+                      : "text-gray-700 hover:bg-gray-100"
+                  }`}
+                >
+                  <item.icon className="w-5 h-5 mr-3" />
+                  <span className="font-medium">{item.label}</span>
+                </button>
+              ))}
+          </nav>
+        </aside>
 
-                if (clickedEvent) {
-                  setSelectedEvent(clickedEvent);
-                  setIsCalendarModalOpen(true);
-                } else {
-                  console.warn(
-                    "일치하는 이벤트를 찾을 수 없습니다:",
-                    info.event
-                  );
-                }
-              }}
-              headerToolbar={{
-                left: "prev,next today",
-                center: "title",
-                right: "dayGridMonth,timeGridWeek,timeGridDay",
-              }}
-              buttonText={{
-                today: "오늘",
-                month: "월",
-                week: "주",
-                day: "일",
-              }}
-              events={events}
-              eventDisplay="block"
-              height={600}
-            ></FullCalendar>
-          )}
-        </div>
-        {isCalendarModalOpen && selectedEvent && (
-          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
-            <div className="bg-white rounded-2xl shadow-2xl w-[420px] overflow-hidden  animate-fadeIn ">
-              {/*상단 해더 */}
-              <div
-                className="h-24 flex items-center justify-center text-white text-2xl font-bold"
-                style={{
-                  backgroundColor:
-                    selectedEvent.type === "진료 예약"
-                      ? "#3B82F6"
-                      : selectedEvent.type === "검사 예약"
-                      ? "#60A5FA"
-                      : selectedEvent.type === "수술 예약"
-                      ? "#1E40AF"
-                      : "#64748B",
-                }}
-              >
-                {selectedEvent.title}
-              </div>
-              {/*본문 내용*/}
-              <div className="p-6 space-y-4">
-                <div className="space-y-2 text-gray-700">
-                  <div className="flex justify-between border-b pb-2">
-                    <span className="font-semibold text-gray-600">
-                      예약종류
-                    </span>
-                    <span className="text-gray-800">{selectedEvent.type}</span>
-                  </div>
-                  <div className="flex justify-between border-b pb-2">
-                    <span className="font-semibold text-gray-600">환자</span>
-                    <span className="text-gray-800">
-                      {selectedEvent.patientName}
-                    </span>
-                  </div>
-                  <div className="flex justify-between border-b pb-2">
-                    <span className="font-semibold text-gray-600">
-                      담당 의사
-                    </span>
-                    <span className="text-gray-800">
-                      {selectedEvent.doctorName}
-                    </span>
-                  </div>
-                  <div className="flex justify-between border-b pb-2">
-                    <span className="font-semibold text-gray-600">아이디</span>
-                    <span className="text-gray-800">{selectedEvent.id}</span>
-                  </div>
-
-                  <div className="flex justify-between border-b pb-2">
-                    <span className="font-semibold text-gray-600">
-                      예약 시간
-                    </span>
-                    <span className="text-gray-800">
-                      {selectedEvent.start
-                        ? new Date(selectedEvent.start).toLocaleString("ko-KR")
-                        : "시간 정보 없음"}
-                    </span>
-                  </div>
-                </div>
-                {/*버튼*/}
-                <div className="flex justify-end space-x-3 pt-4">
-                  {new Date(selectedEvent.start) > new Date() && (
-                    <button
-                      onClick={async () => {
-                        if (!window.confirm("예약을 취소하시겠습니까?")) {
-                          return;
-                        }
-                        try {
-                          await axios.delete(
-                            `http://localhost:8080/api/calendar`,
-                            {
-                              params: {
-                                id: selectedEvent.id,
-                                type: selectedEvent.type,
-                                startDate: selectedEvent.start,
-                              },
-                            }
-                          );
-                          //모달 닫기
-                          alert("예약을 취소하였습니다.");
-                          setIsCalendarModalOpen(false);
-                          setSelectedEvent(null);
-
-                          //달력 리로드
-                          await fetchCalendarData();
-                        } catch (error) {
-                          console.log("예약 취소 오류", error);
-                          alert("예약 취소 중 오류가 발생했습니다.");
-                        }
-                      }}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                    >
-                      예약 취소
-                    </button>
-                  )}
-                  <button
-                    onClick={() => {
-                      setIsCalendarModalOpen(false);
-                      setSelectedEvent(null);
-                    }}
-                    className="px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-                  >
-                    닫기
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+        {/* 콘텐츠 영역 */}
+        <main className="flex-grow bg-white rounded-xl shadow-xl border border-gray-200">
+          <header className="p-4 border-b bg-gray-50 rounded-t-xl">
+            <h2 className="text-2xl font-bold text-gray-700">{activeLabel}</h2>
+          </header>
+          {renderContent()}
+        </main>
       </div>
-    );
-  };
-
-  // 실시간 상담 아이콘 -> 클릭 시 채팅 시작 (임의 구현)
-  const ChatFloatingButton = () => {
-    const [isOpen, setIsOpen] = useState(false);
-
-    return (
-      <div className="fixed bottom-8 right-8 z-20">
-        {isOpen && (
-          <div className="absolute bottom-16 right-0 w-80 h-96 bg-white rounded-xl shadow-2xl border border-gray-200 flex flex-col overflow-hidden">
-            <header className="bg-blue-600 text-white p-3 flex justify-between items-center">
-              <span className="font-semibold">실시간 상담</span>
-              <button onClick={() => setIsOpen(false)}>
-                <X className="w-5 h-5" />
-              </button>
-            </header>
-            <div className="flex-grow p-4 overflow-y-auto text-sm text-gray-600">
-              {/* Chat Messages Mock */}
-              <p className="mb-2 text-right">
-                안녕하세요, 무엇을 도와드릴까요?
-              </p>
-              <p className="mb-2 text-left bg-gray-100 p-2 rounded-lg inline-block">
-                예약 변경 문의드립니다.
-              </p>
-            </div>
-            <footer className="p-3 border-t">
-              <input
-                type="text"
-                placeholder="메시지 입력..."
-                className="w-full p-2 border rounded-lg"
-              />
-            </footer>
-          </div>
-        )}
-        <button
-          onClick={() => setIsOpen(!isOpen)}
-          className="w-14 h-14 bg-green-500 text-white rounded-full shadow-xl flex items-center justify-center hover:bg-green-600 transition transform hover:scale-105"
-          title="실시간 상담"
-        >
-          <MessageSquare className="w-7 h-7" />
-        </button>
-      </div>
-    );
-  };
-
-  // ----------------------------------------------------
-  // Main Component
-  // ----------------------------------------------------
-
-  const MyPage = () => {
-    const [currentUser, setCurrentUser] = useState(null);
-    const [isLoading, setIsLoading] = useState(true);
-    useEffect(() => {
-      setTimeout(() => {
-        setCurrentUser("");
-        setIsLoading(false);
-      }, 500);
-    }, []);
-
-    // 사용자의 현재 탭 상태 관리
-    const [activeTab, setActiveTab] = useState("info_edit");
-
-    // 마이페이지 메뉴 정의
-    const menuItems = useMemo(
-      () => [
-        {
-          id: "info_edit",
-          label: "회원 정보 변경",
-          icon: User,
-          group: "profile",
-        },
-        {
-          id: "password_change",
-          label: "비밀번호 변경",
-          icon: Lock,
-          group: "profile",
-        },
-        {
-          id: "notification_settings",
-          label: "알림 수신 설정",
-          icon: Bell,
-          group: "profile",
-        },
-
-        {
-          id: "med_records",
-          label: "예약 조회 및 변경",
-          icon: Calendar,
-          group: "patient",
-        },
-        {
-          id: "reservations",
-          label: "진료 기록 조회",
-          icon: FileText,
-          group: "patient",
-        },
-        {
-          id: "tests",
-          label: "검사 결과 조회",
-          icon: Search,
-          group: "patient",
-        },
-        {
-          id: "insurance_payment",
-          label: "보험/수납 관련",
-          icon: Wallet,
-          group: "patient",
-        },
-      ],
-      []
-    );
-
-    // 탭 콘텐츠 맵핑 - currentUser를 props로 전달
-    const renderContent = () => {
-      if (isLoading) {
-        return (
-          <div className="p-10 text-center text-gray-500">
-            사용자 정보를 불러오는 중입니다...
-          </div>
-        );
-      }
-
-      switch (activeTab) {
-        case "info_edit":
-          return <UserInfoEdit currentUser={currentUser} />;
-        case "password_change":
-          return <PasswordChange />;
-        case "notification_settings":
-          return <NotificationSettings />;
-        case "med_records":
-          return (
-            <ViewReservation
-              title="예약 조회 및 변경"
-              icon={Calendar}
-              currentUser={currentUser}
-            />
-          );
-        case "reservations":
-          return <PatientRecords title="진료 기록" icon={FileText} />;
-        case "tests":
-          return (
-            <ViewReservation
-              title="검사 결과 조회"
-              icon={Search}
-              currentUser={currentUser}
-            />
-          );
-        case "insurance_payment":
-          return (
-            <ViewReservation
-              title="보험/수납 내역"
-              icon={Wallet}
-              currentUser={currentUser}
-            />
-          );
-        default:
-          return (
-            <div className="p-6 text-gray-500">선택된 메뉴가 없습니다.</div>
-          );
-      }
-    };
-
-    // 현재 선택된 메뉴 항목의 라벨을 헤더에 표시
-    const activeLabel =
-      menuItems.find((item) => item.id === activeTab)?.label || "마이페이지";
-
-    // 사용자 이름이 로딩 중일 때는 '...' 표시, 로딩 완료 후 값이 없으면 '사용자' 표시
-    const userName = currentUser?.name || (isLoading ? "..." : "사용자");
-
-    return (
-      <div className="font-pretendard">
-        {/* 상단 섹션: 사용자 이름 동적 반영 */}
-        <section className="pt-12 pb-16 bg-gradient-to-l from-white to-sky-100 shadow-inner">
-          <div className="max-w-6xl mx-auto px-4 md:px-8">
-            <h1 className="text-3xl font-bold text-gray-800">
-              환영합니다, <span className="text-blue-600">{userName}</span> 님!
-            </h1>
-            <p className="text-gray-500 mt-1">
-              이곳에서 당신의 정보를 안전하게 관리하고 기록을 확인하세요.
-            </p>
-          </div>
-        </section>
-        {/* 메인 콘텐츠 영역 (사이드바 + 내용) */}
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row mt-8 px-4 md:px-8">
-          {/* 사이드바 (메뉴 목록) */}
-          <aside className="w-full md:w-64 mb-8 md:mb-0 md:mr-8 bg-white rounded-xl shadow-lg border border-gray-200 p-4">
-            <nav className="space-y-2">
-              {/* 섹션 1: 프로필 관리 */}
-              <p className="text-sm font-bold text-gray-500 uppercase mt-4 mb-2 border-b pb-1">
-                내 정보 관리
-              </p>
-              {menuItems
-                .filter((item) => item.group === "profile")
-                .map((item) => (
-                  <button
-                    key={item.id}
-                    onClick={() => setActiveTab(item.id)}
-                    className={`w-full text-left flex items-center p-3 rounded-lg transition duration-150 ${
-                      activeTab === item.id
-                        ? "bg-blue-600 text-white shadow-md"
-                        : "text-gray-700 hover:bg-gray-100"
-                    }`}
-                  >
-                    <item.icon className="w-5 h-5 mr-3" />
-                    <span className="font-medium">{item.label}</span>
-                  </button>
-                ))}
-
-              {/* 섹션 2: 환자 기록 */}
-              <p className="text-sm font-bold text-gray-500 uppercase mt-6 mb-2 border-b pb-1">
-                나의 진료 기록
-              </p>
-              {menuItems
-                .filter((item) => item.group === "patient")
-                .map((item) => (
-                  <button
-                    key={item.id}
-                    onClick={() => setActiveTab(item.id)}
-                    className={`w-full text-left flex items-center p-3 rounded-lg transition duration-150 ${
-                      activeTab === item.id
-                        ? "bg-blue-600 text-white shadow-md"
-                        : "text-gray-700 hover:bg-gray-100"
-                    }`}
-                  >
-                    <item.icon className="w-5 h-5 mr-3" />
-                    <span className="font-medium">{item.label}</span>
-                  </button>
-                ))}
-            </nav>
-          </aside>
-
-          {/* 콘텐츠 영역 */}
-          <main className="flex-grow bg-white rounded-xl shadow-xl border border-gray-200">
-            <header className="p-4 border-b bg-gray-50 rounded-t-xl">
-              <h2 className="text-2xl font-bold text-gray-700">
-                {activeLabel}
-              </h2>
-            </header>
-            {renderContent()}
-          </main>
-        </div>
-        <ChatFloatingButton /> {/* 실시간 상담 아이콘 */}
-      </div>
-    );
-  };
+      <ChatFloatingButton /> {/* 실시간 상담 아이콘 */}
+    </div>
+  );
 };
 export default MyPage;

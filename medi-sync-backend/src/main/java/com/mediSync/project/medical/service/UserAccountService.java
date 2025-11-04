@@ -1,7 +1,8 @@
-package com.mediSync.project.service;
+package com.mediSync.project.medical.service;
 
-import com.mediSync.project.mapper.UserAccountMapper;
-import com.mediSync.project.vo.UserAccount;
+import com.mediSync.project.medical.mapper.UserAccountMapper;
+
+import com.mediSync.project.medical.vo.UserAccount;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

@@ -1,7 +1,7 @@
 import React, { useContext } from "react";
 import { Link } from "react-router-dom";
 import { LogOut, LogIn } from "lucide-react";
-import { useModal } from "./ModalContext";
+import useModal from "./ModalContext";
 
 export default function Navbar() {
   const { openModal, openLoginModal, isLoggedIn, handleLogout } = useModal();

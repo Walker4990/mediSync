@@ -5,6 +5,10 @@ import { createContext, useContext } from "react";
  * 이 파일에서 단 한 번만 createContext()를 호출하고 export 합니다.
  */
 const ModalContext = createContext();
-const useModal = () => useContext(ModalContext);
 
-export default useModal;
+export default function useModal() {
+  const context = useContext(ModalContext);
+  return context;
+}
+
+export { ModalContext };

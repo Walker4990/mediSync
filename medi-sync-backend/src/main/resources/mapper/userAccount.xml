@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.mediSync.project.mapper.UserAccountMapper">
+<mapper namespace="com.mediSync.project.medical.mapper.UserAccountMapper">
 
-    <resultMap id="userAccountMap" type="com.mediSync.project.vo.UserAccount">
+    <resultMap id="userAccountMap" type="com.mediSync.project.medical.vo.UserAccount">
         <id property="userId" column="user_id"/>
         <result property="loginId" column="login_id"/>
         <result property="password" column="password"/>
@@ -12,7 +12,7 @@
         <result property="role" column="role"/>
         <result property="createdAt" column="created_at"/>
 
-        <association property="patient" javaType="com.mediSync.project.vo.Patient">
+        <association property="patient" javaType="com.mediSync.project.patient.vo.Patient">
             <id property="patientId" column="patient_id"/>
             <result property="residentNo" column="resident_no"/>
             <result property="address" column="address"/>

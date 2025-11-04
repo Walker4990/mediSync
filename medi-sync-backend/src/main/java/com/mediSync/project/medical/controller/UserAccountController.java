@@ -1,7 +1,8 @@
-package com.mediSync.project.controller;
+package com.mediSync.project.medical.controller;
 
-import com.mediSync.project.service.UserAccountService;
-import com.mediSync.project.vo.UserAccount;
+import com.mediSync.project.medical.service.UserAccountService;
+
+import com.mediSync.project.medical.vo.UserAccount;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;

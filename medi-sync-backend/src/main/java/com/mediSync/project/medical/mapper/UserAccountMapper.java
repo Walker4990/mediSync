@@ -1,6 +1,6 @@
-package com.mediSync.project.mapper;
+package com.mediSync.project.medical.mapper;
 
-import com.mediSync.project.vo.UserAccount;
+import com.mediSync.project.medical.vo.UserAccount;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 

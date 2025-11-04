@@ -1,7 +1,7 @@
 import React, { useState, useContext, useEffect } from "react";
 import axios from "axios";
 import { X } from "lucide-react";
-import { useModal } from "./ModalContext";
+import useModal from "./ModalContext";
 
 const API_URL = "http://localhost:8080/api/users";
 
