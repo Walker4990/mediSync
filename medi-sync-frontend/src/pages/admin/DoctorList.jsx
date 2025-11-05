@@ -13,9 +13,10 @@ import {
 } from "lucide-react";
 
 // API 기본 URL
-const API_BASE_URL = "http://192.168.0.24:8080/api/admins/doctors";
+const API_BASE_URL = "http://localhost:8080/api/admins/doctors";
+const DEPT_API_URL = "http://192.168.0.24:8080/api/departments";
 
-// InfoModal (일반적인 alert 대체)
+// 알림 모달
 const InfoModal = ({ message, onClose, title = "알림" }) => (
   <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center p-4 z-[100]">
     <div className="bg-white p-6 rounded-xl shadow-2xl w-full max-w-sm">
@@ -38,13 +39,21 @@ const InfoModal = ({ message, onClose, title = "알림" }) => (
 const DoctorDetail = ({ adminId }) => {
   return (
     <div className="bg-gray-50 p-8 rounded-xl shadow-inner w-full text-center text-gray-600">
-      <p className="text-lg font-medium">인사정보 페이지 (ID: {adminId})</p>
-      <p className="text-sm mt-1">
-        상세 정보는 이 컴포넌트 내에서 구현해야 합니다.
-      </p>
+      <p className="text-lg font-medium">개인정보 페이지 ({adminId})</p>
+      <p className="text-sm mt-1">내용을 채워주세요</p>
     </div>
   );
 };
+
+// 재직 상태(Status) 옵션
+const STATUS_OPTIONS = [
+  { value: "ACTIVE", label: "재직 중" },
+  { value: "LEAVE", label: "휴직" },
+  { value: "RETIRED", label: "퇴사" },
+];
+
+const getStatusLabel = (value) =>
+  STATUS_OPTIONS.find((opt) => opt.value === value)?.label || value;
 
 const AdminDoctorForm = ({
   adminData,
@@ -63,6 +72,7 @@ const AdminDoctorForm = ({
     deptId: initialDeptId,
     licenseNo: adminData?.licenseNo || "",
     phone: adminData?.phone || "",
+    status: STATUS_OPTIONS[0].value,
     hiredDate: adminData?.hiredDate
       ? format(new Date(adminData.hiredDate), "yyyy-MM-dd")
       : "",
@@ -70,6 +80,7 @@ const AdminDoctorForm = ({
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [deptList, setDeptList] = useState([]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -106,10 +117,16 @@ const AdminDoctorForm = ({
         if (dataToSend.password === "") {
           delete dataToSend.password; // 비밀번호가 비어있으면 전송하지 않음
         }
-        res = await axios.put(API_BASE_URL, dataToSend);
+        res = await axios.put(
+          `${API_BASE_URL}/${dataToSend.adminId}`,
+          dataToSend
+        );
       } else {
         delete dataToSend.adminId; // 등록 시 adminId 제거
-        res = await axios.post(API_BASE_URL, dataToSend);
+        res = await axios.put(
+          `${API_BASE_URL}/${dataToSend.adminId}`,
+          dataToSend
+        );
       }
 
       const successMessage =
@@ -133,6 +150,19 @@ const AdminDoctorForm = ({
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    const loadDepartments = async () => {
+      try {
+        const res = await axios.get(DEPT_API_URL);
+        setDeptList(res.data);
+      } catch (err) {
+        console.error("부서 목록 로드 실패:", err);
+        onShowMessage("부서 정보를 불러올 수 없습니다.", "오류");
+      }
+    };
+    loadDepartments();
+  }, []);
 
   return (
     <div className="bg-white p-8 rounded-xl shadow-2xl w-full max-w-lg mx-auto transform transition-all duration-300">
@@ -235,7 +265,7 @@ const AdminDoctorForm = ({
               className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-blue-500 focus:border-blue-500 appearance-none"
             >
               <option value="">진료과를 선택하세요</option>
-              {departments.map((dept) => (
+              {deptList.map((dept) => (
                 <option key={dept.deptId} value={dept.deptId}>
                   {dept.deptName}
                 </option>
@@ -280,25 +310,6 @@ const AdminDoctorForm = ({
             name="phone"
             value={formData.phone}
             onChange={handleChange}
-            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-blue-500 focus:border-blue-500"
-          />
-        </div>
-
-        {/* 입사일 */}
-        <div>
-          <label
-            htmlFor="hiredDate"
-            className="block text-sm font-medium text-gray-700"
-          >
-            입사일 *
-          </label>
-          <input
-            type="date"
-            id="hiredDate"
-            name="hiredDate"
-            value={formData.hiredDate}
-            onChange={handleChange}
-            required
             className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-blue-500 focus:border-blue-500"
           />
         </div>
@@ -480,8 +491,8 @@ const DoctorList = () => {
           >
             &larr; 목록으로 돌아가기
           </button>
-          <h1 className="text-3xl font-bold text-blue-600 mb-6">
-            의사 상세 정보 (ID: {editingAdmin.adminId})
+          <h1 className="text-3xl font-semibold text-blue-600 mb-6">
+            상세 정보 (직원ID: {editingAdmin.adminId})
           </h1>
           <DoctorDetail adminId={editingAdmin.adminId} />
         </main>
@@ -523,12 +534,12 @@ const DoctorList = () => {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="이름, 사번, 진료과, 면허번호 검색"
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow"
+              className="w-[400px] pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow"
             />
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
           </div>
           <div>
-            <button
+            {/* <button
               onClick={() => {
                 setEditingAdmin(null);
                 setViewMode("add");
@@ -536,7 +547,7 @@ const DoctorList = () => {
               className="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors shadow-md flex items-center"
             >
               <PlusCircle className="w-5 h-5 inline mr-2" /> 의사 추가
-            </button>
+            </button> */}
           </div>
         </div>
         <div className="overflow-x-auto border border-gray-200 rounded-lg shadow-xl">
@@ -580,13 +591,15 @@ const DoctorList = () => {
                   </td>
                   <td className="py-2 px-4">
                     <span
-                      className={`inline-block px-2 py-0.5 text-xs font-semibold rounded-full ${
+                      className={`px-2 py-1 rounded-full text-xs font-medium ${
                         a.status === "ACTIVE"
                           ? "bg-green-100 text-green-800"
+                          : a.status === "LEAVE"
+                          ? "bg-orange-100 text-orange-800"
                           : "bg-red-100 text-red-800"
                       }`}
                     >
-                      {a.status || "ACTIVE"}
+                      {getStatusLabel(a.status)}
                     </span>
                   </td>
                   <td className="py-2 px-4 text-center whitespace-nowrap space-x-2">

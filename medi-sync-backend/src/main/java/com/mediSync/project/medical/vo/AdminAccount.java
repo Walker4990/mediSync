@@ -19,12 +19,13 @@ public class AdminAccount {
     private String name;
     private String phone;
     private String email;
-    private String postion;
+    private String position;
     private String role;
-    private String porfileImgUrl;
+    private String profileImgUrl;
     private Long deptId;
-    private String licenceNo;
+    private String licenseNo;
     private String status;
     private LocalDate hiredDate;
     private LocalDateTime createdAt;
+    private String deptName;
 }
