@@ -35,22 +35,26 @@ export default function AdminChatPage() {
             console.log("✅ Admin WebSocket connected:", frame.headers?.server || "");
             // adminId 토픽 구독
             client.subscribe(`/topic/chat/${adminId}`, (msg) => {
-                try {
-                    const data = JSON.parse(msg.body);
-                    console.log("📩 [WebSocket] 받은 메시지:", data);
-                    setMessages((prev) => [...prev, data]);
+                const data = JSON.parse(msg.body);
 
-                    // 받은 메시지 보낸사람이 users 목록에 없으면 추가
-                    setUsers((prev) => {
-                        if (!prev.find((u) => u.userId === data.senderId)) {
-                            return [...prev, { userId: data.senderId, name: `User ${data.senderId}` }];
+                setMessages((prev) => [...prev, data]);
+
+                // ✅ 새 메시지 오면 해당 유저의 unread 즉시 증가
+                  setUsers((prev) => {
+                      const updated = prev.map(u => {
+                           if (u.userId === data.senderId) {
+                              return { ...u, unread: (u.unread || 0) + 1 };
+                              }
+                          return u;
+                          });
+
+                    // 리스트에 없는 사용자면 추가
+                        if (!updated.find(u => u.userId === data.senderId)) {
+                        updated.push({ userId: data.senderId, name: `User ${data.senderId}`, unread: 1 });
                         }
-                        return prev;
+                    return updated;
                     });
-                } catch (e) {
-                    console.error("WebSocket message parse error:", e, msg.body);
-                }
-            });
+        })
         };
 
         client.onStompError = (err) => {

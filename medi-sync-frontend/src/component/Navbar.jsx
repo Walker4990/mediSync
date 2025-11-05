@@ -26,7 +26,7 @@ export default function Navbar() {
             마이페이지
           </Link>
           <Link to="/user/support" className="hover:text-blue-500 transition">
-                고객센터
+                채팅상담
           </Link>
 
           {/* 구분선 */}
