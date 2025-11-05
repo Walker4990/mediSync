@@ -6,15 +6,18 @@
 <mapper namespace="com.mediSync.project.chat.mapper.ChatMessageMapper">
 
     <insert id="insertMessage" parameterType="chat">
-        INSERT INTO chat_message (sender_id, receiver_id, content, sent_at, chat_type)
-        VALUES (#{senderId}, #{receiverId}, #{content}, NOW(), #{chatType})
+        INSERT INTO chat_message
+        (sender_id, sender_type, receiver_id, receiver_type, content, sent_at, chat_type)
+        VALUES (#{senderId}, #{senderType}, #{receiverId}, #{receiverType}, #{content}, NOW(), #{chatType})
     </insert>
 
     <select id="getMessagesBetween" resultType="chat">
         SELECT *
         FROM chat_message
-        WHERE (sender_id = #{senderId} AND receiver_id = #{receiverId})
+        WHERE (
+        (sender_id = #{senderId} AND receiver_id = #{receiverId})
         OR (sender_id = #{receiverId} AND receiver_id = #{senderId})
+        )
         ORDER BY sent_at ASC
     </select>
 

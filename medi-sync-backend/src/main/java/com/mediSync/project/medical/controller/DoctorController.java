@@ -1,6 +1,7 @@
 package com.mediSync.project.medical.controller;
 
 import com.mediSync.project.medical.service.DoctorService;
+import com.mediSync.project.medical.vo.AdminAccount;
 import com.mediSync.project.medical.vo.Doctor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DuplicateKeyException;
@@ -18,17 +19,18 @@ public class DoctorController {
 
     private final DoctorService doctorService;
     @GetMapping
-    public List<Doctor> findAllDoctor(@RequestParam(required = false) String dept_id){
+    public List<AdminAccount> findAllDoctor(@RequestParam(required = false) String dept_id){
 
         System.out.println("department 넘어온 값 : "+dept_id);
         if(dept_id != null && !dept_id.equals("전체 과목")){
             return doctorService.selectDoctorByDepartment(dept_id);
         }
         else {
+            System.out.println(doctorService.selectAllDoctor());
             return doctorService.selectAllDoctor();
         }
     }
-
+    //의사 등록
     @PostMapping
     public ResponseEntity<?> insertDoctor(@RequestBody Doctor doctor) {
         try {
@@ -48,7 +50,7 @@ public class DoctorController {
                     .body(Map.of("success", false, "message", "서버 오류 발생"));
         }
     }
-
+    //의사 수정
     @PutMapping
     public ResponseEntity<?> editDoctor(@RequestBody Doctor doctor) {
         try {
@@ -62,7 +64,7 @@ public class DoctorController {
                     .body(Map.of("success", false, "message", "수정 중 서버 오류 발생"));
         }
     }
-
+    //의사 삭제
     @DeleteMapping("/{doctorId}")
     public ResponseEntity<?> delDoctor(@PathVariable Long doctorId) {
         try {

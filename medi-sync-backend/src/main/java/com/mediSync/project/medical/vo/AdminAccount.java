@@ -11,10 +11,20 @@ import java.time.LocalDateTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Alias("admin")
+@Alias("adminAccount")
 public class AdminAccount {
-    private Long adminId, deptId;
-    private String name, phone, empId, password, email, role, position, profileImgUrl, licenseNo, status;
+    private Long adminId;
+    private String empId;
+    private String password;
+    private String name;
+    private String phone;
+    private String email;
+    private String postion;
+    private String role;
+    private String porfileImgUrl;
+    private Long deptId;
+    private String licenceNo;
+    private String status;
     private LocalDate hiredDate;
     private LocalDateTime createdAt;
 }

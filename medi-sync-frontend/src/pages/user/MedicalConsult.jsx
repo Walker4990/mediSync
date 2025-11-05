@@ -96,7 +96,7 @@ const DoctorList = ({
         {doctors.length > 0 ? (
           doctors.map((doctor) => (
             <div
-              key={doctor.doctorId}
+              key={doctor.adminId}
               className="flex justify-between items-start pt-4"
             >
               {/* (좌측) 의사 정보 */}
@@ -105,7 +105,7 @@ const DoctorList = ({
                 <p className="text-sm text-gray-500">{doctor.department}</p>
                 <div className="flex items-center space-x-2">
                   <h3 className="text-lg font-bold text-gray-800">
-                    {doctor.doctorName}
+                    {doctor.name}
                   </h3>
                   {/* 별점 표시 - review 테이블에서 rating + count 추출 */}
                   <span className="text-yellow-500 text-sm font-semibold flex items-center">

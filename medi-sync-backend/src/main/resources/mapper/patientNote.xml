@@ -7,14 +7,14 @@
     <select id="findByPatientId" parameterType="long" resultType="note">
         SELECT n.*, d.doctor_name AS authorName
         FROM patient_note n
-        LEFT JOIN doctor d ON n.staff_id = d.doctor_id
+        LEFT JOIN admin_account d ON n.admin_id = a.admin_id
         WHERE n.patient_id = #{patientId}
         ORDER BY n.created_at DESC
     </select>
 
     <insert id="insertNote" parameterType="note">
-        INSERT INTO patient_note (patient_id, admission_id, staff_id, note_type, content, visibility)
-        VALUES (#{patientId}, #{admissionId}, #{staffId}, #{noteType}, #{content}, #{visibility})
+        INSERT INTO patient_note (patient_id, admission_id, admin_id, note_type, content, visibility)
+        VALUES (#{patientId}, #{admissionId}, #{adminId}, #{noteType}, #{content}, #{visibility})
     </insert>
 
     <update id="updateNote" parameterType="note">

@@ -4,9 +4,8 @@ import { Client } from "@stomp/stompjs";
 import axios from "axios";
 
 export default function SupportChatPage() {
-    // 🧩 테스트용 하드코딩 (로그인 없이)
     const userId = 101; // 환자
-    const adminId = 1;  // 관리자
+    const adminId = 2;  // 관리자
 
     const [messages, setMessages] = useState([]);
     const [input, setInput] = useState("");
@@ -46,7 +45,9 @@ export default function SupportChatPage() {
             destination: `/app/chat/${userId}/${adminId}`,
             body: JSON.stringify({
                 senderId: userId,
+                senderType: "USER",
                 receiverId: adminId,
+                receiverType: "ADMIN",
                 content: input,
                 chatType: "GENERAL",
             }),
