@@ -8,17 +8,18 @@
     <!-- 의사 목록 조회 -->
     <select id="doctorSelectAll" resultType="doctor">
         SELECT *
-        FROM doctor doc JOIN department dept ON doc.dept_id = dept.dept_id
-        ORDER BY doc.doctor_id DESC
+        FROM admin_account acc JOIN department dept ON acc.dept_id = dept.dept_id
+        WHERE acc.position = 'DOCTOR'
+        ORDER BY acc.admin_id DESC
     </select>
 
     <!-- 의사 검색 -->
     <select id="doctorSelectById" parameterType="Long" resultType="doctor">
-        SELECT * FROM doctor WHERE doctor_id = #{doctorId}
+        SELECT * FROM admin_account WHERE admin_id = #{adminId}
     </select>
     <!-- 의사 토글검색 -->
    <select id="doctorSelectByDepartment" parameterType="String">
-       select * from doctor WHERE dept_id = #{dept_id}
+       select * from admin_account WHERE admin_id = #{adminId}
    </select>
 
     <!-- 의사 정보 등록 -->

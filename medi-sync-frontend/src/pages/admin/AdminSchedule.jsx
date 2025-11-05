@@ -70,7 +70,8 @@ export default function AdminSchedule() {
     const [events, setEvents] = useState([]);
     const [selectedEvent, setSelectedEvent] = useState(null);
     const [isCalendarModalOpen, setIsCalendarModalOpen] = useState(false);
-
+    const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+    const [cancelReason, setCancelReason] = useState("");
     // 로그인 유저 임시 번호
     const fetchCalendarData = async () => {
       try {
@@ -144,6 +145,7 @@ export default function AdminSchedule() {
             height="100%"
           ></FullCalendar>
         </div>
+        {/* 기존 상세 모달 */}
         {isCalendarModalOpen && selectedEvent && (
           <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
             <div className="bg-white rounded-2xl shadow-2xl w-[420px] overflow-hidden  animate-fadeIn ">
@@ -206,33 +208,9 @@ export default function AdminSchedule() {
                 <div className="flex justify-end space-x-3 pt-4">
                   {new Date(selectedEvent.start) > new Date() && (
                     <button
-                      onClick={async () => {
-                        if (!window.confirm("예약을 취소하시겠습니까?")) {
-                          return;
-                        }
-                        try {
-                          await axios.put(
-                            `http://localhost:8080/api/calendar`,
-                            null,
-                            {
-                              params: {
-                                id: selectedEvent.id,
-                                type: selectedEvent.type,
-                                startDate: selectedEvent.start,
-                              },
-                            }
-                          );
-                          // 모달 닫기
-                          alert("예약을 취소하였습니다.");
-                          setIsCalendarModalOpen(false);
-                          setSelectedEvent(null);
-
-                          // 달력 리로드
-                          await fetchCalendarData();
-                        } catch (error) {
-                          console.log("예약 취소 오류", error);
-                          alert("예약 취소 중 오류가 발생했습니다.");
-                        }
+                      onClick={() => {
+                        setIsCancelModalOpen(true);
+                        setIsCalendarModalOpen(false);
                       }}
                       className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                     >
@@ -249,6 +227,66 @@ export default function AdminSchedule() {
                     닫기
                   </button>
                 </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/*취소 사유 입력 모달 */}
+        {isCancelModalOpen && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div className="bg-white w-[420px] rounded-2xl shadow-xl p-6 space-y-4 animate-fadeIn">
+              <h2 className="text-xl font-semibold text-gray-800">
+                예약 취소 사유 입력
+              </h2>
+              <textarea
+                value={cancelReason}
+                onChange={(e) => setCancelReason(e.target.value)}
+                placeholder="취소 사유를 입력하세요"
+                className="w-full border border-gray-300 rounded-md p-3 h-32 focus:outline-none focus:ring2  focus:ring-blue-400 resize-none"
+              />
+              <div className="flex justify-end space-x-3">
+                <button
+                  onClick={() => {
+                    setIsCancelModalOpen(false);
+                    setCancelReason("");
+                  }}
+                  className="px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                >
+                  닫기
+                </button>
+                <button
+                  onClick={async () => {
+                    if (!cancelReason.trim()) {
+                      alert("취소 사유를 입력해주세요.");
+                      return;
+                    }
+                    try {
+                      await axios.put(
+                        `http://localhost8080/api/calendar/admin/cancel`,
+                        null,
+                        {
+                          params: {
+                            id: selectedEvent.id,
+                            type: selectedEvent.type,
+                            startDate: selectedEvent.start,
+                            reason: cancelReason,
+                          },
+                        }
+                      );
+                      alert("예약이 취소되었습니다.");
+                      setIsCancelModalOpen(false);
+                      setCancelReason("");
+                      await fetchCalendarData();
+                    } catch (error) {
+                      console.error("예약 취소 오류 :", error);
+                      alert("예약 취소 중 오류가 발생했습니다.");
+                    }
+                  }}
+                  className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+                >
+                  제출
+                </button>
               </div>
             </div>
           </div>

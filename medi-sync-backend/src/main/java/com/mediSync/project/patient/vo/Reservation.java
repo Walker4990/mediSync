@@ -16,7 +16,7 @@ import java.util.Date;
 public class Reservation {
     private long reservationId;
     private long patientId;
-    private long doctorId;
+    private long adminId;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss", timezone = "Asia/Seoul")
     private Date  reservationDate;
     private String status;

@@ -12,14 +12,14 @@
         FROM reservation
         WHERE reservation_date >= #{reservationDate}
         AND reservation_date < DATE_ADD(#{reservationDate}, INTERVAL 1 DAY)
-        AND doctor_id = #{doctorId}
+        AND admin_id = #{adminId}
         ]]>
 
     </select>
     <!--  예약하기  -->
     <insert id="addReservation" parameterType="reservation">
-        insert into reservation(patient_id,doctor_id,reservation_date,status,created_at,type)
-        values(#{patientId},#{doctorId},#{reservationDate}, 'WAIT', now(), #{type})
+        insert into reservation(patient_id,admin_id,reservation_date,status,created_at,type)
+        values(#{patientId},#{adminId},#{reservationDate}, 'WAIT', now(), #{type})
     </insert>
 
     <!-- 예약 취소하기 -->
@@ -30,7 +30,7 @@
         AND
         patient_id=#{patientId}
         AND
-        doctor_id = #{doctorId}
+        admin_id = #{adminId}
         AND
         reservation_date = #{reservationDate}
     </delete>
@@ -45,12 +45,12 @@
     <select id="findReservationBetween" resultType="com.mediSync.project.patient.dto.ReservationDTO">
         select
         r.reservation_date,
-        d.doctor_name as doctorName,
+        a.name as doctorName,
         p.name,
         p.email
         from
         reservation r
-        join doctor d using(doctor_id)
+        join admin_account a using(admin_id)
         join patient p using(patient_id)
         join notification_setting ns ON p.patient_id = ns.patient_id
         WHERE r.reservation_date BETWEEN #{start} AND #{end}
