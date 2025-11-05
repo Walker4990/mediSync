@@ -17,7 +17,7 @@ public interface DoctorMapper {
     Map<String, Object> getConsultFeeByDoctorId(Long doctorId);
 
     //의사 서치
-    List<AdminAccount> doctorSelectByDepartment(String dept_id);
+    List<AdminAccount> doctorSelectByDepartment(long dept_id);
 
     String findDepartmentByDoctorId(Long doctorId);
 }

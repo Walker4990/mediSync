@@ -414,7 +414,7 @@ export default function MedicalConsult() {
     try {
       const url =
         deft && deft.id !== 0
-          ? `${API_TEST_URL}?dept_id=${deft.id}`
+          ? `${API_TEST_URL}?deptId=${deft.id}`
           : API_TEST_URL;
 
       const res = await axios.get(url, {
