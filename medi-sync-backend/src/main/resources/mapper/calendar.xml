@@ -5,6 +5,8 @@
 
 <mapper namespace="com.mediSync.project.common.mapper.CalendarMapper">
 
+    <!-- 회원 페이지 -->
+    <!-- 해당 회원의 진료 예약 정보 가져오기 -->
     <select id="getReservation" parameterType="long" resultType="calendar">
         select
         r.reservation_date as startDate,
@@ -17,12 +19,12 @@
         where r.patient_id = #{patient_id}
         AND r.status != "CANCEL"
     </select>
-
+    <!-- 해당 회원의 검사 예약 정보 가져오기 -->
     <select id="getTestReservation" parameterType="long" resultType="testReservation">
         select * from test_reservation
         where patient_id = #{patient_id}
     </select>
-
+    <!-- 해당 회원의 검사 예약 정보 가져오기 -->
     <select id="getTestSchedule" parameterType="long" resultType="calendar">
         select
         ts.test_name as title,
@@ -38,7 +40,7 @@
         where schedule_id = #{schedule_id}
         AND tr.status != "CANCELED"
     </select>
-
+    <!-- 해당 회원의 수술 예약 정보 가져오기 -->
     <select id="getOperation" parameterType="long" resultType="calendar">
         select
         o.operation_name as title,
@@ -52,6 +54,7 @@
         where patient_id = #{patient_id}
         AND o.status != "CANCELED"
     </select>
+
     <!-- 예약 취소 업데이트 -->
     <update id="cancelReservation" parameterType="map">
         update reservation
@@ -71,6 +74,51 @@
         set status = "CANCELED"
         WHERE operation_id = #{id, jdbcType=BIGINT}
     </update>
+
+    <!-- 관리자 페이지 -->
+    <!-- 전체 진료 예약 정보 가져오기 -->
+    <select id="getReservationAll"  resultType="calendar">
+        select
+        r.reservation_date as startDate,
+        r.reservation_id as id,
+        d.doctor_name,
+        p.name as patientName
+        from reservation r
+        join doctor d using(doctor_id)
+        join patient p using(patient_id)
+        where  r.status != "CANCEL"
+    </select>
+
+    <!-- 전체 검사 예약 정보 가져오기 -->
+    <select id="getTestScheduleAll" resultType="calendar">
+        select
+        ts.test_name as title,
+        d.doctor_name,
+        p.name as patientName,
+        r.reservation_id as id,
+        CONCAT(DATE_FORMAT(ts.test_date, '%Y-%m-%d'),' ', DATE_FORMAT(CAST(ts.test_time AS TIME), '%H:%i:%s')) AS startDate
+        from test_reservation tr
+        join patient p using(patient_id)
+        join test_schedule ts using(schedule_id)
+        join doctor d using(doctor_id)
+        join reservation r using(reservation_id)
+        where tr.status != "CANCELED"
+    </select>
+    <!-- 해당 회원의 수술 예약 정보 가져오기 -->
+    <select id="getOperationAll" resultType="calendar">
+        select
+        o.operation_name as title,
+        d.doctor_name,
+        p.name as patientName,
+        o.operation_id as id,
+        CONCAT(DATE_FORMAT(o.scheduled_date, '%Y-%m-%d'),' ', DATE_FORMAT(o.scheduled_time, '%H:%i:%s')) AS startDate
+        from operation o
+        join patient p using(patient_id)
+        join doctor d using(doctor_id)
+        where o.status != "CANCELED"
+    </select>
+
+
 
 
 

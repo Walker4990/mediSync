@@ -25,10 +25,11 @@ public class DoctorController {
             return doctorService.selectDoctorByDepartment(dept_id);
         }
         else {
+            System.out.println(doctorService.selectAllDoctor());
             return doctorService.selectAllDoctor();
         }
     }
-
+    //의사 등록
     @PostMapping
     public ResponseEntity<?> insertDoctor(@RequestBody AdminAccount doctor) {
         try {
@@ -48,7 +49,7 @@ public class DoctorController {
                     .body(Map.of("success", false, "message", "서버 오류 발생"));
         }
     }
-
+    //의사 수정
     @PutMapping
     public ResponseEntity<?> editDoctor(@RequestBody AdminAccount doctor) {
         try {
@@ -62,7 +63,7 @@ public class DoctorController {
                     .body(Map.of("success", false, "message", "수정 중 서버 오류 발생"));
         }
     }
-
+    //의사 삭제
     @DeleteMapping("/{doctorId}")
     public ResponseEntity<?> delDoctor(@PathVariable Long doctorId) {
         try {
