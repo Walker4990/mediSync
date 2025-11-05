@@ -35,7 +35,7 @@ export default function DoctorList() {
 
     const [formData, setFormData] = useState({
       doctorId: doctorData?.doctorId || null,
-      doctorName: doctorData?.doctorName || "",
+      name: doctorData?.doctorName || "",
       deptId: initialDeptId,
       deptName: initialDeptName,
       licenseNo: doctorData?.licenseNo || "",

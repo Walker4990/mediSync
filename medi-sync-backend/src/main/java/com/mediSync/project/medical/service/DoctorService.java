@@ -1,6 +1,7 @@
 package com.mediSync.project.medical.service;
 
 import com.mediSync.project.medical.mapper.DoctorMapper;
+import com.mediSync.project.medical.vo.AdminAccount;
 import com.mediSync.project.medical.vo.Doctor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -13,7 +14,7 @@ import java.util.Map;
 public class DoctorService {
     private final DoctorMapper doctorMapper;
 
-    public List<Doctor> selectAllDoctor(){
+    public List<AdminAccount> selectAllDoctor(){
         return doctorMapper.doctorSelectAll();
     }
     public Doctor selectDoctorById(Long doctorId){
@@ -31,7 +32,7 @@ public class DoctorService {
         return doctorMapper.getConsultFeeByDoctorId(doctorId);
     }
     //의사 서치
-    public List<Doctor> selectDoctorByDepartment(String dept_id){
+    public List<AdminAccount> selectDoctorByDepartment(String dept_id){
         return doctorMapper.doctorSelectByDepartment(dept_id);
     }
 }
