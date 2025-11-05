@@ -69,10 +69,24 @@ export default function AdminChatPage() {
         };
     }, []); // 빈 dependency -> 1회 연결
 
+    useEffect(() => {
+        const fetchUnreadCounts = async () => {
+            const updated = await Promise.all(
+                users.map(async (u) => {
+                    const res = await axios.get(`http://192.168.0.24:8080/api/chat/unread/${u.userId}/${adminId}`);
+                    return { ...u, unread: res.data };
+                })
+            );
+            setUsers(updated);
+        };
+        if (users.length > 0) fetchUnreadCounts();
+    }, [users.length]);
+
     // 특정 사용자 대화 불러오기 (REST)
-    const loadChat = (uid) => {
+    const loadChat = async (uid) => {
         setCurrentUser(uid);
         setMessages([]); // 기존 메세지 초기화 (로딩중 UI 원하면 추가)
+        await axios.post(`http://192.168.0.24:8080/api/chat/read/${uid}/${adminId}`);
         axios
             .get(`http://192.168.0.24:8080/api/chat/${adminId}/${uid}`)
             .then((res) => {
@@ -84,6 +98,12 @@ export default function AdminChatPage() {
             .catch((err) => {
                 console.error("❌ 채팅 불러오기 실패:", err);
             });
+        await axios.post(`http://192.168.0.24:8080/api/chat/read/${uid}/${adminId}`);
+        setUsers((prev) =>
+            prev.map((u) =>
+                u.userId === uid ? { ...u, unread: 0 } : u
+            )
+        );
     };
 
     // 메시지 발송
@@ -147,15 +167,26 @@ export default function AdminChatPage() {
                                         onClick={() => loadChat(u.userId)}
                                         role="button"
                                         tabIndex={0}
-                                        className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition select-none ${
-                                            currentUser === u.userId ? "bg-green-100 border-l-4 border-green-500" : "hover:bg-gray-100"
+                                        className={`flex items-center justify-between px-4 py-3 cursor-pointer transition select-none ${
+                                            currentUser === u.userId
+                                                ? "bg-green-100 border-l-4 border-green-500"
+                                                : "hover:bg-gray-100"
                                         }`}
                                     >
-                                        <AiOutlineUser className="text-green-500" size={20} />
-                                        <div>
-                                            <div className="text-sm font-medium text-gray-800">사용자 #{u.userId}</div>
-                                            {u.name && <div className="text-xs text-gray-500">{u.name}</div>}
+                                        <div className="flex items-center gap-3">
+                                            <AiOutlineUser className="text-green-500" size={20} />
+                                            <div>
+                                                <div className="text-sm font-medium text-gray-800">사용자 #{u.userId}</div>
+                                                {u.name && <div className="text-xs text-gray-500">{u.name}</div>}
+                                            </div>
                                         </div>
+
+                                        {/* 🔴 읽지 않은 메시지 표시 */}
+                                        {u.unread > 0 && (
+                                            <div className="ml-auto bg-red-500 text-white text-xs font-semibold px-2 py-0.5 rounded-full">
+                                                {u.unread}
+                                            </div>
+                                        )}
                                     </div>
                                 ))
                             )}

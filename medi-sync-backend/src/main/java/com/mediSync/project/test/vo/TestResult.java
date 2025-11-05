@@ -16,7 +16,7 @@ public class TestResult {
     private Long testResultId;
     private Long recordId;
     private Long patientId;
-    private Long doctorId;
+    private Long adminId;
     private String testCode;
     private String testName;
     private String testArea;

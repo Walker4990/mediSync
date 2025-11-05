@@ -1,7 +1,7 @@
 package com.mediSync.project.medical.controller;
 
 import com.mediSync.project.medical.service.DoctorService;
-import com.mediSync.project.medical.vo.Doctor;
+import com.mediSync.project.medical.vo.AdminAccount;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
@@ -18,7 +18,7 @@ public class DoctorController {
 
     private final DoctorService doctorService;
     @GetMapping
-    public List<Doctor> findAllDoctor(@RequestParam(required = false) String dept_id){
+    public List<AdminAccount> findAllDoctor(@RequestParam(required = false) String dept_id){
 
         System.out.println("department 넘어온 값 : "+dept_id);
         if(dept_id != null && !dept_id.equals("전체 과목")){
@@ -30,7 +30,7 @@ public class DoctorController {
     }
 
     @PostMapping
-    public ResponseEntity<?> insertDoctor(@RequestBody Doctor doctor) {
+    public ResponseEntity<?> insertDoctor(@RequestBody AdminAccount doctor) {
         try {
             doctorService.insertDoctor(doctor);
             return ResponseEntity
@@ -50,7 +50,7 @@ public class DoctorController {
     }
 
     @PutMapping
-    public ResponseEntity<?> editDoctor(@RequestBody Doctor doctor) {
+    public ResponseEntity<?> editDoctor(@RequestBody AdminAccount doctor) {
         try {
             doctorService.editDoctor(doctor);
             return ResponseEntity
@@ -76,9 +76,9 @@ public class DoctorController {
                     .body(Map.of("success", false, "message", "삭제 중 서버 오류 발생"));
         }
     }
-    @GetMapping("/fee/{doctorId}")
-    public ResponseEntity<Map<String, Object>> getConsultFeeByDoctorId(@PathVariable Long doctorId) {
-        Map<String, Object> feeInfo = doctorService.getConsultFeeByDoctorId(doctorId);
+    @GetMapping("/fee/{adminId}")
+    public ResponseEntity<Map<String, Object>> getConsultFeeByDoctorId(@PathVariable Long adminId) {
+        Map<String, Object> feeInfo = doctorService.getConsultFeeByDoctorId(adminId);
         if (feeInfo == null || feeInfo.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(Map.of("success", false, "message", "해당 의사의 진료비 정보 없음"));

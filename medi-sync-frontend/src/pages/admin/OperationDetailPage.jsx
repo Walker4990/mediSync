@@ -93,10 +93,12 @@ export default function OperationDetailPage() {
             setNewStaff({ name: "", position: "" });
             fetchDetail();
         } catch (err) {
-            if (err.response?.data?.includes("이미 등록된 의료진")) {
+            const message = err.response?.data?.message || err.response?.data;
+              if (typeof message === "string" && message.includes("이미 등록된 의료진")) {
                 alert("⚠️ 이미 참여중인 의료진입니다.");
             } else {
                 alert("❌ 의료진 등록 실패");
+                console.error("의료진 등록 오류:", err.response?.data);
             }
         }
     };
@@ -132,14 +134,14 @@ export default function OperationDetailPage() {
 
     const handleSelectSuggestion = (staff) => {
         setNewStaff({
-            name: staff.staffName,
+            name: staff.name,
             position: staff.position || "",
-            medicalStaffId: staff.staffId,
+            adminId: staff.adminId,
         });
 
         //  실제 입력창에도 선택한 이름 반영
         const inputEl = document.querySelector("input[placeholder='이름']");
-        if (inputEl) inputEl.value = staff.staffName;
+        if (inputEl) inputEl.value = staff.name;
 
         //  자동완성 목록 닫기
         setSuggestions([]);
@@ -342,11 +344,11 @@ export default function OperationDetailPage() {
                             <ul className="absolute z-10 bg-white border mt-1 rounded-md shadow w-full max-h-40 overflow-y-auto">
                                 {suggestions.map((staff, idx) => (
                                     <li
-                                        key={staff.staffId || `${staff.staffName}-${idx}`}
+                                        key={staff.staffId || `${staff.name}-${idx}`}
                                         className="px-3 py-2 hover:bg-blue-100 cursor-pointer text-sm text-gray-700"
                                         onClick={() => handleSelectSuggestion(staff)}
                                     >
-                                        {staff.staffName} — {staff.position || "직책 미등록"}
+                                        {staff.name} — {staff.position || "직책 미등록"}
                                     </li>
                                 ))}
                             </ul>
@@ -364,7 +366,7 @@ export default function OperationDetailPage() {
                             <tbody>
                             {staffList.map((s, idx) => (
                                 <tr key={s.staffId || `staff-${idx}`} className="border-b hover:bg-gray-50">
-                                    <td className="p-2">{s.staffName}</td>
+                                    <td className="p-2">{s.name}</td>
                                     <td className="p-2">{s.position}</td>
                                     <td className="p-2">
                                         <button

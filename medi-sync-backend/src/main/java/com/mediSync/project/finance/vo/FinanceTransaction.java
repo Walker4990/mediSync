@@ -18,7 +18,7 @@ public class FinanceTransaction {
     private String refType;
     private Long refId;
     private Long patientId;
-    private Long doctorId;
+    private Long adminId;
     private String type;
     private String category;
     private BigDecimal amount;

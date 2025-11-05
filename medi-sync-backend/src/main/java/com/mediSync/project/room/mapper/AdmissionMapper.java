@@ -12,10 +12,7 @@ import java.util.Map;
 
 @Mapper
 public interface AdmissionMapper {
-    int insertAdmission(@Param("patientId") Long patientId,
-                        @Param("operationId") Long operationId,
-                        @Param("roomId") Long roomId,
-                        @Param("admissionDate") LocalDate admissionDate);
+    void insertAdmission(Admission admission);
 
     boolean existsByOperationId(Integer operationId);
 

@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import org.apache.ibatis.type.Alias;
 import org.springframework.cglib.core.Local;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Data
@@ -17,7 +18,7 @@ public class Admission {
     private Long patientId;
     private Long operationId;
     private Long roomId;
-    private LocalDateTime admittedAt;
+    private LocalDate admittedAt;
     private LocalDateTime dischargedAt;
     private String status;
     private LocalDateTime createdAt;

@@ -77,7 +77,7 @@ public class MedicalRecordService {
             }
         }
 
-        Map<String, Object> feeInfo = doctorMapper.getConsultFeeByDoctorId(mr.getDoctorId());
+        Map<String, Object> feeInfo = doctorMapper.getConsultFeeByDoctorId(mr.getAdminId());
         BigDecimal consultFee = new BigDecimal(feeInfo.get("consultFee").toString());
         BigDecimal insuranceRate = new BigDecimal(feeInfo.get("insuranceRate").toString());
 
@@ -114,7 +114,7 @@ public class MedicalRecordService {
                 patientFt.setRefType("RECORD");
                 patientFt.setRefId(recordId);
                 patientFt.setPatientId(mr.getPatientId());
-                patientFt.setDoctorId(mr.getDoctorId());
+                patientFt.setAdminId(mr.getAdminId());
                 patientFt.setType("INCOME");
                 patientFt.setCategory(p.getType());
                 patientFt.setAmount(mr.getPatientPay());
@@ -126,7 +126,7 @@ public class MedicalRecordService {
                 insuranceFt.setRefType("RECORD");
                 insuranceFt.setRefId(recordId);
                 insuranceFt.setPatientId(mr.getPatientId());
-                insuranceFt.setDoctorId(mr.getDoctorId());
+                insuranceFt.setAdminId(mr.getAdminId());
                 insuranceFt.setType("CLAIM");
                 insuranceFt.setCategory("INSURANCE_CLAIM");
                 insuranceFt.setAmount(mr.getInsuranceAmount());
@@ -182,7 +182,7 @@ public class MedicalRecordService {
                     TestReservation reservation = new TestReservation();
                     reservation.setScheduleId(schedule.getScheduleId());
                     reservation.setPatientId(mr.getPatientId());
-                    reservation.setDoctorId(mr.getDoctorId());
+                    reservation.setAdminId(mr.getAdminId());
                     reservation.setStatus("RESERVED");
                     reservation.setReservedAt(p.getTestDate().atTime(9, 0));
                     testReservationMapper.insertTestReservation(reservation);

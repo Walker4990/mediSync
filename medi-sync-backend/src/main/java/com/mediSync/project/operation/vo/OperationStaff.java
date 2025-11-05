@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
 public class OperationStaff {
     private Long staffId;
     private Long operationId;
+    private Long adminId;
     private String name;
     private String position;
     private LocalDateTime createdAt;

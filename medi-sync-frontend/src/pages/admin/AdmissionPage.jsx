@@ -248,10 +248,15 @@ export default function AdmissionPage() {
                                             />
                                         </td>
                                         <td className="p-3">
-                                            {a.status === "ADMITTED" ? "입원중" : "퇴원"}
+                                            {a.status === "ADMITTED"
+                                                ? "입원중"
+                                                : a.status === "SCHEDULED"
+                                                    ? "입원 예정"
+                                                    : "퇴원"}
                                         </td>
+
                                         <td className="p-3">
-                                            {a.status === "ADMITTED" && (
+                                            {a.status === "ADMITTED" || a.status === "SCHEDULED" &&(
                                                 <>
                                                     <button
                                                         onClick={() => handleDischarge(a.admissionId)}

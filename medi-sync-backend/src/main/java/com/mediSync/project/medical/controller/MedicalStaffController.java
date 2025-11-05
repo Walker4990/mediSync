@@ -1,7 +1,7 @@
 package com.mediSync.project.medical.controller;
 
 import com.mediSync.project.medical.service.MedicalStaffService;
-import com.mediSync.project.medical.vo.MedicalStaff;
+import com.mediSync.project.medical.vo.AdminAccount;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
@@ -19,12 +19,12 @@ public class MedicalStaffController {
     private final MedicalStaffService medicalStaffService;
 
     @GetMapping
-    public List<MedicalStaff> findAllStaff() {
+    public List<AdminAccount> findAllStaff() {
         return medicalStaffService.findAllStaff();
     }
 
     @PostMapping
-    public ResponseEntity<?> addStaff(@RequestBody MedicalStaff staff) {
+    public ResponseEntity<?> addStaff(@RequestBody AdminAccount staff) {
         try {
             medicalStaffService.addStaff(staff);
             return ResponseEntity
@@ -44,7 +44,7 @@ public class MedicalStaffController {
     }
 
     @PutMapping
-    public ResponseEntity<?> updateStaff(@RequestBody MedicalStaff staff) {
+    public ResponseEntity<?> updateStaff(@RequestBody AdminAccount staff) {
         try {
             medicalStaffService.updateStaff(staff);
             return ResponseEntity
@@ -71,7 +71,7 @@ public class MedicalStaffController {
         }
     }
     @GetMapping("/search")
-    public List<MedicalStaff> searchStaffByKeyword(String keyword) {
+    public List<AdminAccount> searchStaffByKeyword(String keyword) {
         return medicalStaffService.searchStaffByKeyword(keyword);
     }
 }
