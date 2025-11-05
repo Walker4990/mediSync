@@ -25,9 +25,16 @@ public class AdminAccountController {
     private JwtUtil jwtUtil;
 
     // 전체 리스트
-    @GetMapping
-    public List<AdminAccount> allAdmins() {
-        return adminAccountService.adminSelectAll();
+    @GetMapping("/doctors")
+    public ResponseEntity<List<AdminAccount>> getDoctorList() {
+        List<AdminAccount> doctors = adminAccountService.getDoctorList();
+        return ResponseEntity.ok(doctors);
+    }
+
+    @GetMapping("/doctors")
+    public ResponseEntity<List<AdminAccount>> getDoctorList() {
+        List<AdminAccount> doctors = adminAccountService.getDoctorList();
+        return ResponseEntity.ok(doctors);
     }
 
     // 회원가입

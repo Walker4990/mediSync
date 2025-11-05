@@ -36,6 +36,8 @@ export default function LoginModal() {
   // 🔑 로그인 처리 로직
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsSubmitting(true);
+    setMessage("");
 
     try {
       const res = await axios.post("/api/users/login", {
@@ -46,12 +48,14 @@ export default function LoginModal() {
       if (res.data.success) {
         localStorage.setItem("token", res.data.token);
         alert("로그인 성공!");
-        window.location.href = "/mypage";
+        window.location.href = "/";
       } else {
-        alert(res.data.message);
+        setMessage(res.data.message || "로그인 실패");
       }
     } catch (err) {
-      alert("로그인 실패");
+      setMessage("서버 오류로 로그인 실패");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -185,7 +189,7 @@ export default function LoginModal() {
           </a>
           <span className="text-gray-400 ml-4 mr-4">|</span>
           <a
-            href="/find"
+            href="/findAccount"
             className="text-blue-600 hover:text-blue-800 font-medium"
           >
             아이디/비밀번호 찾기

@@ -7,7 +7,7 @@ import java.util.List;
 
 @Mapper
 public interface AdminAccountMapper {
-    List<AdminAccount> selectAllAdmin();
+    List<AdminAccount> selectAllAdmin(String position);
     void insertAdmin(AdminAccount vo);
 
 }

@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.apache.ibatis.type.Alias;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Data
@@ -12,11 +13,8 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Alias("admin")
 public class AdminAccount {
-    private Long adminId;
-    private Long doctorId, staffId;
-    private String name, phone, empId, password, email, role, profileImgUrl;
+    private Long adminId, deptId;
+    private String name, phone, empId, password, email, role, position, profileImgUrl, licenseNo, status;
+    private LocalDate hiredDate;
     private LocalDateTime createdAt;
-
-    private Doctor doctor;
-    private MedicalStaff medicalStaff;
 }

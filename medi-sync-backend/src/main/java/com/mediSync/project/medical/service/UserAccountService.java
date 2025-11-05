@@ -48,4 +48,10 @@ public class UserAccountService {
                 return null;
         }
     }
+    public String findLoginIdByNameAndPhone(String name, String phone) {
+        return userAccountMapper.selectLoginIdByNameAndPhone(name, phone);
+    }
+    public int resetPassword(String loginId, String name, String phone, String encodedPassword) {
+        return userAccountMapper.updatePasswordByUserInfo(loginId, name, phone, encodedPassword);
+    }
 }

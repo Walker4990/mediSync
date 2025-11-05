@@ -3,6 +3,7 @@ package com.mediSync.project.medical.service;
 import com.mediSync.project.medical.mapper.AdminAccountMapper;
 import com.mediSync.project.medical.vo.AdminAccount;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -12,9 +13,10 @@ import java.util.List;
 public class AdminAccountService {
 
     private final AdminAccountMapper adminAccountMapper;
+    private final PasswordEncoder passwordEncoder;
 
-    public List<AdminAccount> adminSelectAll() {
-        return adminAccountMapper.selectAllAdmin();
+    public List<AdminAccount> getDoctorList() {
+        return adminAccountMapper.selectAllAdmin("DOCTOR");
     }
     public void adminInsert(AdminAccount vo){
         adminAccountMapper.insertAdmin(vo);

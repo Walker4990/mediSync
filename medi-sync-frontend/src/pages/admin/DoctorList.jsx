@@ -1,285 +1,384 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { format } from "date-fns";
 import AdminHeader from "../../component/AdminHeader";
 import ConfirmModal from "../../component/ConfirmModal";
-import { ChevronDown } from "lucide-react";
+import { format } from "date-fns";
 import {
-  FaEdit,
-  FaTrashAlt,
-  FaSearch,
-  FaPlusCircle,
-  FaSpinner,
-} from "react-icons/fa";
+  ChevronDown,
+  Edit,
+  Trash2,
+  Search,
+  PlusCircle,
+  Loader2,
+} from "lucide-react";
 
 // API 기본 URL
-const API_BASE_URL = "http://192.168.0.24:8080/api/doctors";
-// const DEPT_API_URL = "http://192.168.0.24:8080/api/departments";
+const API_BASE_URL = "http://192.168.0.24:8080/api/admins/doctors";
 
-export default function DoctorList() {
-  const [doctors, setDoctors] = useState([]);
-  const [search, setSearch] = useState("");
-  const [apiError, setApiError] = useState(false);
-  const [viewMode, setViewMode] = useState("list");
-  const [editingDoctor, setEditingDoctor] = useState(null);
-  const [deletingDoctor, setDeletingDoctor] = useState(null);
-  const [uniqueDepartments, setUniqueDepartments] = useState([]);
+// InfoModal (일반적인 alert 대체)
+const InfoModal = ({ message, onClose, title = "알림" }) => (
+  <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center p-4 z-[100]">
+    <div className="bg-white p-6 rounded-xl shadow-2xl w-full max-w-sm">
+      <h3 className="text-lg font-bold text-gray-800 mb-4 border-b pb-2">
+        {title}
+      </h3>
+      <p className="text-gray-700 mb-6">{message}</p>
+      <div className="flex justify-end">
+        <button
+          onClick={onClose}
+          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+        >
+          확인
+        </button>
+      </div>
+    </div>
+  </div>
+);
 
-  const DoctorForm = ({ doctorData, onClose, departments }) => {
-    const isEditing = !!doctorData?.doctorId; // doctorData가 있고 doctorId가 있을 때 수정 모드
-    const initialDeptId = doctorData?.deptId ? String(doctorData.deptId) : ""; // 백엔드로부터 받은 데이터에 deptId : Long -> 문자열로 변환
-    const initialDeptName = doctorData?.deptName
-      ? String(doctorData.deptName)
-      : "";
-    const deptOptions = departments || [];
+const DoctorDetail = ({ adminId }) => {
+  return (
+    <div className="bg-gray-50 p-8 rounded-xl shadow-inner w-full text-center text-gray-600">
+      <p className="text-lg font-medium">인사정보 페이지 (ID: {adminId})</p>
+      <p className="text-sm mt-1">
+        상세 정보는 이 컴포넌트 내에서 구현해야 합니다.
+      </p>
+    </div>
+  );
+};
 
-    const [formData, setFormData] = useState({
-      doctorId: doctorData?.doctorId || null,
-      doctorName: doctorData?.doctorName || "",
-      deptId: initialDeptId,
-      deptName: initialDeptName,
-      licenseNo: doctorData?.licenseNo || "",
-      phone: doctorData?.phone || "",
-    });
+// ====================================================================
+// AdminDoctorForm 컴포넌트 (등록/수정 폼)
+// ====================================================================
 
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState(null);
+const AdminDoctorForm = ({
+  adminData,
+  onClose,
+  departments,
+  onShowMessage,
+}) => {
+  const isEditing = !!adminData?.adminId;
+  const initialDeptId = adminData?.deptId ? String(adminData.deptId) : "";
 
-    const handleChange = (e) => {
-      const { name, value } = e.target;
-      setFormData((prev) => ({ ...prev, [name]: value }));
-    };
+  const [formData, setFormData] = useState({
+    adminId: adminData?.adminId || null,
+    name: adminData?.name || "",
+    empId: adminData?.empId || "",
+    password: "",
+    deptId: initialDeptId,
+    licenseNo: adminData?.licenseNo || "",
+    phone: adminData?.phone || "",
+    hiredDate: adminData?.hiredDate
+      ? format(new Date(adminData.hiredDate), "yyyy-MM-dd")
+      : "",
+  });
 
-    const handleSubmit = async (e) => {
-      e.preventDefault();
-      setLoading(true);
-      setError(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-      if (!formData.deptId) {
-        setError("진료과는 필수 선택 항목입니다.");
-        setLoading(false);
-        return;
-      }
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
 
-      try {
-        let res;
-        if (isEditing) {
-          // 수정: doctorId 포함하여 PUT 요청
-          res = await axios.put(API_BASE_URL, formData);
-        } else {
-          // 등록: doctorId 필드 제거 (백엔드에서 자동 생성)
-          const postData = { ...formData };
-          delete postData.doctorId;
-          res = await axios.post(API_BASE_URL, postData);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+
+    if (!formData.deptId || !formData.hiredDate) {
+      setError("진료과와 입사일은 필수 입력 항목입니다.");
+      setLoading(false);
+      return;
+    }
+    if (!isEditing && (!formData.empId || !formData.password)) {
+      setError("사번과 비밀번호는 필수 입력 항목입니다.");
+      setLoading(false);
+      return;
+    }
+    if (!formData.name || !formData.licenseNo) {
+      setError("이름과 면허번호는 필수 입력 항목입니다.");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      let res;
+      const dataToSend = { ...formData };
+      delete dataToSend.deptName;
+
+      if (isEditing) {
+        if (dataToSend.password === "") {
+          delete dataToSend.password; // 비밀번호가 비어있으면 전송하지 않음
         }
-        console.log(
-          `✅ ${isEditing ? "수정" : "등록"} 성공:`,
-          res.data.message
-        );
-
-        // 성공 후 목록 새로고침 및 모달 닫기
-        onClose(true); // onRefresh 호출을 위해 true 전달
-      } catch (err) {
-        console.error(
-          "저장/수정 실패:",
-          err.response ? err.response.data : err.message
-        );
-        const errorMessage =
-          err.response?.data?.message ||
-          (isEditing ? "수정 실패" : "등록 실패");
-
-        setError(
-          `${errorMessage}: 필수 항목을 확인하거나 중복된 정보(면허번호)가 아닌지 확인해주세요.`
-        );
-      } finally {
-        setLoading(false);
+        res = await axios.put(API_BASE_URL, dataToSend);
+      } else {
+        delete dataToSend.adminId; // 등록 시 adminId 제거
+        res = await axios.post(API_BASE_URL, dataToSend);
       }
-    };
 
-    return (
-      <div className="bg-white p-8 rounded-xl shadow-2xl w-full max-w-lg mx-auto transform transition-all duration-300">
-        <h2 className="text-2xl font-bold mb-6 text-blue-600">
-          {isEditing ? "의사 정보 수정" : "새 의사 등록"}
-        </h2>
+      const successMessage =
+        res.data.message ||
+        `${isEditing ? "수정" : "등록"}이 성공적으로 완료되었습니다.`;
+      console.log(`✅ ${isEditing ? "수정" : "등록"} 성공:`, successMessage);
+      onShowMessage(successMessage, "성공");
+      onClose(true); // 성공 후 목록 새로고침
+    } catch (err) {
+      console.error(
+        "저장/수정 실패:",
+        err.response ? err.response.data : err.message
+      );
+      const errorMessage =
+        err.response?.data?.message || (isEditing ? "수정 실패" : "등록 실패");
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {isEditing && (
-            <div className="bg-gray-100 p-3 rounded-md text-sm">
-              <label className="block text-gray-600">ID / 면허번호</label>
-              <p className="font-semibold text-gray-800">
-                {doctorData.doctorId} / {doctorData.licenseNo}
-              </p>
-            </div>
-          )}
+      setError(
+        `${errorMessage}: 필수 항목을 확인하거나 중복된 정보(사번, 면허번호)가 아닌지 확인해주세요.`
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  return (
+    <div className="bg-white p-8 rounded-xl shadow-2xl w-full max-w-lg mx-auto transform transition-all duration-300">
+      <h2 className="text-2xl font-bold mb-6 text-blue-600">
+        {isEditing ? "의사 정보 수정" : "새 의사 등록"}
+      </h2>
+
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {/* ID / 사번 */}
+        {isEditing && (
+          <div className="bg-gray-100 p-3 rounded-md text-sm">
+            <label className="block text-gray-600">ID / 사번</label>
+            <p className="font-semibold text-gray-800">
+              {adminData.adminId} / {adminData.empId}
+            </p>
+          </div>
+        )}
+
+        {/* 사번 */}
+        {!isEditing && (
           <div>
             <label
-              htmlFor="doctorName"
+              htmlFor="empId"
               className="block text-sm font-medium text-gray-700"
             >
-              이름 *
+              사번 *
             </label>
             <input
               type="text"
-              id="doctorName"
-              name="doctorName"
-              value={formData.doctorName}
+              id="empId"
+              name="empId"
+              value={formData.empId}
+              onChange={handleChange}
+              required={!isEditing}
+              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+        )}
+
+        {/* 비밀번호 */}
+        <div>
+          <label
+            htmlFor="password"
+            className="block text-sm font-medium text-gray-700"
+          >
+            비밀번호 {isEditing ? "(변경 시 입력)" : "*"}
+          </label>
+          <input
+            type="password"
+            id="password"
+            name="password"
+            value={formData.password}
+            onChange={handleChange}
+            required={!isEditing}
+            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-blue-500 focus:border-blue-500"
+            placeholder={
+              isEditing ? "비밀번호를 변경하려면 입력하세요" : "새 비밀번호"
+            }
+          />
+        </div>
+
+        {/* 이름 */}
+        <div>
+          <label
+            htmlFor="name"
+            className="block text-sm font-medium text-gray-700"
+          >
+            이름 *
+          </label>
+          <input
+            type="text"
+            id="name"
+            name="name"
+            value={formData.name}
+            onChange={handleChange}
+            required
+            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-blue-500 focus:border-blue-500"
+          />
+        </div>
+
+        {/* 진료과명 */}
+        <div>
+          <label
+            htmlFor="deptId"
+            className="block text-sm font-medium text-gray-700"
+          >
+            진료과명 *
+          </label>
+          <div className="relative mt-1">
+            <ChevronDown
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none"
+              aria-hidden="true"
+            />
+            <select
+              id="deptId"
+              name="deptId"
+              value={formData.deptId}
               onChange={handleChange}
               required
-              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-blue-500 focus:border-blue-500"
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="deptId"
-              className="block text-sm font-medium text-gray-700"
+              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-blue-500 focus:border-blue-500 appearance-none"
             >
-              진료과명 *
-            </label>
-            <div className="relative mt-1">
-              <ChevronDown
-                className="absolute right-0 top-1/2 transform -translate-y-1/2 mr-3 h-5 w-5 text-gray-400 pointer-events-none"
-                aria-hidden="true"
-              />
-              <select
-                id="deptId"
-                name="deptId"
-                value={formData.deptId}
-                onChange={handleChange}
-                required
-                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-blue-500 focus:border-blue-500 appearance-none"
-              >
-                <option value="">진료과를 선택하세요</option>
-                {deptOptions.map((dept) => (
-                  <option key={dept.deptId} value={dept.deptId}>
-                    {dept.deptName}
-                  </option>
-                ))}
-              </select>
-            </div>
+              <option value="">진료과를 선택하세요</option>
+              {departments.map((dept) => (
+                <option key={dept.deptId} value={dept.deptId}>
+                  {dept.deptName}
+                </option>
+              ))}
+            </select>
           </div>
+        </div>
 
-          {/* 등록 시에만 면허번호 입력 가능, 수정 시에는 변경 불가 */}
-          {!isEditing && (
-            <div>
-              <label
-                htmlFor="licenseNo"
-                className="block text-sm font-medium text-gray-700"
-              >
-                면허번호 *
-              </label>
-              <input
-                type="text"
-                id="licenseNo"
-                name="licenseNo"
-                value={formData.licenseNo}
-                onChange={handleChange}
-                required
-                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
-          )}
+        {/* 면허번호 (등록 시 필수, 수정 시에는 변경 불가) */}
+        <div className={isEditing ? "bg-gray-100 p-3 rounded-md text-sm" : ""}>
+          <label
+            htmlFor="licenseNo"
+            className="block text-sm font-medium text-gray-700"
+          >
+            면허번호 {isEditing ? "(수정 불가)" : "*"}
+          </label>
+          <input
+            type="text"
+            id="licenseNo"
+            name="licenseNo"
+            value={formData.licenseNo}
+            onChange={handleChange}
+            required={!isEditing}
+            disabled={isEditing}
+            className={`mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-blue-500 focus:border-blue-500 ${
+              isEditing ? "bg-gray-200 cursor-not-allowed" : ""
+            }`}
+          />
+        </div>
 
-          <div>
-            <label
-              htmlFor="phone"
-              className="block text-sm font-medium text-gray-700"
-            >
-              연락처
-            </label>
-            <input
-              type="text"
-              id="phone"
-              name="phone"
-              value={formData.phone}
-              onChange={handleChange}
-              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-blue-500 focus:border-blue-500"
-            />
-          </div>
+        {/* 연락처 */}
+        <div>
+          <label
+            htmlFor="phone"
+            className="block text-sm font-medium text-gray-700"
+          >
+            연락처
+          </label>
+          <input
+            type="text"
+            id="phone"
+            name="phone"
+            value={formData.phone}
+            onChange={handleChange}
+            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-blue-500 focus:border-blue-500"
+          />
+        </div>
 
-          {error && <p className="text-red-500 text-sm">{error}</p>}
+        {/* 입사일 */}
+        <div>
+          <label
+            htmlFor="hiredDate"
+            className="block text-sm font-medium text-gray-700"
+          >
+            입사일 *
+          </label>
+          <input
+            type="date"
+            id="hiredDate"
+            name="hiredDate"
+            value={formData.hiredDate}
+            onChange={handleChange}
+            required
+            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-blue-500 focus:border-blue-500"
+          />
+        </div>
 
-          <div className="flex justify-end space-x-3 pt-4">
-            <button
-              type="button"
-              onClick={() => onClose && onClose(false)}
-              className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md shadow-sm hover:bg-gray-100 transition-colors"
-              disabled={loading}
-            >
-              취소
-            </button>
-            <button
-              type="submit"
-              className={`px-4 py-2 text-white rounded-md shadow-sm transition-colors ${
-                loading ? "bg-blue-400" : "bg-blue-600 hover:bg-blue-700"
-              }`}
-              disabled={loading}
-            >
-              {loading ? "처리 중..." : isEditing ? "수정 완료" : "등록"}
-            </button>
-          </div>
-        </form>
-      </div>
-    );
-  };
+        {error && <p className="text-red-500 text-sm mt-3">{error}</p>}
 
-  const DoctorDetail = (id) => {
-    alert(id);
-    return <div>인사정보 페이지</div>;
-  };
+        <div className="flex justify-end space-x-3 pt-4">
+          <button
+            type="button"
+            onClick={() => onClose && onClose(false)}
+            className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md shadow-sm hover:bg-gray-100 transition-colors"
+            disabled={loading}
+          >
+            취소
+          </button>
+          <button
+            type="submit"
+            className={`px-4 py-2 text-white rounded-md shadow-sm transition-colors flex items-center justify-center ${
+              loading ? "bg-blue-400" : "bg-blue-600 hover:bg-blue-700"
+            }`}
+            disabled={loading}
+          >
+            {loading ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin mr-2" /> 처리 중...
+              </>
+            ) : isEditing ? (
+              "수정 완료"
+            ) : (
+              "등록"
+            )}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+};
 
-  // 초기 데이터 불러오기
-  useEffect(() => {
-    fetchDoctors();
-  }, []);
+// ====================================================================
+// 메인 APP 컴포넌트 (의사 목록 및 관리)
+// ====================================================================
 
-  // 의사 목록이 업데이트될 때마다 고유한 부서 목록 추출
-  useEffect(() => {
-    if (doctors.length > 0) {
-      const deptMap = new Map();
-      doctors.forEach((doctor) => {
-        // deptId와 deptName이 모두 존재하고 유효한 값일 때만 추가
-        if (doctor.deptId && doctor.deptName) {
-          // deptId를 키로 사용하여 중복을 방지하고 고유한 부서만 저장
-          deptMap.set(doctor.deptId, {
-            deptId: doctor.deptId,
-            deptName: doctor.deptName,
-          });
-        }
-      });
-      // Map의 값(value)들을 배열로 변환하여 저장
-      setUniqueDepartments(Array.from(deptMap.values()));
-    } else {
-      setUniqueDepartments([]);
-    }
-  }, [doctors]); // doctors 배열이 변경될 때마다 실행
+const DoctorList = () => {
+  // 상태 관리
+  const [admins, setAdmins] = useState([]);
+  const [search, setSearch] = useState("");
+  const [viewMode, setViewMode] = useState("list");
+  const [editingAdmin, setEditingAdmin] = useState(null);
+  const [deletingAdmin, setDeletingAdmin] = useState(null);
+  const [apiError, setApiError] = useState(false);
+  const [uniqueDepartments, setUniqueDepartments] = useState([]);
+  const [message, setMessage] = useState(null); // InfoModal용 메시지
 
   // API 호출: 의사 목록 조회 (GET)
-  const fetchDoctors = async () => {
+  const fetchAdmins = async () => {
     setApiError(false);
     try {
+      // API 호출
       const res = await axios.get(API_BASE_URL);
-      setDoctors(res.data);
+      setAdmins(res.data);
     } catch (err) {
-      console.error("의사 조회 실패:", err);
-      if (axios.isAxiosError(err) && !err.response) {
-        console.warn("API 연결에 실패했습니다. 모의 데이터를 로드합니다.");
-        setApiError(true);
-      } else {
-        setApiError(true);
-      }
+      console.error("의사 조회 실패 (API 연결 오류):", err);
+      setApiError(true);
     }
   };
 
+  // 초기 데이터 및 부서 목록 로드
+  useEffect(() => {
+    fetchAdmins();
+  }, []);
+
   // 날짜 포맷 함수
-  const formatDateTime = (dateString) => {
-    if (!dateString) return "";
+  const formatDate = (dateString) => {
+    if (!dateString) return "-";
     try {
-      const isoDateString = dateString.includes("T")
-        ? dateString
-        : dateString.replace(" ", "T");
-      return format(new Date(isoDateString), "yyyy-MM-dd HH:mm:ss");
+      return format(new Date(dateString), "yyyy-MM-dd");
     } catch (error) {
       return dateString;
     }
@@ -288,38 +387,48 @@ export default function DoctorList() {
   // 폼 닫기 핸들러 (isRefreshed가 true면 목록 새로고침)
   const handleCloseForm = (isRefreshed = false) => {
     setViewMode("list");
-    setEditingDoctor(null);
+    setEditingAdmin(null);
     if (isRefreshed) {
-      fetchDoctors();
+      fetchAdmins();
     }
   };
 
+  // 메시지 표시 핸들러
+  const handleShowMessage = (msg, title = "알림") => {
+    setMessage({ text: msg, title: title });
+  };
+
+  const handleCloseMessage = () => {
+    setMessage(null);
+  };
+
   // 삭제 확인 모달 열기
-  const confirmDelete = (doctor) => {
-    setDeletingDoctor(doctor);
+  const confirmDelete = (admin) => {
+    setDeletingAdmin(admin);
   };
 
   // 최종 삭제 실행
   const handleDelete = async () => {
-    if (!deletingDoctor) return;
+    if (!deletingAdmin) return;
+    const adminToDelete = deletingAdmin;
+    setDeletingAdmin(null); // 모달 바로 닫기
 
     try {
       if (!apiError) {
         const res = await axios.delete(
-          `${API_BASE_URL}/${deletingDoctor.doctorId}`
+          `${API_BASE_URL}/${adminToDelete.adminId}`
         );
-        alert(
+        const successMessage =
           res.data.message ||
-            `${deletingDoctor.doctorName} 의사 정보가 삭제되었습니다.`
-        );
-        fetchDoctors();
+          `${adminToDelete.name} 의사 정보(직원 계정)가 삭제되었습니다.`;
+        handleShowMessage(successMessage);
+        fetchAdmins();
       } else {
-        // 모의 데이터 삭제
-        setDoctors((prevDoctors) =>
-          prevDoctors.filter((d) => d.doctorId !== deletingDoctor.doctorId)
+        setAdmins((prevAdmins) =>
+          prevAdmins.filter((a) => a.adminId !== adminToDelete.adminId)
         );
-        alert(
-          `(모의) ${deletingDoctor.doctorName} 의사 정보가 삭제되었습니다.`
+        handleShowMessage(
+          `(모의) ${adminToDelete.name} 의사 정보가 삭제되었습니다.`
         );
       }
     } catch (err) {
@@ -327,30 +436,59 @@ export default function DoctorList() {
         "삭제 실패:",
         err.response ? err.response.data : err.message
       );
-      alert(err.response?.data?.message || "삭제에 실패했습니다.");
-    } finally {
-      setDeletingDoctor(null); // 모달 닫기
+      const errorMessage =
+        err.response?.data?.message || "삭제에 실패했습니다.";
+      handleShowMessage(errorMessage, "오류");
     }
   };
 
   // 검색 필터링
-  const filtered = doctors.filter(
-    (d) =>
-      (d.doctorName || "").toLowerCase().includes(search.toLowerCase()) ||
-      (d.phone || "").includes(search) ||
-      (d.deptName || "").toLowerCase().includes(search.toLowerCase()) ||
-      (d.licenseNo || "").toLowerCase().includes(search.toLowerCase())
+  const filtered = admins.filter(
+    (a) =>
+      (a.name || "").toLowerCase().includes(search.toLowerCase()) ||
+      (a.phone || "").includes(search) ||
+      (a.deptName || "").toLowerCase().includes(search.toLowerCase()) ||
+      (a.licenseNo || "").toLowerCase().includes(search.toLowerCase()) ||
+      (a.empId || "").toLowerCase().includes(search.toLowerCase())
   );
 
   // 뷰 모드에 따라 렌더링할 내용 상이
   if (viewMode === "add" || viewMode === "edit") {
     return (
       <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center p-8 z-50">
-        <DoctorForm
-          doctorData={editingDoctor}
+        <AdminDoctorForm
+          adminData={editingAdmin}
           onClose={handleCloseForm}
           departments={uniqueDepartments}
+          onShowMessage={handleShowMessage}
         />
+        {message && (
+          <InfoModal
+            message={message.text}
+            title={message.title}
+            onClose={handleCloseMessage}
+          />
+        )}
+      </div>
+    );
+  }
+
+  if (viewMode === "detail" && editingAdmin) {
+    return (
+      <div className="min-h-screen bg-gray-50 font-pretendard pt-24">
+        <AdminHeader />
+        <main className="max-w-7xl mx-auto px-8">
+          <button
+            onClick={() => setViewMode("list")}
+            className="mb-6 px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors shadow-md"
+          >
+            &larr; 목록으로 돌아가기
+          </button>
+          <h1 className="text-3xl font-bold text-blue-600 mb-6">
+            의사 상세 정보 (ID: {editingAdmin.adminId})
+          </h1>
+          <DoctorDetail adminId={editingAdmin.adminId} />
+        </main>
       </div>
     );
   }
@@ -361,14 +499,13 @@ export default function DoctorList() {
       <AdminHeader />
 
       {/* 컨텐츠 영역 */}
-      <main className="max-w-7xl mx-auto pt-24 px-8">
+      <main className="max-w-7xl mx-auto pt-24 px-4 sm:px-8">
         <h1 className="text-3xl font-bold text-blue-600 mb-8">
           의사 정보 목록
           <span className="font-normal text-xl ml-2">
-            (총 {doctors.length}명)
+            (총 {admins.length}명)
           </span>
         </h1>
-
         {/* API 연결 오류 경고 메시지 */}
         {apiError && (
           <div
@@ -377,93 +514,104 @@ export default function DoctorList() {
           >
             <strong className="font-bold">API 연결 오류 발생:</strong>
             <span className="block sm:inline">
-              {" "}
-              백엔드 서버(`{API_BASE_URL}`)에 연결할 수 없어 모의 데이터(Mock
-              Data)를 표시합니다.
+              백엔드 서버(`{API_BASE_URL}`)에 연결할 수 없어 **모의 데이터**를
+              표시합니다.
             </span>
           </div>
         )}
-
         {/* 검색창 + 버튼 그룹 */}
-        <div className="mb-6 flex justify-between items-center">
-          <div className="relative w-1/3">
+        <div className="mb-6 flex flex-wrap justify-between items-center gap-4">
+          <div className="relative w-full sm:w-1/3 min-w-[250px] flex-grow">
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="이름, 전화번호, 진료과 검색"
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="이름, 사번, 진료과, 면허번호 검색"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow"
             />
-            <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
           </div>
-          <div className="space-x-3">
+          <div>
             <button
               onClick={() => {
+                setEditingAdmin(null);
                 setViewMode("add");
-                setEditingDoctor(null);
               }}
-              className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors shadow-md"
+              className="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors shadow-md flex items-center"
             >
-              추가
+              <PlusCircle className="w-5 h-5 inline mr-2" /> 의사 추가
             </button>
           </div>
         </div>
-
-        {/* 테이블 */}
-        <div className="overflow-x-auto">
-          <table className="w-full bg-white border border-gray-200 rounded-lg shadow-md text-sm">
-            <thead className="bg-gray-100 text-gray-800 font-semibold">
+        <div className="overflow-x-auto border border-gray-200 rounded-lg shadow-xl">
+          <table className="min-w-full bg-white text-sm divide-y divide-gray-200">
+            <thead className="bg-gray-100 text-gray-800 font-semibold border-b border-gray-200 sticky top-0">
               <tr>
-                <th className="py-3 px-4 text-left">ID</th>
-                <th className="py-3 px-4 text-left">이름</th>
-                <th className="py-3 px-4 text-left">진료과명</th>
-                <th className="py-3 px-4 text-left">면허번호</th>
-                <th className="py-3 px-4 text-left">연락처</th>
-                <th className="py-3 px-4 text-left">등록일</th>
-                <th className="py-3 px-4 text-center">관리</th>
+                <th className="py-3 px-4 text-left w-12">ID</th>
+                <th className="py-3 px-4 text-left w-20">사번</th>
+                <th className="py-3 px-4 text-left w-32">이름</th>
+                <th className="py-3 px-4 text-left w-32">진료과명</th>
+                <th className="py-3 px-4 text-left w-28">면허번호</th>
+                <th className="py-3 px-4 text-left w-24">연락처</th>
+                <th className="py-3 px-4 text-left w-24">입사일</th>
+                <th className="py-3 px-4 text-left w-20">상태</th>
+                <th className="py-3 px-4 text-center w-24">관리</th>
               </tr>
             </thead>
 
             <tbody>
-              {filtered.map((d) => (
+              {filtered.map((a) => (
                 <tr
-                  key={d.doctorId}
-                  className="border-b hover:bg-gray-50 text-gray-700"
+                  key={a.adminId}
+                  className="border-b border-gray-100 hover:bg-gray-50 text-gray-700 transition-colors"
                 >
-                  <td className="py-2 px-4">{d.doctorId}</td>
+                  <td className="py-2 px-4">{a.adminId || "-"}</td>
+                  <td className="py-2 px-4 font-medium">{a.empId || "-"}</td>
                   <td
-                    className="py-2 px-4 font-semibold"
+                    className="py-2 px-4 text-blue-600 cursor-pointer hover:underline"
                     onClick={() => {
-                      DoctorDetail(d.doctorId);
+                      setEditingAdmin(a); // 상세 페이지에서 사용할 데이터를 설정
+                      setViewMode("detail");
                     }}
                   >
-                    {d.doctorName}
+                    {a.name || "-"}
                   </td>
-                  <td className="py-2 px-4">{d.deptName}</td>
-                  <td className="py-2 px-4">{d.licenseNo}</td>
-                  <td className="py-2 px-4">{d.phone}</td>
-                  <td className="py-2 px-4 text-gray-500 text-xs">
-                    {formatDateTime(d.createdAt)}
+                  <td className="py-2 px-4">{a.deptName || "-"}</td>
+                  <td className="py-2 px-4">{a.licenseNo || "-"}</td>
+                  <td className="py-2 px-4">{a.phone || "-"}</td>
+                  <td className="py-2 px-4 text-sm">
+                    {formatDate(a.hiredDate)}
+                  </td>
+                  <td className="py-2 px-4">
+                    <span
+                      className={`inline-block px-2 py-0.5 text-xs font-semibold rounded-full ${
+                        a.status === "ACTIVE"
+                          ? "bg-green-100 text-green-800"
+                          : "bg-red-100 text-red-800"
+                      }`}
+                    >
+                      {a.status || "ACTIVE"}
+                    </span>
                   </td>
                   <td className="py-2 px-4 text-center whitespace-nowrap space-x-2">
                     {/* 수정 버튼 (Edit Icon) */}
                     <button
                       onClick={() => {
-                        setEditingDoctor(d);
+                        setEditingAdmin(a);
                         setViewMode("edit");
                       }}
-                      className="text-blue-600 hover:text-blue-800 p-1 rounded-md transition duration-150 ease-in-out"
+                      className="text-blue-600 hover:text-blue-800 p-1 rounded-md transition duration-150 ease-in-out hover:bg-blue-100"
                       title="수정"
                     >
-                      <FaEdit className="w-5 h-5" />{" "}
+                      <Edit className="w-5 h-5" />
                     </button>
                     {/* 삭제 버튼 (Delete Icon) */}
                     <button
-                      onClick={() => confirmDelete(d)}
-                      className="text-red-600 hover:text-red-800 p-1 rounded-md transition duration-150 ease-in-out"
+                      onClick={() => confirmDelete(a)}
+                      className="text-red-600 hover:text-red-800 p-1 rounded-md transition duration-150 ease-in-out hover:bg-red-100"
                       title="삭제"
                     >
-                      <FaTrashAlt className="w-5 h-5" />{" "}
+                      <Trash2 className="w-5 h-5" />
                     </button>
                   </td>
                 </tr>
@@ -472,8 +620,8 @@ export default function DoctorList() {
               {filtered.length === 0 && (
                 <tr>
                   <td
-                    colSpan="7"
-                    className="text-center py-10 text-gray-500 italic"
+                    colSpan="9"
+                    className="text-center py-10 text-gray-500 italic bg-white"
                   >
                     등록된 의사 정보가 없거나 검색 결과가 없습니다.
                   </td>
@@ -485,13 +633,24 @@ export default function DoctorList() {
       </main>
 
       {/* 삭제 확인 모달 렌더링 */}
-      {deletingDoctor && (
+      {deletingAdmin && (
         <ConfirmModal
-          message={`'${deletingDoctor.doctorName}' 의사 정보를 정말로 삭제하시겠습니까?`}
+          message={`'${deletingAdmin.name}' 의사 정보(직원 계정)를 정말로 삭제하시겠습니까?`}
           onConfirm={handleDelete}
-          onCancel={() => setDeletingDoctor(null)}
+          onCancel={() => setDeletingAdmin(null)}
+        />
+      )}
+
+      {/* 알림 모달 렌더링 */}
+      {message && (
+        <InfoModal
+          message={message.text}
+          title={message.title}
+          onClose={handleCloseMessage}
         />
       )}
     </div>
   );
-}
+};
+
+export default DoctorList;

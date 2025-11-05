@@ -10,6 +10,7 @@ import StaffList from "./pages/admin/StaffList";
 import DoctorList from "./pages/admin/DoctorList";
 import MyPage from "./pages/user/MyPage";
 import UserHome from "./pages/user/UserHome";
+import FindAccount from "./pages/user/FindAccount";
 import MedicalConsult from "./pages/user/MedicalConsult";
 import MediHistory from "./pages/admin/MediHistory";
 import MedicalRecordPage from "./pages/admin/MedicalRecordPage";
@@ -32,7 +33,6 @@ import AdmissionPage from "./pages/admin/AdmissionPage";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import SupportChatPage from "./pages/user/SupportChatPage";
-
 
 function AppContent() {
   const location = useLocation();
@@ -72,6 +72,7 @@ function AppContent() {
           {/*유저페이지*/}
           <Route element={<UserLayout />}>
             <Route path="/" element={<UserHome />} />/
+            <Route path="/findAccount" element={<FindAccount />} />/
             <Route path="/user/mypage" element={<MyPage />} />
             <Route path="/user/consult" element={<MedicalConsult />} />
             <Route path="/user/reservation" element={<Reservation />} />

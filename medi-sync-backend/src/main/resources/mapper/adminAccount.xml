@@ -3,17 +3,38 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.mediSync.project.medical.mapper.AdminAccountMapper">
 
+    <resultMap id="admin" type="com.mediSync.project.medical.vo.AdminAccount">
+        <id column="admin_id" property="adminId"/>
+        <result column="emp_id" property="empId"/>
+        <result column="name" property="name"/>
+        <result column="phone" property="phone"/>
+        <result column="email" property="email"/>
+        <result column="position" property="position"/>
+        <result column="profile_img_url" property="profileImgUrl"/>
+        <result column="status" property="status"/>
+        <result column="license_no" property="licenseNo"/>
+        <result column="hired_date" property="hiredDate"/>
+        <result column="created_at" property="createdAt"/>
+
+        <result column="dept_id" property="deptId"/>
+        <result column="dept_name" property="deptName"/>
+    </resultMap>
+
     <!-- erp 계정 등록 -->
     <insert id="insertAdmin" parameterType="admin" useGeneratedKeys="true" keyProperty="adminId">
         INSERT INTO admin_account (
-        emp_id, password, name, phone, email, role, profile_img_url, doctor_id, staff_id, created_at
+        emp_id, password, name, phone, email, position, role, profile_img_url, dept_id, license_no, status, hired_date, created_at
         ) VALUES (
-        #{empId}, #{password}, #{name}, #{phone}, #{email}, 'ADMIN', #{profileImgUrl}, #{doctorId}, #{staffId}, NOW())
+        #{empId}, #{password}, #{name}, #{phone}, #{email}, #{position}, 'ADMIN', #{profileImgUrl}, #{deptId}, ${licenseNo}, 'ACTIVE', NOW(), NOW())
     </insert>
 
-    <!-- 전체 사원 조회 -->
-    <select id="selectAllAdmin" resultType="admin">
-        SELECT * FROM admin_account
+    <!-- 의사 조회 -->
+    <select id="selectAllDoctor" parameterType="String" resultMap="admin">
+        SELECT a.*, d.dept_name
+        FROM admin_account a JOIN department d ON a.dept_id = d.dept_id
+        WHERE a.position = 'DOCTOR'
+        ORDER BY a.admin_id DESC
     </select>
+
 
 </mapper>

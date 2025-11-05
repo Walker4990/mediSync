@@ -1,12 +1,12 @@
 import React, { useEffect, useState, useMemo } from "react";
 import axios from "axios";
 import { format } from "date-fns";
-import AdminHeader from "../../component/AdminHeader";
 import { FaEdit, FaTrashAlt, FaSearch } from "react-icons/fa";
+import AdminHeader from "../../component/AdminHeader";
 import ConfirmModal from "../../component/ConfirmModal";
 
-// API 기본 URL (백엔드 MedicalStaffController 경로와 일치)
-const API_BASE_URL = "http://192.168.0.24:8080/api/staffs";
+// API 기본 URL
+const API_BASE_URL = "http://192.168.0.24:8080/api/admins/staffs";
 
 // 직무(Position) 옵션
 const POSITION_OPTIONS = [
@@ -60,7 +60,7 @@ const StaffForm = ({ staffData, onClose }) => {
   const today = format(new Date(), "yyyy-MM-dd");
 
   const initialData = staffData || {
-    staffName: "",
+    name: "",
     department: "",
     position: POSITION_OPTIONS[0].value, // 기본값 설정
     licenseNo: "",
@@ -85,13 +85,9 @@ const StaffForm = ({ staffData, onClose }) => {
     setLoading(true);
     setError(null);
 
-    // 필수 필드 검증 (이름, 직무, 등록 시 면허번호)
-    if (
-      !formData.staffName ||
-      !formData.position ||
-      (!isEditing && !formData.licenseNo)
-    ) {
-      setError("필수 항목(이름, 직무, 면허번호)을 모두 입력해주세요.");
+    // 필수 필드 검증
+    if (!formData.name || !formData.position) {
+      setError("필수 항목(이름, 직무)을 모두 입력해주세요.");
       setLoading(false);
       return;
     }
@@ -114,7 +110,7 @@ const StaffForm = ({ staffData, onClose }) => {
       // alert() 대신 커스텀 모달이나 토스트 알림 사용 권장
       alert(
         res.data.message ||
-          `${formData.staffName} 의료진 정보가 ${
+          `${formData.name} 의료진 정보가 ${
             isEditing ? "수정" : "등록"
           }되었습니다.`
       );
@@ -147,7 +143,7 @@ const StaffForm = ({ staffData, onClose }) => {
             <label className="block text-indigo-600 font-semibold">
               고유 ID
             </label>
-            <p className="font-bold text-gray-800">{staffData.staffId}</p>
+            <p className="font-bold text-gray-800">{staffData.adminId}</p>
           </div>
         )}
 
@@ -163,7 +159,7 @@ const StaffForm = ({ staffData, onClose }) => {
             type="text"
             id="staffName"
             name="staffName"
-            value={formData.staffName}
+            value={formData.name}
             onChange={handleChange}
             required
             className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
@@ -197,16 +193,16 @@ const StaffForm = ({ staffData, onClose }) => {
         {/* 3. 진료과명 / 소속 */}
         <div>
           <label
-            htmlFor="department"
+            htmlFor="deptId"
             className="block text-sm font-medium text-gray-700"
           >
             소속 진료과 (또는 부서)
           </label>
           <input
             type="text"
-            id="department"
-            name="department"
-            value={formData.department}
+            id="deptId"
+            name="deptId"
+            value={formData.deptId}
             onChange={handleChange}
             className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
           />
@@ -422,8 +418,6 @@ export default function MedicalStaffList() {
 
   // 뷰 모드에 따라 렌더링할 내용 상이 (모달 처리)
   if (viewMode === "add" || viewMode === "edit") {
-    // 기존 코드의 DropdownMenu, AdminHeader, ConfirmModal 컴포넌트가 임포트된 곳에 MedicalStaffList가 위치한다고 가정
-    // 모달 대신 전체 화면 Form으로 처리
     return (
       <div className="fixed inset-0 bg-gray-900 bg-opacity-70 flex items-center justify-center p-4 z-50">
         <StaffForm staffData={editingStaff} onClose={handleCloseForm} />
@@ -603,7 +597,7 @@ export default function MedicalStaffList() {
                 />
             )}
             */}
-      {/* 임시 alert/confirm 대체 (ConfirmModal이 없는 경우를 대비) */}
+
       {deletingStaff && (
         <div className="fixed inset-0 bg-gray-900 bg-opacity-70 flex items-center justify-center p-4 z-50">
           <div className="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full">
