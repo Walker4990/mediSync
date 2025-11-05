@@ -238,7 +238,7 @@ const TimeModal = ({
     const startTime = selectedTime.split("~")[0];
     const dataToSend = {
       patientId: 1,
-      doctorId: selectedDoctor.doctorId,
+      adminId: selectedDoctor.adminId,
       reservationDate: `${selectedDate} ${startTime}:00`,
       type: type ? "ONLINE" : "OFFLINE",
     };
@@ -456,11 +456,11 @@ export default function MedicalConsult() {
       try {
         const response = await axios.get(
           //http://192.168.0.24:8080
-          `http://localhost:8080/api/reservation/getReservationList?date=${selectedDate}&doctor_id=${selectedDoctor.doctorId}`
+          `http://localhost:8080/api/reservation/getReservationList?date=${selectedDate}&admin_id=${selectedDoctor.adminId}`
         );
 
         console.log(
-          reservedTimes,
+          "reservedTimes : ",
           reservedTimes.map((t) => `'${t}'`)
         );
         setReservedTimes(response.data);

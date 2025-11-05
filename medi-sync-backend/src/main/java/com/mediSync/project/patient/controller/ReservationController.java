@@ -22,8 +22,9 @@ public class ReservationController {
 
     //해당 날짜에 잡힌 예약 시간 리스트 가져오기
     @GetMapping("/getReservationList")
-    public List<String> getReservationList(@RequestParam String date, @RequestParam Integer doctor_id) {
-        System.out.println(date + doctor_id);
+    public List<String> getReservationList(@RequestParam String date, @RequestParam Integer admin_id) {
+        System.out.println("날짜 : "+ date + "admin Id : "+admin_id);
+
         Reservation reservation = new Reservation();
         //시간 설정
         LocalDate localDate = LocalDate.parse(date);
@@ -31,7 +32,7 @@ public class ReservationController {
         Date convertDate = Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant());
 
         reservation.setReservationDate(convertDate);
-        reservation.setAdminId(doctor_id);
+        reservation.setAdminId(admin_id);
         List<String> rawTimes = reservationService.getReservedTimesByDate(reservation);
 
         return rawTimes.stream()
