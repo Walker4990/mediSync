@@ -9,7 +9,7 @@
         INSERT INTO admission (
         patient_id, operation_id, room_id, admitted_at, status
         ) VALUES (
-        #{patientId}, #{operationId}, #{roomId}, #{admissionDate}, 'SCHEDULED'
+        #{patientId}, #{operationId}, #{roomId}, #{admittedAt}, 'SCHEDULED'
         )
     </insert>
 
@@ -34,6 +34,7 @@
         FROM admission a
         JOIN patient p ON a.patient_id = p.patient_id
         JOIN room r ON a.room_id = r.room_id
+        WHERE a.status IN ('ADMITTED', 'SCHEDULED')
     </select>
     <!-- 병실 별 입원환자 조회 -->
     <select id="getAdmissionsByRoom" resultType="admission">
@@ -52,7 +53,7 @@
         JOIN patient p ON a.patient_id = p.patient_id
         JOIN room r ON a.room_id = r.room_id
         WHERE a.room_id = #{roomId}
-        AND a.status = 'ADMITTED'
+        AND a.status IN ('ADMITTED', 'SCHEDULED')
     </select>
 
     <!--  퇴원 처리 -->

@@ -8,11 +8,11 @@
     <!-- 수술 등록 -->
     <insert id="insertOperation" parameterType="operation" useGeneratedKeys="true" keyProperty="operationId">
         INSERT INTO operation (
-        patient_id, admin_id, staff_id, record_id,
+        patient_id, admin_id, assistant_id, record_id,
         operation_name, diagnosis, anesthesia_type,
         room_id, scheduled_date, scheduled_time, cost, status
         ) VALUES (
-        #{patientId}, #{adminId}, #{staffId}, #{recordId},
+        #{patientId}, #{adminId}, #{assistantId}, #{recordId},
         #{operationName}, #{diagnosis}, #{anesthesiaType},
         #{roomId}, #{scheduledDate}, #{scheduledTime}, #{cost}, 'SCHEDULED'
         )
@@ -23,7 +23,7 @@
         SELECT
         o.*,
         p.name AS patientName,
-        a.name AS adminName,
+        a.name AS doctorName,
         r.room_name AS roomName
         FROM operation o
         JOIN patient p ON o.patient_id = p.patient_id
@@ -56,11 +56,14 @@
         o.cost,
         o.status,
         o.scheduled_date,
-        o.scheduled_time
+        o.scheduled_time,
+        o.room_id,
+        orr.room_name AS roomName
         FROM operation o
         LEFT JOIN patient p ON o.patient_id = p.patient_id
         LEFT JOIN admin_account a ON o.admin_id = a.admin_id
-        WHERE o.operation_id = #{operationId}
+        LEFT JOIN operation_room orr ON o.room_id = orr.room_id
+        WHERE o.operation_id = #{operationId};
     </select>
 
     <!-- 중복 예약 확인 -->
@@ -153,7 +156,7 @@
     </delete>
 
     <!-- 중복 스태프 확인 -->
-    <select id="checkDuplicateStaff" parameterType="map" resultType="int">
+    <select id="checkDuplicateStaff" resultType="int">
         SELECT COUNT(*)
         FROM operation_staff
         WHERE operation_id = #{operationId}

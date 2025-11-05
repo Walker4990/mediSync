@@ -7,8 +7,8 @@
 
     <insert id="insertMessage" parameterType="chat">
         INSERT INTO chat_message
-        (sender_id, sender_type, receiver_id, receiver_type, content, sent_at, chat_type)
-        VALUES (#{senderId}, #{senderType}, #{receiverId}, #{receiverType}, #{content}, NOW(), #{chatType})
+        (sender_id, sender_type, receiver_id, receiver_type, content, sent_at, chat_type, read_status)
+        VALUES (#{senderId}, #{senderType}, #{receiverId}, #{receiverType}, #{content}, NOW(), #{chatType}, #{readStatus})
     </insert>
 
     <select id="getMessagesBetween" resultType="chat">
@@ -21,4 +21,20 @@
         ORDER BY sent_at ASC
     </select>
 
+    <!-- 채팅 안읽은 갯수 -->
+    <select id="getUnreadCount" resultType="int">
+        SELECT COUNT(*)
+        FROM chat_message
+        WHERE receiver_id = #{receiverId}
+        AND sender_id = #{senderId}
+        AND read_status = false
+    </select>
+    <!-- 채팅 읽음 처리-->
+    <update id="markMessagesAsRead">
+        UPDATE chat_message
+        SET read_status = true
+        WHERE receiver_id = #{receiverId}
+        AND sender_id = #{senderId}
+        AND read_status = false
+    </update>
 </mapper>

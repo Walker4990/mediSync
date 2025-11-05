@@ -1,6 +1,6 @@
 package com.mediSync.project.operation.controller;
 
-import com.mediSync.project.medical.vo.MedicalStaff;
+import com.mediSync.project.medical.vo.AdminAccount;
 import com.mediSync.project.operation.vo.Operation;
 import com.mediSync.project.operation.vo.OperationLog;
 import com.mediSync.project.operation.vo.OperationRoom;
@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.*;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Map;
@@ -116,7 +115,7 @@ public class OperationController {
         return ResponseEntity.ok(operationService.selectOperationRoomList());
     }
     @GetMapping("/{operationId}/operationStaffs")
-    public List<MedicalStaff> selectStaffByOperationId(@PathVariable Long operationId) {
+    public List<AdminAccount> selectStaffByOperationId(@PathVariable Long operationId) {
         return operationService.selectStaffByOperationId(operationId);
     }
     @DeleteMapping("/{operationId}/staff/{staffId}")

@@ -11,7 +11,7 @@ public class LisResultDTO {
     private Long patientId;
     private Long recordId;
     private String patientName;
-    private Long doctorId;
+    private Long adminId;
     private String doctorName;
     private Long reservationId;
     private Map<String, String> mockData;

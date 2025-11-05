@@ -17,6 +17,7 @@ import com.mediSync.project.test.mapper.TestResultMapper;
 import com.mediSync.project.test.vo.TestResult;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import javax.imageio.ImageIO;
@@ -52,7 +53,7 @@ public class TestResultService {
         mockData.forEach((item, value) -> {
             TestResult result = new TestResult();
             result.setPatientId(dto.getPatientId());
-            result.setDoctorId(dto.getDoctorId());
+            result.setAdminId(dto.getAdminId());
             result.setRecordId(dto.getRecordId());
             result.setTestCode(dto.getTestCode());
             result.setTestName(dto.getTestName());
@@ -114,10 +115,20 @@ public class TestResultService {
             PdfWriter.getInstance(document, baos);
             document.open();
 
-            // ✅ 한글 폰트 설정
-            String fontPath = System.getProperty("os.name").toLowerCase().contains("win")
-                    ? "C:/Windows/Fonts/malgun.ttf"
-                    : "/usr/share/fonts/truetype/nanum/NanumGothic.ttf";
+            // ✅ 한글 폰트 설정 (경로 확인)
+            String fontPath;
+            if (System.getProperty("os.name").toLowerCase().contains("win")) {
+                fontPath = "C:/Windows/Fonts/malgun.ttf";
+            } else {
+                fontPath = "/usr/share/fonts/truetype/nanum/NanumGothic.ttf";
+            }
+
+            java.io.File fontFile = new java.io.File(fontPath);
+            if (!fontFile.exists()) {
+                System.out.println("⚠️ [경고] 지정한 폰트 파일을 찾을 수 없습니다: " + fontPath);
+            } else {
+                System.out.println("✅ 폰트 경로 확인됨: " + fontPath);
+            }
 
             BaseFont baseFont = BaseFont.createFont(fontPath, BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
             Font labelFont = new Font(baseFont, 12, Font.BOLD);
@@ -141,14 +152,24 @@ public class TestResultService {
             PdfPCell rightCell = new PdfPCell();
             rightCell.setBorder(Rectangle.NO_BORDER);
             rightCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
+
             try {
-                Image logo = Image.getInstance(getClass().getResource("/static/images/logo.png"));
-                logo.scaleToFit(60, 60);
-                rightCell.addElement(logo);
-            } catch (Exception ignore) {
+                ClassPathResource resource = new ClassPathResource("static/images/logo.png");
+                if (resource.exists()) {
+                    Image logo = Image.getInstance(resource.getInputStream().readAllBytes());
+                    logo.scaleToFit(60, 60);
+                    rightCell.addElement(logo);
+                } else {
+                    System.out.println("⚠️ 로고 이미지가 존재하지 않습니다. 텍스트 로고로 대체합니다.");
+                    rightCell.addElement(new Paragraph("MediSync",
+                            new Font(baseFont, 12, Font.BOLD, new BaseColor(90, 90, 90))));
+                }
+            } catch (Exception e) {
+                System.out.println("⚠️ 로고 로드 실패: " + e.getMessage());
                 rightCell.addElement(new Paragraph("MediSync",
                         new Font(baseFont, 12, Font.BOLD, new BaseColor(90, 90, 90))));
             }
+
             rightCell.addElement(new Paragraph("발행일: " + LocalDate.now(), new Font(baseFont, 10)));
             headerTable.addCell(leftCell);
             headerTable.addCell(rightCell);
@@ -201,8 +222,12 @@ public class TestResultService {
             summary.setSpacingBefore(10);
             document.add(summary);
 
-            // ✅ QR 코드 삽입
-            String qrCodeUrl = "https://medisync.kr/report/" + reservationId; // ← 실제 배포 시 URL 연결
+            // ✅ QR 코드 삽입 (URL 인코딩 적용)
+            String qrCodeUrl = java.net.URLEncoder.encode(
+                    "https://medisync.kr/report/" + reservationId,
+                    java.nio.charset.StandardCharsets.UTF_8
+            );
+
             Image qrImage = generateQrCodeImage(qrCodeUrl);
             qrImage.scaleToFit(80, 80);
             qrImage.setAlignment(Element.ALIGN_RIGHT);
@@ -226,9 +251,11 @@ public class TestResultService {
             return baos.toByteArray();
 
         } catch (Exception e) {
-            throw new RuntimeException("PDF 생성 실패", e);
+            e.printStackTrace(); // ❗콘솔에서 정확한 예외 확인용
+            throw new RuntimeException("PDF 생성 실패: " + e.getClass().getSimpleName() + " - " + e.getMessage(), e);
         }
     }
+
 
     /** ====== 🔧 유틸 메서드들 ====== **/
     private PdfPCell makeInfoCell(String text, Font font) {

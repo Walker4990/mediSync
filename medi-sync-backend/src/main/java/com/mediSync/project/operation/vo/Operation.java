@@ -17,8 +17,8 @@ import java.time.LocalTime;
 public class Operation {
     private Long operationId;
     private Long patientId; // 환자
-    private Long doctorId; // 집도의
-    private Long staffId;  // 의료진
+    private Long adminId; // 집도의
+    private Long assistantId;  // 의료진
     private String operationName; // 수술명(위 절제술 등)
     private LocalDate scheduledDate; //수술 예정일
     private String status; // 진행상태

@@ -65,11 +65,11 @@ public class MedicalRecordController {
     }
     @GetMapping("/cost/preview")
     public ResponseEntity<Map<String, Object>> previewCost(
-            @RequestParam Long doctorId,
+            @RequestParam Long adminId,
             @RequestParam Long patientId) {
 
         MedicalRecord mr = new MedicalRecord();
-        mr.setDoctorId(doctorId);
+        mr.setAdminId(adminId);
         mr.setPatientId(patientId);
         medicalRecordService.calculateCost(mr); // 기존 로직 재사용
 

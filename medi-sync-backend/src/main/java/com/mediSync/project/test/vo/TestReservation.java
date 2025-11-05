@@ -18,7 +18,7 @@ public class TestReservation {
     private Long scheduleId;
     private Long patientId;
     private Long recordId;
-    private Long doctorId;
+    private Long adminId;
     private String status;
     private LocalDateTime reservedAt;
 
