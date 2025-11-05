@@ -5,27 +5,36 @@
 
 <mapper namespace="com.mediSync.project.medical.mapper.PrescriptionMapper">
 
-    <!--  처방전 등록  -->
+    <!-- 처방전 등록 -->
     <insert id="insertPrescription" parameterType="prescription">
-        INSERT INTO prescription ( record_id, type, drug_name, dosage, duration, test_name, test_area, test_date, injection_name, injection_count, injection_area, unit, unit_price, created_at
+        INSERT INTO prescription (
+        record_id, type, drug_name, dosage, duration,
+        test_name, test_area, test_date,
+        injection_name, injection_count, injection_area,
+        unit, unit_price, created_at
         )
-        VALUES ( #{recordId}, #{type}, #{drugName}, #{dosage}, #{duration}, #{testName}, #{testArea}, #{testDate}, #{injectionName}, #{injectionCount}, #{injectionArea}, #{unit}, #{unitPrice}, NOW()
+        VALUES (
+        #{recordId}, #{type}, #{drugName}, #{dosage}, #{duration},
+        #{testName}, #{testArea}, #{testDate},
+        #{injectionName}, #{injectionCount}, #{injectionArea},
+        #{unit}, #{unitPrice}, NOW()
         );
     </insert>
-    <!--  처방 내역 조회  -->
+
+    <!-- 처방 내역 전체 조회 -->
     <select id="selectPrescription" resultType="prescription">
         SELECT * FROM prescription
     </select>
-    <!--  처방 내역 검색(환자별)  -->
+
+    <!-- 처방 내역 검색(환자별) -->
     <select id="selectPrescriptionByPatientId" parameterType="long" resultType="prescription">
-        SELECT * FROM prescription p
+        SELECT *
+        FROM prescription p
         JOIN medical_record mr ON p.record_id = mr.record_id
-        JOIN doctor d ON mr.doctor_id = d.doctor_id
+        JOIN admin_account a ON mr.admin_id = a.admin_id
         WHERE mr.record_id = #{recordId}
         ORDER BY p.created_at DESC
     </select>
-
-
 
     <!-- 입원환자 처방 내역 조회 -->
     <select id="selectInpatientPrescriptions" resultType="prescription">
@@ -34,7 +43,7 @@
         pa.patient_id           AS patientId,
         pa.name                 AS patientName,
         pa.admission_status     AS admissionStatus,
-        d.doctor_name           AS doctorName,
+        a.name                  AS adminName,
         mr.record_id            AS recordId,
         p.drug_name             AS drugName,
         p.dosage                AS dosage,
@@ -45,10 +54,9 @@
         FROM prescription p
         JOIN medical_record mr ON p.record_id = mr.record_id
         JOIN patient pa ON mr.patient_id = pa.patient_id
-        LEFT JOIN doctor d ON mr.doctor_id = d.doctor_id
+        LEFT JOIN admin_account a ON mr.admin_id = a.admin_id
         WHERE pa.admission_status = 'INPATIENT'
         ORDER BY p.created_at DESC
     </select>
-
 
 </mapper>

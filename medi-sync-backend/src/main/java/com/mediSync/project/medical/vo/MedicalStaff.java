@@ -11,7 +11,7 @@ import java.time.LocalDate;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Alias("medicalStaff")
+@Alias("")
 public class MedicalStaff {
     private Long staffId;
     private String staffName, department, licenseNo, phone;
