@@ -18,5 +18,6 @@ public class ReservationDTO {
     private String doctorName;
     private Timestamp reservationDate;
     private String email;
+    private String type;
 
 }

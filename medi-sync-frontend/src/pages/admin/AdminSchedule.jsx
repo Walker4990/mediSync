@@ -27,13 +27,6 @@ export default function AdminSchedule() {
       }
     };
 
-    // 검색 필터링
-    const filtered = patients.filter(
-      (p) =>
-        p.name.toLowerCase().includes(search.toLowerCase()) ||
-        p.phone.includes(search)
-    );
-
     return (
       <div className="bg-gray-50 min-h-screen font-pretendard">
         {/* 상단 고정 관리자 헤더 */}
@@ -41,24 +34,10 @@ export default function AdminSchedule() {
 
         {/* 컨텐츠 영역 */}
         <main className="max-w-7xl mx-auto pt-24 px-8">
-          <h1 className="text-3xl font-bold text-blue-600 mb-8">일정확인</h1>
+          <h1 className="text-3xl font-bold text-blue-600 mb-8">
+            예약일정확인
+          </h1>
 
-          {/* 검색창 + 새로고침 버튼 */}
-          <div className="mb-6 flex justify-between items-center">
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="이름 또는 전화번호 검색"
-              className="border border-gray-300 px-4 py-2 rounded-md w-1/3 focus:ring-2 focus:ring-blue-400 focus:outline-none"
-            />
-            <button
-              onClick={fetchPatients}
-              className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
-            >
-              새로고침
-            </button>
-          </div>
           <ViewReservation title="예약일정" icon={() => <></>} />
         </main>
       </div>

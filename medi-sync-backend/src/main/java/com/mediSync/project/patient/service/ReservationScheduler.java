@@ -23,6 +23,8 @@ public class ReservationScheduler {
     //예약 전날 오전 9시에 알림
     @Scheduled(cron = "0 0 9 * * ?")
     public void sendReservationReminders(){
+        
+        //reservation 보내기
         String testEmail  = "silvermoon4989@gmail.com";
         LocalDateTime start = LocalDateTime.now().plusDays(1)
                                                     .withHour(0)
@@ -32,22 +34,26 @@ public class ReservationScheduler {
 
         List<ReservationDTO> reservationList = reservationMapper
                                 .findReservationBetween(start,end);
+
+
+
         if(reservationList != null && !reservationList.isEmpty()){
-
-
         for (ReservationDTO res : reservationList){
             SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm");
             String time = timeFormat.format(res.getReservationDate());
-
+            if(res.getType() == null){
+                res.setType("진료");
+            }
             String message = String.format(
                             "[병원예약 알림]\n" +
                             "병원에서 알려드립니다.\n" +
-                            "%s님! 내일 %s시에 %s 의사와의\n" +
-                            "예약이 있습니다!\n" +
+                            "%s님! 내일 %s시에 %s 의사님과의\n" +
+                            " %s 예약이 있습니다!\n" +
                             "▼만약 예약을 변경하거나 취소하시려면\n" +
                             "http://localhost:3000/user/consult",
                     res.getName(),
                     time,
+                     res.getType(),
                     res.getDoctorName());
             emailService.sendEmail(/*res.getEmail()*/ testEmail, "예약 알림", message);
         }
