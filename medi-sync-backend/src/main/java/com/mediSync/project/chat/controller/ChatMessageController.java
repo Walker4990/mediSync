@@ -27,14 +27,26 @@ public class ChatMessageController {
         return chatMessageService.getMessagesBetween(senderId, receiverId);
     }
     @MessageMapping("/chat/{senderId}/{receiverId}")
-    public void sendMessage(@DestinationVariable Long senderId, @DestinationVariable Long receiverId, ChatMessage chatMessage){
+    public void sendMessage(@DestinationVariable Long senderId,
+                            @DestinationVariable Long receiverId,
+                            ChatMessage chatMessage) {
+
         chatMessage.setSenderId(senderId);
         chatMessage.setReceiverId(receiverId);
         chatMessage.setSentAt(LocalDateTime.now());
-        if (chatMessage.getSenderType() == null) chatMessage.setSenderType("USER");
-        if (chatMessage.getReceiverType() == null) chatMessage.setReceiverType("ADMIN");
+
+        // ✅ 발신자 타입 자동 지정
+        if (senderId == 2L) { // 관리자면
+            chatMessage.setSenderType("ADMIN");
+            chatMessage.setReceiverType("USER");
+        } else { // 일반 사용자면
+            chatMessage.setSenderType("USER");
+            chatMessage.setReceiverType("ADMIN");
+        }
+
         System.out.println("📩 [WebSocket] 메시지 수신: " + chatMessage);
+
         chatMessageService.insertMessage(chatMessage);
         messagingTemplate.convertAndSend("/topic/chat/" + receiverId, chatMessage);
-        }
+    }
 }

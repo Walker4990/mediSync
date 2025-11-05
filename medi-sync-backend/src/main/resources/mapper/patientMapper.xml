@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper
-  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
-  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="com.mediSync.project.patient.mapper.PatientMapper">
 
@@ -20,22 +20,23 @@
         VALUES
         (#{patientId}, #{userId}, #{password})
     </insert>
+
     <!-- 3. 환자 정보 조회 -->
     <select id="allPatient" resultType="patient">
         SELECT * FROM patient
     </select>
 
-    <!-- 과거진료 내역 불러오기 (수술 시)-->
+    <!-- 과거진료 내역 불러오기 (수술 시) -->
     <select id="getPatientRecords" parameterType="long" resultType="medicalRecord">
         SELECT
         r.record_id,
         r.created_at,
         r.diagnosis,
-        d.doctor_name AS doctorName,
+        a.name AS adminName,
         dept.dept_name AS deptName
         FROM medical_record r
-        LEFT JOIN doctor d ON r.doctor_id = d.doctor_id
-        LEFT JOIN department dept ON d.dept_id = dept.dept_id
+        LEFT JOIN admin_account a ON r.admin_id = a.admin_id
+        LEFT JOIN department dept ON a.dept_id = dept.dept_id
         WHERE r.patient_id = #{patientId}
         ORDER BY r.created_at DESC
     </select>
@@ -58,11 +59,11 @@
         p.injection_count       AS injectionCount,
         p.unit                  AS unit,
         p.unit_price            AS unitPrice,
-        d.doctor_name           AS doctorName,
+        a.name                  AS adminName,
         r.diagnosis             AS diagnosis
         FROM prescription p
         JOIN medical_record r ON p.record_id = r.record_id
-        LEFT JOIN doctor d ON r.doctor_id = d.doctor_id
+        LEFT JOIN admin_account a ON r.admin_id = a.admin_id
         WHERE r.patient_id = #{patientId}
         ORDER BY p.created_at DESC
     </select>
@@ -72,6 +73,7 @@
         SELECT * FROM patient WHERE patient_id=#{patientId}
     </select>
 
+    <!-- 입원 환자 조회 -->
     <select id="selectInpatient" resultType="patient">
         SELECT
         p.patient_id       AS patientId,
@@ -85,26 +87,24 @@
         r.status           AS roomStatus,
         mr.record_id       AS recordId,
         mr.diagnosis       AS diagnosis,
-        mr.doctor_id       AS doctorId,
-        d.doctor_name      AS doctorName,
+        mr.admin_id        AS adminId,
+        a.name             AS adminName,
         p.admission_date   AS admissionDate,
         p.discharge_date   AS dischargeDate
         FROM patient p
-        LEFT JOIN room r
-        ON p.room_id = r.room_id
-        LEFT JOIN medical_record mr
-        ON mr.record_id = (
+        LEFT JOIN room r ON p.room_id = r.room_id
+        LEFT JOIN medical_record mr ON mr.record_id = (
         SELECT record_id
         FROM medical_record
         WHERE patient_id = p.patient_id
         ORDER BY created_at DESC
         LIMIT 1
         )
-        LEFT JOIN doctor d
-        ON mr.doctor_id = d.doctor_id
+        LEFT JOIN admin_account a ON mr.admin_id = a.admin_id
         WHERE p.admission_status = 'INPATIENT'
         ORDER BY r.room_no ASC;
     </select>
+
     <!-- 환자 과거 처방 내역 조회 -->
     <select id="findByPatientId" parameterType="long" resultType="prescription">
         SELECT
@@ -124,8 +124,11 @@
         WHERE mr.patient_id = #{patientId}
         ORDER BY p.created_at DESC
     </select>
+
     <update id="updatePatientAdmissionStatus" parameterType="patient">
-        UPDATE patient SET admission_status = #{admissionStatus}
+        UPDATE patient
+        SET admission_status = #{admissionStatus}
         WHERE patient_id = #{patientId}
     </update>
+
 </mapper>

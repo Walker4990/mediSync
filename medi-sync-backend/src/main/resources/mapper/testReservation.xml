@@ -4,7 +4,8 @@
         "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="com.mediSync.project.test.mapper.TestReservationMapper">
-   <!-- 검사 예약 조회 -->
+
+    <!-- 검사 예약 조회 -->
     <select id="selectTestReservation" resultType="com.mediSync.project.test.vo.TestReservation">
         SELECT
         r.reservation_id AS reservationId,
@@ -22,14 +23,14 @@
         LEFT JOIN test_schedule ts ON r.schedule_id = ts.schedule_id
     </select>
 
-    <select id="selectById" parameterType="long" resultType="testReservation" >
+    <select id="selectById" parameterType="long" resultType="testReservation">
         SELECT * FROM test_reservation WHERE reservation_id = #{reservationId}
     </select>
 
     <!-- 등록 -->
     <insert id="insertTestReservation" parameterType="testReservation">
-        INSERT INTO test_reservation (schedule_id, patient_id, record_id, doctor_id, status)
-        VALUES (#{scheduleId}, #{patientId}, #{recordId}, #{doctorId}, #{status})
+        INSERT INTO test_reservation (schedule_id, patient_id, record_id, admin_id, status)
+        VALUES (#{scheduleId}, #{patientId}, #{recordId}, #{adminId}, #{status})
     </insert>
 
     <!-- 수정 -->
@@ -38,7 +39,7 @@
         SET
         status = #{status},
         record_id = #{recordId},
-        doctor_id = #{doctorId},
+        admin_id = #{adminId},
         test_date = #{testDate},
         test_time = #{testTime}
         WHERE reservation_id = #{reservationId}
@@ -48,6 +49,7 @@
     <delete id="deleteTestReservation" parameterType="long">
         DELETE FROM test_reservation WHERE reservation_id = #{reservationId}
     </delete>
+
     <!-- 검사별 조회 -->
     <select id="selectByGroup" resultType="testReservation">
         SELECT
@@ -66,7 +68,8 @@
         WHERE UPPER(TRIM(f.test_group)) = UPPER(TRIM(#{group}))
         ORDER BY ts.test_date DESC, ts.test_time ASC
     </select>
-<!--  검사 관리 검색 기능  -->
+
+    <!-- 검사 관리 검색 기능 -->
     <select id="searchByGroupAndKeyword" resultType="testReservation">
         SELECT
         r.reservation_id AS reservationId,
@@ -95,10 +98,12 @@
         ORDER BY ts.test_date DESC, ts.test_time ASC
     </select>
 
+    <!-- 상태 변경 -->
     <update id="updateStatus" parameterType="map">
         UPDATE test_reservation
         SET status = #{status},
         updated_at = NOW()
         WHERE reservation_id = #{reservationId}
     </update>
+
 </mapper>

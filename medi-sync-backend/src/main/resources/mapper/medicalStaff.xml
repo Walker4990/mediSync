@@ -5,42 +5,70 @@
 
 <mapper namespace="com.mediSync.project.medical.mapper.MedicalStaffMapper">
 
-    <!-- 의료진 목록 조회  -->
-    <select id="findAllStaff" resultType="medicalStaff">
-        SELECT * FROM medical_staff
+    <!-- 의료진 목록 조회 -->
+    <select id="findAllStaff" resultType="adminAccount">
+        SELECT
+        admin_id       AS adminId,
+        emp_id         AS empId,
+        name           AS name,
+        position       AS position,
+        role           AS role,
+        dept_id        AS deptId,
+        license_no     AS licenseNo,
+        phone          AS phone,
+        email          AS email,
+        status         AS status,
+        hired_date     AS hiredDate,
+        created_at     AS createdAt
+        FROM admin_account
+        WHERE position IN ('NURSE','RADIOLOGIST','LAB_TECH','ASSISTANT','DOCTOR')
+        ORDER BY created_at DESC
     </select>
 
-    <!-- 의료진 정보 등록 -->
-    <insert id="addStaff" parameterType="medicalStaff" useGeneratedKeys="true" keyProperty="staffId">
-        INSERT INTO medical_staff
-        (staff_name, position, department, license_no, phone, status, hired_date)
+    <!-- 의료진 등록 -->
+    <insert id="addStaff" parameterType="adminAccount" useGeneratedKeys="true" keyProperty="adminId">
+        INSERT INTO admin_account
+        (emp_id, password, name, position, role, dept_id, license_no, phone, email, status, hired_date, created_at)
         VALUES
-        (#{staffName}, #{position}, #{department}, #{licenseNo}, #{phone}, #{status}, #{hiredDate})
+        (#{empId}, #{password}, #{name}, #{position}, #{role}, #{deptId}, #{licenseNo}, #{phone}, #{email}, #{status}, #{hiredDate}, NOW())
     </insert>
 
     <!-- 의료진 정보 수정 -->
-    <update id="updateStaff" parameterType="medicalStaff">
-        UPDATE medical_staff SET
-        staff_name = #{staffName},
-        position = #{position},
-        department = #{department},
-        phone = #{phone},
-        status = #{status},
-        hired_date = #{hiredDate}
-        WHERE staff_id = #{staffId}
+    <update id="updateStaff" parameterType="adminAccount">
+        UPDATE admin_account
+        SET
+        name        = #{name},
+        position    = #{position},
+        dept_id     = #{deptId},
+        phone       = #{phone},
+        email       = #{email},
+        status      = #{status},
+        license_no  = #{licenseNo},
+        hired_date  = #{hiredDate},
+        updated_at  = NOW()
+        WHERE admin_id = #{adminId}
     </update>
 
-    <!-- 의료진 정보 삭제 -->
-    <delete id="deleteStaff" parameterType="Long">
-        DELETE from medical_staff WHERE staff_id = #{staffId}
+    <!-- 의료진 삭제 -->
+    <delete id="deleteStaff" parameterType="long">
+        DELETE FROM admin_account
+        WHERE admin_id = #{adminId}
     </delete>
-    <!-- 의료진 찾기(수술 시) -->
-    <select id="searchStaffByKeyword" parameterType="string" resultType="medicalStaff">
-        SELECT staff_id AS staffId, staff_name AS staffName, position FROM medical_staff
-        WHERE staff_name     LIKE CONCAT ('%', #{keyword}, '%')
-        OR    position LIKE CONCAT ('%', #{keyword}, '%')
+
+    <!-- 의료진 검색 (수술, 배정 등) -->
+    <select id="searchStaffByKeyword" parameterType="string" resultType="adminAccount">
+        SELECT
+        admin_id AS adminId,
+        name     AS name,
+        position AS position,
+        dept_id  AS deptId
+        FROM admin_account
+        WHERE position IN ('NURSE','RADIOLOGIST','LAB_TECH','ASSISTANT','DOCTOR')
+        AND (
+        name LIKE CONCAT('%', #{keyword}, '%')
+        OR position LIKE CONCAT('%', #{keyword}, '%')
+        )
         LIMIT 10;
     </select>
-
 
 </mapper>

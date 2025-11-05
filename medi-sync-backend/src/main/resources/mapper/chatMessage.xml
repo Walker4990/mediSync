@@ -14,8 +14,10 @@
     <select id="getMessagesBetween" resultType="chat">
         SELECT *
         FROM chat_message
-        WHERE (sender_id = #{senderId} AND receiver_id = #{receiverId})
+        WHERE (
+        (sender_id = #{senderId} AND receiver_id = #{receiverId})
         OR (sender_id = #{receiverId} AND receiver_id = #{senderId})
+        )
         ORDER BY sent_at ASC
     </select>
 

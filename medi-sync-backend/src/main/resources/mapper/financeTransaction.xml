@@ -9,7 +9,7 @@
     </select>
 
     <insert id="insertFinance" parameterType="finance">
-        INSERT INTO finance_transaction(ref_type, ref_id, patient_id, doctor_id, type, category, amount, description, status, created_at, updated_at)
-        VALUES (#{refType}, #{refId}, #{patientId}, #{doctorId}, #{type}, #{category}, #{amount}, #{description}, #{status}, now(), now())
+        INSERT INTO finance_transaction(ref_type, ref_id, patient_id, admin_id, type, category, amount, description, status, created_at, updated_at)
+        VALUES (#{refType}, #{refId}, #{patientId}, #{admin_id}, #{type}, #{category}, #{amount}, #{description}, #{status}, now(), now())
     </insert>
 </mapper>
