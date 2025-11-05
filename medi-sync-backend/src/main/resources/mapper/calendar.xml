@@ -11,10 +11,10 @@
         select
         r.reservation_date as startDate,
         r.reservation_id as id,
-        d.doctor_name,
+        a.name as doctorName,
         p.name as patientName
         from reservation r
-        join doctor d using(doctor_id)
+        join admin_account a using(admin_id)
         join patient p using(patient_id)
         where r.patient_id = #{patient_id}
         AND r.status != "CANCEL"
@@ -28,14 +28,14 @@
     <select id="getTestSchedule" parameterType="long" resultType="calendar">
         select
         ts.test_name as title,
-        d.doctor_name,
+        a.name as doctorName,
         p.name as patientName,
         r.reservation_id as id,
         CONCAT(DATE_FORMAT(ts.test_date, '%Y-%m-%d'),' ', DATE_FORMAT(CAST(ts.test_time AS TIME), '%H:%i:%s')) AS startDate
         from test_reservation tr
         join patient p using(patient_id)
         join test_schedule ts using(schedule_id)
-        join doctor d using(doctor_id)
+        join admin_account a using(admin_id)
         join reservation r using(reservation_id)
         where schedule_id = #{schedule_id}
         AND tr.status != "CANCELED"
@@ -44,13 +44,13 @@
     <select id="getOperation" parameterType="long" resultType="calendar">
         select
         o.operation_name as title,
-        d.doctor_name,
+        a.name as doctorName,
         p.name as patientName,
         o.operation_id as id,
         CONCAT(DATE_FORMAT(o.scheduled_date, '%Y-%m-%d'),' ', DATE_FORMAT(o.scheduled_time, '%H:%i:%s')) AS startDate
         from operation o
         join patient p using(patient_id)
-        join doctor d using(doctor_id)
+        join admin_account a using(admin_id)
         where patient_id = #{patient_id}
         AND o.status != "CANCELED"
     </select>
