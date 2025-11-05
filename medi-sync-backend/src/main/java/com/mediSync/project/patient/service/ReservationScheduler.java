@@ -1,8 +1,10 @@
 package com.mediSync.project.patient.service;
 
 import com.mediSync.project.common.service.EmailService;
+import com.mediSync.project.operation.mapper.OperationMapper;
 import com.mediSync.project.patient.dto.ReservationDTO;
 import com.mediSync.project.patient.mapper.ReservationMapper;
+import com.mediSync.project.test.mapper.TestReservationMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -16,6 +18,9 @@ import java.util.List;
 public class ReservationScheduler {
 
     private final ReservationMapper reservationMapper;
+    private final TestReservationMapper testReservationMapper;
+    private final OperationMapper operationMapper;
+
     private final EmailService emailService;
     //(cron = "0 */5 * * * ?") << 5분간격
     //(cron = "0 0 9 * * ?") << 아침 9시
@@ -34,6 +39,14 @@ public class ReservationScheduler {
 
         List<ReservationDTO> reservationList = reservationMapper
                                 .findReservationBetween(start,end);
+        System.out.println("reservation 리스트 : " + reservationList);
+        List<ReservationDTO> testReservationList = testReservationMapper.findTestReservationBetween(start,end);
+        System.out.println("testReservation 리스트 : "+ testReservationList);
+        List<ReservationDTO> operationList = operationMapper.findOperationBetween(start,end);
+        System.out.println("Opertation 리스트 : " + operationList);
+
+        reservationList.addAll(testReservationList);
+        reservationList.addAll(operationList);
 
 
 
@@ -50,11 +63,12 @@ public class ReservationScheduler {
                             "%s님! 내일 %s시에 %s 의사님과의\n" +
                             " %s 예약이 있습니다!\n" +
                             "▼만약 예약을 변경하거나 취소하시려면\n" +
-                            "http://localhost:3000/user/consult",
+                            "http://localhost:3000/user/mypage",
                     res.getName(),
                     time,
-                     res.getType(),
-                    res.getDoctorName());
+                    res.getDoctorName(),
+                    res.getType()
+            );
             emailService.sendEmail(/*res.getEmail()*/ testEmail, "예약 알림", message);
         }
             System.out.println(reservationList);

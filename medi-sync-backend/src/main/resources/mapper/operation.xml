@@ -197,4 +197,22 @@
        ]]>
     </update>
 
+    <!-- 내일 예약 가져오기 -->
+    <select id="findOperationBetween" resultType="com.mediSync.project.patient.dto.ReservationDTO">
+        select
+        o.operation_name as type,
+        CAST(TIMESTAMP(o.scheduled_date, o.scheduled_time) AS DATETIME) AS reservationDate,
+        a.name as doctorName,
+        p.name as name,
+        p.email
+        from
+        operation o
+        join admin_account a using(admin_id)
+        join patient p using(patient_id)
+        join notification_setting ns ON p.patient_id = ns.patient_id
+        WHERE ns.email_enabled = 1
+        AND o.status NOT IN ('CANCELED', 'COMPLETED')
+        AND TIMESTAMP(o.scheduled_date, o.scheduled_time) BETWEEN #{start} AND #{end};
+    </select>
+
 </mapper>

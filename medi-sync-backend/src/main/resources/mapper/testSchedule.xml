@@ -62,22 +62,6 @@
     </update>
 
 
-    <!-- 내일 예약 조회하기 -->
-    <select id="findTestReservationBetween" resultType="com.mediSync.project.patient.dto.ReservationDTO">
-        select
-        r.reservation_date,
-        a.name as doctorName,
-        p.name,
-        p.email
-        from
-        reservation r
-        join admin_account a using(admin_id)
-        join patient p using(patient_id)
-        join notification_setting ns ON p.patient_id = ns.patient_id
-        WHERE r.reservation_date BETWEEN #{start} AND #{end}
-        AND r.status NOT IN ('CANCELD', 'DONE')
-        AND ns.email_enabled = 1
-    </select>
 
 
 
