@@ -2,6 +2,7 @@ package com.mediSync.project.common.mapper;
 
 import com.mediSync.project.common.dto.CalendarDTO;
 import com.mediSync.project.operation.vo.Operation;
+import com.mediSync.project.patient.dto.CancelDTO;
 import com.mediSync.project.patient.vo.Reservation;
 import com.mediSync.project.test.vo.TestReservation;
 import com.mediSync.project.test.vo.TestSchedule;
@@ -30,6 +31,9 @@ public interface CalendarMapper {
     List<CalendarDTO> getTestScheduleAll(long adminId);
     List<CalendarDTO> getOperationAll(long adminId);
     
-    
+    //관리자 페이지 예약 취소
+    int insertCanceledReservation(CancelDTO dto);
+    int insertCanceledTestReservation(CancelDTO dto);
+    int insertCanceledOperation(CancelDTO dto);
 }
 

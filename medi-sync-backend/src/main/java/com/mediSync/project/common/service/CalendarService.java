@@ -25,6 +25,8 @@ import java.util.Map;
 public class CalendarService {
 
     private  final CalendarMapper calendarMapper;
+
+    private final  EmailService emailService;
     public List<CalendarDTO> getUserCalendar(Integer patient_id){
        return calendarMapper.getUserCalendar(patient_id);
     }
@@ -152,27 +154,40 @@ public class CalendarService {
             }
 
     }
-
+    //의사가 예약 취소하기
+    @Transactional
     public void cancelReservation(CancelDTO dto){
         System.out.println("타입 : "+ dto.getType());
         //서비스단
-
+        LocalDate date;
+        String time;
         //type으로 switch를 사용해서 각 경우마다 CANCEL로 바꾸기
-        // 진료 예약, 수술 예약, 검사 예약
+        //reservation_cancel 테이블에 값 넣기
         switch (dto.getType()){
             case  "진료 예약":
                     dto.setReservationId(dto.getId());
+                    //type -> CANCEL로 변경
+                    calendarMapper.cancelReservation(Map.of("id", dto.getId(), "date", dto.getDate()));
+                    calendarMapper.insertCanceledReservation(dto);
                     return;
             case "검사 예약":
                     dto.setReservationId(dto.getId());
+                    date = dto.getDate().toLocalDate();
+                    time = String.format("%02d:%02d", dto.getDate().getHour(), dto.getDate().getMinute());
+                    calendarMapper.cancelTestReservation(Map.of("id", dto.getId(), "date",date,"time",time));
+                    calendarMapper.insertCanceledTestReservation(dto);
                 return;
             case  "수술 예약":
                 dto.setOperationId(dto.getId());
+                date = dto.getDate().toLocalDate();
+                time = String.format("%02d:%02d", dto.getDate().getHour(), dto.getDate().getMinute());
+                calendarMapper.cancelOperation(Map.of("id", dto.getId(), "date",date,"time",time));
+                calendarMapper.insertCanceledOperation(dto);
                 return;
-            default:
+            default: System.out.println("오류");
 
         }
-        //reservation_cancel 테이블에 값 넣기
+
 
         //이메일 발송
     }

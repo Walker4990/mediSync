@@ -128,12 +128,20 @@
         AND a.admin_id = #{adminId}
     </select>
 
+    <!-- reservation_cancel 테이블 생성 -->
+    <insert id="insertCanceledReservation" parameterType="com.mediSync.project.patient.dto.CancelDTO">
+        insert into reservation_cancel(type, patient_id, admin_id, date, reason, reservation_id)
+        value('MEDICAL', #{patientId}, #{adminId}, #{date}, #{reason}, #{reservationId})
+    </insert>
 
+    <insert id="insertCanceledTestReservation" parameterType="com.mediSync.project.patient.dto.CancelDTO">
+        insert into reservation_cancel(type, patient_id, admin_id, date, reason, reservation_id,schedule_id)
+        value('TEST', #{patientId}, #{adminId}, #{date}, #{reason}, #{reservationId}, #{schedule_id})
+    </insert>
 
-    <update id="canceledTestReservation" parameterType="long">
-        update test_reservation
-        set type = 'CANCELED'
-        WHERE reservation_id = #{id}
-    </update>
+    <insert id="insertCanceledOperation" parameterType="com.mediSync.project.patient.dto.CancelDTO">
+        insert into reservation_cancel(type, patient_id, admin_id, date, reason, operation_id)
+        value('OPERATION', #{patientId}, #{adminId}, #{date}, #{reason}, #{operationId})
+    </insert>
 
 </mapper>
