@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
@@ -31,7 +32,7 @@ public class UserAccountController {
         return userAccountService.userSelectAll();
     }
 
-    @GetMapping("/{userId}")
+    @GetMapping("/id/{userId}")
     public ResponseEntity<UserAccount> getUserById(@PathVariable Long userId) {
         UserAccount user = userAccountService.userSelectOne(userId);
         if (user != null) {
@@ -92,27 +93,19 @@ public class UserAccountController {
 
     // 마이페이지
     @GetMapping("/mypage")
-    public ResponseEntity<?> getMyPage(@RequestHeader("Authorization") String authHeader) {
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+    public ResponseEntity<?> getMyPage() {
+        // 💡 SecurityContextHolder에서 인증된 객체 가져오기
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        if (principal instanceof UserAccount) {
+            UserAccount user = (UserAccount) principal;
+            // 💡 비밀번호 필드를 제외하고 사용자 정보를 반환하는 DTO를 사용하는 것이 더 안전합니다.
+            return ResponseEntity.ok(user);
+        } else {
+            // 인증 필터 (JwtFilter)가 실패하면 여기까지 오지 않겠지만, 안전 장치
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(Map.of("message", "토큰이 없습니다."));
+                    .body(Map.of("message", "인증된 사용자 정보를 찾을 수 없습니다."));
         }
-
-        String token = authHeader.substring(7);
-        if (!jwtUtil.validateToken(token)) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(Map.of("message", "토큰이 유효하지 않습니다."));
-        }
-
-        String loginId = jwtUtil.extractLoginId(token);
-        UserAccount user = userAccountService.selectUserByLoginId(loginId);
-
-        if (user == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("message", "사용자 정보를 찾을 수 없습니다."));
-        }
-
-        return ResponseEntity.ok(user);
     }
 
     // 수정

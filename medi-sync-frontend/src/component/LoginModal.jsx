@@ -22,6 +22,8 @@ export default function LoginModal() {
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false); // 중복 요청 방지
 
+  const API_URI = "http://localhost:8080/api/users/login";
+
   // isOpen 상태가 변경될 때마다 실행되며 인풋값을 초기화
   useEffect(() => {
     if (isOpen) {
@@ -40,7 +42,7 @@ export default function LoginModal() {
     setMessage("");
 
     try {
-      const res = await axios.post("/api/users/login", {
+      const res = await axios.post(API_URI, {
         login_id: loginId,
         password: password,
       });

@@ -27,7 +27,7 @@ const UserInfoEdit = ({ currentUser }) => {
   // isStaff는 role 또는 별도의 플래그로 결정됩니다.
   const [isStaff, setIsStaff] = useState(currentUser?.isStaff || false);
   const [isChecking, setIsChecking] = useState(false);
-  const [staffId, setStaffId] = useState("");
+  const [empId, setEmpId] = useState("");
   const [checkResult, setCheckResult] = useState(
     isStaff ? "✅ 직원 사번이 확인되었습니다." : ""
   );
@@ -57,7 +57,7 @@ const UserInfoEdit = ({ currentUser }) => {
 
   // 사번 조회(직원 인증)
   const handleStaffCheck = async () => {
-    if (!staffId) {
+    if (!empId) {
       setCheckResult("사번을 입력해주세요.");
       return;
     }
@@ -68,7 +68,7 @@ const UserInfoEdit = ({ currentUser }) => {
     await new Promise((resolve) => setTimeout(resolve, 1000));
     setIsChecking(false);
 
-    if (staffId === "MS999") {
+    if (empId === "MS999") {
       // Mock 성공
       setIsStaff(true);
       setCheckResult("✅ 직원 사번이 확인되었습니다.");
@@ -99,8 +99,8 @@ const UserInfoEdit = ({ currentUser }) => {
           <input
             type="text"
             placeholder="사번(직원 ID) 입력"
-            value={staffId}
-            onChange={(e) => setStaffId(e.target.value)}
+            value={empId}
+            onChange={(e) => setEmpId(e.target.value)}
             className="flex-grow p-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500"
             disabled={isChecking}
           />
@@ -545,21 +545,19 @@ const ViewReservation = ({ title, icon: Icon }) => {
 
 // 실시간 상담 아이콘 -> 클릭 시 채팅 시작
 const ChatFloatingButton = () => {
-    const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
 
-    return (
-        <div className="fixed bottom-8 right-8 z-50">
-            {/* SupportChatWidget 자체의 버튼을 사용 */}
-            <SupportChatWidget
-                embedded={false}
-                externalControl={isOpen}
-                onToggle={() => setIsOpen(!isOpen)}
-            />
-        </div>
-    );
+  return (
+    <div className="fixed bottom-8 right-8 z-50">
+      {/* SupportChatWidget 자체의 버튼을 사용 */}
+      <SupportChatWidget
+        embedded={false}
+        externalControl={isOpen}
+        onToggle={() => setIsOpen(!isOpen)}
+      />
+    </div>
+  );
 };
-
-
 
 // ----------------------------------------------------
 // Main Component
@@ -570,21 +568,23 @@ const MyPage = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // const token = localStorage.getItem("token");
-    // if (!token) {
-    //   alert("로그인이 필요합니다.");
-    //   window.location.href = "/login";
-    //   return;
-    // }
+    const token = localStorage.getItem("token");
+    if (!token) {
+      alert("로그인이 필요합니다.");
+      window.location.href = "/";
+      return;
+    }
     axios
       .get("http://localhost:8080/api/users/mypage", {
-        // headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${token}` },
       })
       .then((res) => {
         setCurrentUser(res.data);
       })
-      .catch(() => {
+      .catch((err) => {
+        console.error("마이페이지 정보 로드 실패:", err);
         setCurrentUser(null);
+        alert("세션이 만료되었거나 오류가 발생했습니다. 다시 로그인해주세요.");
       })
       .finally(() => {
         setLoading(false);
@@ -704,7 +704,7 @@ const MyPage = () => {
     menuItems.find((item) => item.id === activeTab)?.label || "마이페이지";
 
   // 사용자 이름이 로딩 중일 때는 '...' 표시, 로딩 완료 후 값이 없으면 '사용자' 표시
-  const userName = currentUser?.name || (loading ? "..." : "사용자");
+  const userName = currentUser?.username || (loading ? "..." : "사용자");
 
   return (
     <div className="font-pretendard">
