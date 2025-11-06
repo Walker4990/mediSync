@@ -3,6 +3,7 @@ package com.mediSync.project.common.service;
 import com.mediSync.project.common.dto.CalendarDTO;
 import com.mediSync.project.common.mapper.CalendarMapper;
 import com.mediSync.project.operation.vo.Operation;
+import com.mediSync.project.patient.dto.CancelDTO;
 import com.mediSync.project.patient.vo.Reservation;
 import com.mediSync.project.test.vo.TestReservation;
 import com.mediSync.project.test.vo.TestSchedule;
@@ -86,7 +87,7 @@ public class CalendarService {
 
         // 진료예약
         if(reserList != null && !reserList.isEmpty()){
-
+            System.out.println("진료예약 : "+ reserList);
             for(CalendarDTO re : reserList){
                 re.setTitle("병원 진료");
                 re.setColor("#3B82F6");
@@ -100,6 +101,7 @@ public class CalendarService {
 
          List<CalendarDTO> scheList = calendarMapper.getTestScheduleAll(adminId);
          if (scheList != null && !scheList.isEmpty()){
+             System.out.println("검사예약: "+ scheList);
          for(CalendarDTO sche : scheList){
                 sche.setTitle(sche.getTitle());
                 sche.setColor("#60A5FA");
@@ -112,6 +114,7 @@ public class CalendarService {
         //수술 예약
         List<CalendarDTO> operList = calendarMapper.getOperationAll(adminId);
         if(operList != null && !operList.isEmpty()){
+            System.out.println("수술예약: "+ operList);
             for(CalendarDTO op: operList){
                 op.setColor("#1E40AF");
                 op.setTextColor("#FFFFFF");
@@ -148,6 +151,30 @@ public class CalendarService {
 
             }
 
+    }
+
+    public void cancelReservation(CancelDTO dto){
+        System.out.println("타입 : "+ dto.getType());
+        //서비스단
+
+        //type으로 switch를 사용해서 각 경우마다 CANCEL로 바꾸기
+        // 진료 예약, 수술 예약, 검사 예약
+        switch (dto.getType()){
+            case  "진료 예약":
+                    dto.setReservationId(dto.getId());
+                    return;
+            case "검사 예약":
+                    dto.setReservationId(dto.getId());
+                return;
+            case  "수술 예약":
+                dto.setOperationId(dto.getId());
+                return;
+            default:
+
+        }
+        //reservation_cancel 테이블에 값 넣기
+
+        //이메일 발송
     }
 
 

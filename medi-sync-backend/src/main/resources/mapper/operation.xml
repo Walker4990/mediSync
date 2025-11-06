@@ -215,4 +215,10 @@
         AND TIMESTAMP(o.scheduled_date, o.scheduled_time) BETWEEN #{start} AND #{end};
     </select>
 
+    <update id="canceledOperation" parameterType="long">
+        update operation
+        set type = "CANCELED"
+        WHERE operation_id = #{id}
+    </update>
+
 </mapper>

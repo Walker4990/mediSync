@@ -12,16 +12,16 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 public class CancelDTO {
-    private long cancel_id;
-    private long patient_id;
-    private long admin_id;
+    private long cancelId;
+    private long patientId;
+    private long adminId;
     private LocalDateTime date;
-    private LocalDateTime created_at;
+    private LocalDateTime createdAt;
     private String reason;
 
-    private long reservation_id;
-    private long schedule_id;
-    private long operation_id;
+    private long reservationId;
+    private long scheduleId;
+    private long operationId;
 
     private long id;
     private String type;

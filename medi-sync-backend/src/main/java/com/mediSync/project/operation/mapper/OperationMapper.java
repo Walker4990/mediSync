@@ -60,4 +60,7 @@ public interface OperationMapper {
 
     List<ReservationDTO> findOperationBetween(@Param("start") LocalDateTime start,
                                               @Param("end")LocalDateTime end);
+
+    int canceledOperation(long id);
+
 }

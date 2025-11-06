@@ -82,11 +82,13 @@
         r.reservation_date as startDate,
         r.reservation_id as id,
         a.name as doctorName,
-        p.name as patientName
+        p.name as patientName,
+        p.patient_id as patientId,
+        a.admin_id as adminId
         from reservation r
         join admin_account a using(admin_id)
         join patient p using(patient_id)
-        where  r.status != "CANCEL"
+        where  r.status != 'CANCEL'
         AND a.admin_id = #{adminId}
     </select>
 
@@ -97,13 +99,16 @@
         a.name as doctorName,
         p.name as patientName,
         r.reservation_id as id,
+        p.patient_id as patientId,
+        a.admin_id as adminId,
+        tr.schedule_id as scheduleId,
         CONCAT(DATE_FORMAT(ts.test_date, '%Y-%m-%d'),' ', DATE_FORMAT(CAST(ts.test_time AS TIME), '%H:%i:%s')) AS startDate
         from test_reservation tr
         join patient p using(patient_id)
         join test_schedule ts using(schedule_id)
         join admin_account a using(admin_id)
         join reservation r using(reservation_id)
-        where tr.status != "CANCELED"
+        where tr.status != 'CANCELED'
         AND a.admin_id = #{adminId}
     </select>
     <!-- 해당 회원의 수술 예약 정보 가져오기 -->
@@ -112,17 +117,23 @@
         o.operation_name as title,
         a.name as doctorName,
         p.name as patientName,
+        p.patient_id as patientId,
+        a.admin_id as adminId,
         o.operation_id as id,
         CONCAT(DATE_FORMAT(o.scheduled_date, '%Y-%m-%d'),' ', DATE_FORMAT(o.scheduled_time, '%H:%i:%s')) AS startDate
         from operation o
         join patient p using(patient_id)
         join admin_account a using(admin_id)
-        where o.status != "CANCELED"
+        where o.status != 'CANCELED'
         AND a.admin_id = #{adminId}
     </select>
 
 
 
-
+    <update id="canceledTestReservation" parameterType="long">
+        update test_reservation
+        set type = 'CANCELED'
+        WHERE reservation_id = #{id}
+    </update>
 
 </mapper>

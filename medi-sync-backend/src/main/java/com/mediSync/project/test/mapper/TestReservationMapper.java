@@ -26,4 +26,6 @@ public interface TestReservationMapper {
 
     List<ReservationDTO> findTestReservationBetween(@Param("start") LocalDateTime start,
                                                     @Param("end")LocalDateTime end);
+
+    int canceledTestReservation(long id);
 }

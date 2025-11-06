@@ -69,6 +69,9 @@ export default function AdminSchedule() {
             patientName: item.patientName,
             doctorName: item.doctorName,
             id: item.id,
+            scheduleId: item.scheduleId,
+            patientId: item.patientId,
+            adminId: item.adminId,
           },
         }));
         setEvents(formatted);
@@ -117,6 +120,9 @@ export default function AdminSchedule() {
                 patientName: info.event.extendedProps.patientName,
                 doctorName: info.event.extendedProps.doctorName,
                 id: info.event.extendedProps.id,
+                scheduleId: info.event.extendedProps.scheduleId,
+                patientId: info.event.extendedProps.patientId,
+                adminId: info.event.extendedProps.adminId,
               };
 
               if (clickedEvent) {
@@ -270,6 +276,9 @@ export default function AdminSchedule() {
                         {
                           id: selectedEvent.id,
                           type: selectedEvent.type,
+                          scheduleId: selectedEvent.scheduleId,
+                          adminId: selectedEvent.adminId,
+                          patientId: selectedEvent.patientId,
                           date: toKSTISOString(new Date(selectedEvent.start)),
                           reason: cancelReason,
                         }

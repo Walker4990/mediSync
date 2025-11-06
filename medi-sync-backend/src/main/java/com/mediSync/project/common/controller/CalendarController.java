@@ -37,7 +37,7 @@ public class CalendarController {
        List<CalendarDTO> calendarInfo = calendarService.viewAllReservation(patient_id);
         return calendarInfo;
     }
-
+    //의사별 예약 정보 가져오기
     @GetMapping("/all")
     public List<CalendarDTO> getScheduleAll(@RequestParam("adminId") long adminId){
         List<CalendarDTO> calenderInfo = calendarService.viewAllReservationAll(adminId);
@@ -58,11 +58,14 @@ public class CalendarController {
     }
 
     //의사가 예약 취소하기
-    @PostMapping("admin/cancel")
+    @PostMapping("/admin/cancel")
     public ResponseEntity<?> cancelReservation(@RequestBody CancelDTO dto){
         System.out.println("받아온 dto 값 : " + dto);
         System.out.println("받아온 날짜: " +
                 dto.getDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+
+        calendarService.cancelReservation(dto);
+
         return  ResponseEntity.ok("예약을 취소하였습니다.");
     }
 }
