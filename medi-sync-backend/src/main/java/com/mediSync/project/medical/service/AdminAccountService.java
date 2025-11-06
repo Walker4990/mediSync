@@ -18,6 +18,9 @@ public class AdminAccountService {
     public List<AdminAccount> getAdminList() {
         return adminAccountMapper.selectAllAdmin();
     }
+    public AdminAccount getMember(Long adminId) {
+        return adminAccountMapper.selectOneAdmin(adminId);
+    }
     public List<AdminAccount> getDoctorList() {
         return adminAccountMapper.selectAllDoctor();
     }

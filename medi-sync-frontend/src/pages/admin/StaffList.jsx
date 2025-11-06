@@ -4,6 +4,7 @@ import { format } from "date-fns";
 import { FaEdit, FaTrashAlt, FaSearch } from "react-icons/fa";
 import AdminHeader from "../../component/AdminHeader";
 import ConfirmModal from "../../component/ConfirmModal";
+import AdminDetail from "../../component/AdminDetail";
 
 // API 기본 URL
 const API_BASE_URL = "http://localhost:8080/api/admins/staffs";
@@ -46,15 +47,6 @@ const formatDateOnly = (dateString) => {
   } catch (error) {
     return dateString;
   }
-};
-
-const StaffDetail = ({ adminId }) => {
-  return (
-    <div className="bg-gray-50 p-8 rounded-xl shadow-inner w-full text-center text-gray-600">
-      <p className="text-lg font-medium">개인정보 페이지 ({adminId})</p>
-      <p className="text-sm mt-1">내용을 채워주세요</p>
-    </div>
-  );
 };
 
 // ENUM 레이블 찾기
@@ -458,16 +450,10 @@ export default function MedicalStaffList() {
       <div className="min-h-screen bg-gray-50 font-pretendard pt-24">
         <AdminHeader />
         <main className="max-w-7xl mx-auto px-8">
-          <button
-            onClick={() => setViewMode("list")}
-            className="mb-6 px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors shadow-md"
-          >
-            &larr; 목록으로 돌아가기
-          </button>
-          <h1 className="text-3xl font-semibold text-blue-600 mb-6">
-            상세 정보 (직원ID: {editingStaff.adminId})
-          </h1>
-          <StaffDetail adminId={editingStaff.adminId} />
+          <AdminDetail
+            adminId={editingStaff.adminId}
+            onBackToList={() => setViewMode("list")}
+          />
         </main>
       </div>
     );
@@ -560,9 +546,10 @@ export default function MedicalStaffList() {
                 >
                   <td className="py-2 px-4 text-gray-600">{s.adminId}</td>
                   <td
-                    className="py-2 px-4 font-bold text-gray-900"
+                    className="py-2 px-4 text-gray-900 cursor-pointer hover:font-bold"
                     onClick={() => {
-                      StaffDetail(s.adminId);
+                      setEditingStaff(s);
+                      setViewMode("detail");
                     }}
                   >
                     {s.name}

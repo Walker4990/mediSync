@@ -42,6 +42,14 @@
         ORDER BY a.admin_id DESC
     </select>
 
+    <!-- 선택 조회 -->
+    <select id="selectOneAdmin" parameterType="Long" resultMap="adminAccount">
+        SELECT a.*, d.dept_name
+        FROM admin_account a JOIN department d ON a.dept_id = d.dept_id
+        WHERE admin_id = #{adminId}
+        ORDER BY a.admin_id DESC
+    </select>
+
     <!-- 의사 조회 -->
     <select id="selectAllDoctor" resultMap="adminAccount">
         SELECT a.*, d.dept_name

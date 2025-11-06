@@ -11,6 +11,7 @@ public interface AdminAccountMapper {
     List<AdminAccount> selectAllAdmin();
     List<AdminAccount> selectAllDoctor();
     List<AdminAccount> selectAllStaff();
+    AdminAccount selectOneAdmin(Long adminId);
     void insertAdmin(AdminAccount vo);
     int checkIdExists(@Param("empId") String empId);
     int updateAdmin(AdminAccount vo);

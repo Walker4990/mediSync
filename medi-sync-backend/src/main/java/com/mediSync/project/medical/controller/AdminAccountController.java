@@ -30,6 +30,11 @@ public class AdminAccountController {
     public ResponseEntity<List<AdminAccount>> getAdminList() {
         return ResponseEntity.ok(adminAccountService.getAdminList());
     }
+    // 개별 조회
+    @GetMapping("/{adminId}")
+    public ResponseEntity<AdminAccount> getMember(@PathVariable Long adminId) {
+        return ResponseEntity.ok(adminAccountService.getMember(adminId));
+    }
 
     // 회원가입
     @PostMapping

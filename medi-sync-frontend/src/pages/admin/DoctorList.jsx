@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import AdminHeader from "../../component/AdminHeader";
 import ConfirmModal from "../../component/ConfirmModal";
+import AdminDetail from "../../component/AdminDetail";
 import { format } from "date-fns";
 import {
   ChevronDown,
@@ -485,16 +486,10 @@ const DoctorList = () => {
       <div className="min-h-screen bg-gray-50 font-pretendard pt-24">
         <AdminHeader />
         <main className="max-w-7xl mx-auto px-8">
-          <button
-            onClick={() => setViewMode("list")}
-            className="mb-6 px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors shadow-md"
-          >
-            &larr; 목록으로 돌아가기
-          </button>
-          <h1 className="text-3xl font-semibold text-blue-600 mb-6">
-            상세 정보 (직원ID: {editingAdmin.adminId})
-          </h1>
-          <DoctorDetail adminId={editingAdmin.adminId} />
+          <AdminDetail
+            adminId={editingAdmin.adminId}
+            onBackToList={() => setViewMode("list")}
+          />
         </main>
       </div>
     );
@@ -575,7 +570,7 @@ const DoctorList = () => {
                   <td className="py-2 px-4">{a.adminId || "-"}</td>
                   <td className="py-2 px-4 font-medium">{a.empId || "-"}</td>
                   <td
-                    className="py-2 px-4 text-blue-600 cursor-pointer hover:underline"
+                    className="py-2 px-4 text-blue-600 cursor-pointer hover:font-bold"
                     onClick={() => {
                       setEditingAdmin(a); // 상세 페이지에서 사용할 데이터를 설정
                       setViewMode("detail");
