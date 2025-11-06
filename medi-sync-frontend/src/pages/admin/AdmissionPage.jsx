@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import AdminHeader from "../../component/AdminHeader";
 import PatientDetailModal from "../../component/PatientDetailModal";
-
+import SockJS from "sockjs-client";
+import { Client } from "@stomp/stompjs";
 
 export default function AdmissionPage() {
     const [rooms, setRooms] = useState([]);
@@ -13,6 +14,37 @@ export default function AdmissionPage() {
     const [transferList, setTransferList] = useState([]);
     const [selectedAdmission, setSelectedAdmission] = useState(null);
     const [showModal, setShowModal] = useState(false);
+
+    useEffect(() => {
+        const socket = new SockJS("http://192.168.0.24:8080/ws");
+        const stompClient = new Client({
+            webSocketFactory: () => socket,
+            onConnect: () => {
+                console.log("✅ 입원 관리 WebSocket 연결됨");
+
+                // 퇴원 알림 구독
+                stompClient.subscribe("/topic/admission/discharge", (msg) => {
+                    console.log("📩 실시간 퇴원 알림 수신:", msg.body);
+                    fetchRooms();
+                    fetchAdmissions();
+                });
+
+                // 입원/병실이동 알림 구독
+                stompClient.subscribe("/topic/admission/update", (msg) => {
+                    console.log("📩 입원/병실 이동 알림 수신:", msg.body);
+                    fetchRooms();
+                    fetchAdmissions();
+                });
+            },
+        });
+
+        stompClient.activate();
+
+        return () => {
+            stompClient.deactivate();
+        };
+    }, []);
+
 
     // ✅ 병실 목록 조회
     const fetchRooms = async () => {
@@ -248,10 +280,15 @@ export default function AdmissionPage() {
                                             />
                                         </td>
                                         <td className="p-3">
-                                            {a.status === "ADMITTED" ? "입원중" : "퇴원"}
+                                            {a.status === "ADMITTED"
+                                                ? "입원중"
+                                                : a.status === "SCHEDULED"
+                                                    ? "입원 예정"
+                                                    : "퇴원"}
                                         </td>
+
                                         <td className="p-3">
-                                            {a.status === "ADMITTED" && (
+                                            {(a.status === "ADMITTED" || a.status === "SCHEDULED") &&(
                                                 <>
                                                     <button
                                                         onClick={() => handleDischarge(a.admissionId)}

@@ -4,12 +4,62 @@
         "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="com.mediSync.project.finance.mapper.FinanceTransactionMapper">
-    <select id="selectAll" resultType="finance">
-        SELECT * FROM finance_transaction
+    <select id="selectAll" resultType="com.mediSync.project.finance.vo.FinanceTransaction">
+        SELECT *
+        FROM finance_transaction
+        <where>
+            <!-- 수익/지출 구분 -->
+            <if test="type != null and type != ''">
+                AND type = #{type}
+            </if>
+
+            <!-- 카테고리 (예: 급여, 약품, 장비 등) -->
+            <if test="category != null and category != ''">
+                AND category = #{category}
+            </if>
+
+            <!-- 거래 상태 -->
+            <if test="status != null and status != ''">
+                AND status = #{status}
+            </if>
+
+            <!-- 기간 검색 -->
+            <if test="startDate != null and startDate != ''">
+                AND created_at &gt;= #{startDate}
+            </if>
+            <if test="endDate != null and endDate != ''">
+                AND created_at &lt;= #{endDate}
+            </if>
+        </where>
+        ORDER BY created_at
+        <choose>
+            <when test="sort == 'asc'">ASC</when>
+            <otherwise>DESC</otherwise>
+        </choose>
     </select>
 
     <insert id="insertFinance" parameterType="finance">
         INSERT INTO finance_transaction(ref_type, ref_id, patient_id, admin_id, type, category, amount, description, status, created_at, updated_at)
-        VALUES (#{refType}, #{refId}, #{patientId}, #{admin_id}, #{type}, #{category}, #{amount}, #{description}, #{status}, now(), now())
+        VALUES (#{refType}, #{refId}, #{patientId}, #{adminId}, #{type}, #{category}, #{amount}, #{description}, #{status}, now(), now())
     </insert>
+
+    <!-- 재무 기록 검색 -->
+    <select id="findByRef" parameterType="map" resultType="finance">
+        SELECT *
+        FROM finance_transaction
+        WHERE ref_type = #{refType}
+        AND ref_id = #{refId}
+        ORDER BY created_at DESC
+        LIMIT 1
+    </select>
+
+    <!-- 병실 이동 시 금액 수정 -->
+    <update id="updateFinance" parameterType="finance">
+        UPDATE finance_transaction
+        SET amount = #{amount},
+            description = #{description},
+            updated_at = NOW()
+        WHERE tx_id = #{txId};
+    </update>
+
 </mapper>

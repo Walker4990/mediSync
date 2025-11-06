@@ -1,7 +1,7 @@
 package com.mediSync.project.medical.service;
 
 import com.mediSync.project.medical.mapper.MedicalStaffMapper;
-import com.mediSync.project.medical.vo.MedicalStaff;
+import com.mediSync.project.medical.vo.AdminAccount;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -12,20 +12,20 @@ import java.util.List;
 public class MedicalStaffService {
     private final MedicalStaffMapper medicalStaffMapper;
 
-    public List<MedicalStaff> findAllStaff(){
+    public List<AdminAccount> findAllStaff(){
         return medicalStaffMapper.findAllStaff();
     }
-    public void addStaff(MedicalStaff staff) {
+    public void addStaff(AdminAccount staff) {
         medicalStaffMapper.addStaff(staff);
     }
-    public void updateStaff(MedicalStaff staff) {
+    public void updateStaff(AdminAccount staff) {
         medicalStaffMapper.updateStaff(staff);
     }
     public void deleteStaff(Long staffId) {
         medicalStaffMapper.deleteStaff(staffId);
     }
 
-    public List<MedicalStaff> searchStaffByKeyword(String keyword) {
+    public List<AdminAccount> searchStaffByKeyword(String keyword) {
         return medicalStaffMapper.searchStaffByKeyword(keyword);
     }
 

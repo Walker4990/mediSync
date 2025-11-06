@@ -35,22 +35,26 @@ export default function AdminChatPage() {
             console.log("✅ Admin WebSocket connected:", frame.headers?.server || "");
             // adminId 토픽 구독
             client.subscribe(`/topic/chat/${adminId}`, (msg) => {
-                try {
-                    const data = JSON.parse(msg.body);
-                    console.log("📩 [WebSocket] 받은 메시지:", data);
-                    setMessages((prev) => [...prev, data]);
+                const data = JSON.parse(msg.body);
 
-                    // 받은 메시지 보낸사람이 users 목록에 없으면 추가
-                    setUsers((prev) => {
-                        if (!prev.find((u) => u.userId === data.senderId)) {
-                            return [...prev, { userId: data.senderId, name: `User ${data.senderId}` }];
+                setMessages((prev) => [...prev, data]);
+
+                // ✅ 새 메시지 오면 해당 유저의 unread 즉시 증가
+                  setUsers((prev) => {
+                      const updated = prev.map(u => {
+                           if (u.userId === data.senderId) {
+                              return { ...u, unread: (u.unread || 0) + 1 };
+                              }
+                          return u;
+                          });
+
+                    // 리스트에 없는 사용자면 추가
+                        if (!updated.find(u => u.userId === data.senderId)) {
+                        updated.push({ userId: data.senderId, name: `User ${data.senderId}`, unread: 1 });
                         }
-                        return prev;
+                    return updated;
                     });
-                } catch (e) {
-                    console.error("WebSocket message parse error:", e, msg.body);
-                }
-            });
+        })
         };
 
         client.onStompError = (err) => {
@@ -69,10 +73,24 @@ export default function AdminChatPage() {
         };
     }, []); // 빈 dependency -> 1회 연결
 
+    useEffect(() => {
+        const fetchUnreadCounts = async () => {
+            const updated = await Promise.all(
+                users.map(async (u) => {
+                    const res = await axios.get(`http://192.168.0.24:8080/api/chat/unread/${u.userId}/${adminId}`);
+                    return { ...u, unread: res.data };
+                })
+            );
+            setUsers(updated);
+        };
+        if (users.length > 0) fetchUnreadCounts();
+    }, [users.length]);
+
     // 특정 사용자 대화 불러오기 (REST)
-    const loadChat = (uid) => {
+    const loadChat = async (uid) => {
         setCurrentUser(uid);
         setMessages([]); // 기존 메세지 초기화 (로딩중 UI 원하면 추가)
+        await axios.post(`http://192.168.0.24:8080/api/chat/read/${uid}/${adminId}`);
         axios
             .get(`http://192.168.0.24:8080/api/chat/${adminId}/${uid}`)
             .then((res) => {
@@ -84,6 +102,12 @@ export default function AdminChatPage() {
             .catch((err) => {
                 console.error("❌ 채팅 불러오기 실패:", err);
             });
+        await axios.post(`http://192.168.0.24:8080/api/chat/read/${uid}/${adminId}`);
+        setUsers((prev) =>
+            prev.map((u) =>
+                u.userId === uid ? { ...u, unread: 0 } : u
+            )
+        );
     };
 
     // 메시지 발송
@@ -147,15 +171,26 @@ export default function AdminChatPage() {
                                         onClick={() => loadChat(u.userId)}
                                         role="button"
                                         tabIndex={0}
-                                        className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition select-none ${
-                                            currentUser === u.userId ? "bg-green-100 border-l-4 border-green-500" : "hover:bg-gray-100"
+                                        className={`flex items-center justify-between px-4 py-3 cursor-pointer transition select-none ${
+                                            currentUser === u.userId
+                                                ? "bg-green-100 border-l-4 border-green-500"
+                                                : "hover:bg-gray-100"
                                         }`}
                                     >
-                                        <AiOutlineUser className="text-green-500" size={20} />
-                                        <div>
-                                            <div className="text-sm font-medium text-gray-800">사용자 #{u.userId}</div>
-                                            {u.name && <div className="text-xs text-gray-500">{u.name}</div>}
+                                        <div className="flex items-center gap-3">
+                                            <AiOutlineUser className="text-green-500" size={20} />
+                                            <div>
+                                                <div className="text-sm font-medium text-gray-800">사용자 #{u.userId}</div>
+                                                {u.name && <div className="text-xs text-gray-500">{u.name}</div>}
+                                            </div>
                                         </div>
+
+                                        {/* 🔴 읽지 않은 메시지 표시 */}
+                                        {u.unread > 0 && (
+                                            <div className="ml-auto bg-red-500 text-white text-xs font-semibold px-2 py-0.5 rounded-full">
+                                                {u.unread}
+                                            </div>
+                                        )}
                                     </div>
                                 ))
                             )}

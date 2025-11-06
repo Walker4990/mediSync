@@ -84,7 +84,7 @@ export default function ReserveModal({
                 }
                 : {
                     recordId: test.recordId,
-                    doctorId: test.doctorId,
+                    adminId: test.adminId,
                     patientId: test.patientId,
                     operationName: operationName || "수술",
                     scheduledDate: date,

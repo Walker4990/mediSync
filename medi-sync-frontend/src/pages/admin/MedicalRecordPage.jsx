@@ -12,7 +12,7 @@ import SurgeryReserveModal from "../../component/SurgeryReserveModal";
 export default function MedicalRecordPage() {
     const [form, setForm] = useState({
         patientId: "",
-        doctorId: "",
+        adminId: "",
         diagnosis: "",
         totalCost: "",
     });
@@ -137,7 +137,7 @@ export default function MedicalRecordPage() {
             try {
                 const costRes = await axios.get(
                     `http://192.168.0.24:8080/api/records/cost/preview`,
-                    { params: { doctorId: resv.doctorId, patientId: resv.patientId } }
+                    { params: { adminId: resv.adminId, patientId: resv.patientId } }
                 );
 
                 if (costRes.data.success) {
@@ -162,7 +162,7 @@ export default function MedicalRecordPage() {
             setForm({
                 ...form,
                 patientId: String(resv.patientId ?? ""),
-                doctorId: String(resv.doctorId ?? ""),
+                adminId: String(resv.adminId ?? ""),
             });
 
             setPrescriptions([]);
@@ -174,13 +174,13 @@ export default function MedicalRecordPage() {
 
     useEffect(() => {
         // 둘 다 선택돼야 계산 시작
-        if (!form.doctorId || !form.patientId) return;
+        if (!form.adminId || !form.patientId) return;
 
         const fetchCost = async () => {
             try {
                 const res = await axios.get(
                     "http://192.168.0.24:8080/api/records/cost/preview",
-                    { params: { doctorId: form.doctorId, patientId: form.patientId } }
+                    { params: { adminId: form.adminId, patientId: form.patientId } }
                 );
                 if (res.data && res.data.totalCost) {
                     setForm((prev) => ({
@@ -197,7 +197,7 @@ export default function MedicalRecordPage() {
         };
 
         fetchCost();
-    }, [form.doctorId]); // doctorId 바뀔 때마다 실행
+    }, [form.adminId]); // adminId 바뀔 때마다 실행
 
 
     const handleChange = (e) => {
@@ -213,7 +213,7 @@ export default function MedicalRecordPage() {
             setSelectedRecord(null);
         }
 
-        if (name === "doctorId" && value) {
+        if (name === "adminId" && value) {
             axios.get(`http://192.168.0.24:8080/api/doctors/fee/${value}`)
                 .then(res => {
                     const { consultFee, insuranceRate } = res.data;
@@ -262,7 +262,7 @@ export default function MedicalRecordPage() {
 
             const payload = {
                 patientId: Number(form.patientId),
-                doctorId: Number(form.doctorId),
+                adminId: Number(form.adminId),
                 diagnosis: form.diagnosis,
                 totalCost: Number(form.totalCost),
                 insuranceAmount: Math.round(Number(form.totalCost) * 0.7),
@@ -469,16 +469,16 @@ export default function MedicalRecordPage() {
                     <div>
                         <label className="block text-gray-700 mb-1 font-medium">주치의 선택</label>
                         <select
-                            name="doctorId"
-                            value={form.doctorId || ""}
+                            name="adminId"
+                            value={form.adminId || ""}
                             onChange={handleChange}
                             className="w-full border rounded p-2 focus:ring-2 focus:ring-blue-400"
                             required
                         >
                             <option value="">-- 주치의 선택 --</option>
                             {doctors.map((d) => (
-                                <option key={d.doctorId} value={d.doctorId}>
-                                    {d.doctorName} ({d.deptName})
+                                <option key={d.adminId} value={d.adminId}>
+                                    {d.name} ({d.deptName})
                                 </option>
                             ))}
                         </select>
@@ -1003,7 +1003,7 @@ export default function MedicalRecordPage() {
                                                         e.stopPropagation();
                                                         handleSurgeryReserve({
                                                             recordId: selectedRecord,
-                                                            doctorId: form.doctorId,
+                                                            adminId: form.adminId,
                                                             patientId: form.patientId,
                                                             diagnosis: p.testName, // 수술명 기본값
                                                             patientName: p.patientName || "환자", // optional
@@ -1101,7 +1101,7 @@ export default function MedicalRecordPage() {
                 onClose={() => setSurgeryModalOpen(false)}
                 test={{
                     recordId: selectedSurgery?.recordId,
-                    doctorId: selectedSurgery?.doctorId,
+                    adminId: selectedSurgery?.adminId,
                     patientId: selectedSurgery?.patientId,
                     testName: selectedSurgery?.diagnosis || "수술",
                     patientName: selectedSurgery?.patientName,

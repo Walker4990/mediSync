@@ -43,10 +43,11 @@
         tr.created_at,
         tr.updated_at
         FROM test_result tr
-        JOIN test_reservation r ON tr.patient_id = r.patient_id
         JOIN patient p ON tr.patient_id = p.patient_id
-        JOIN admin_account a ON tr.admin_id = a.admin_id
-        WHERE r.reservation_id = #{reservationId}
+        LEFT JOIN admin_account a ON tr.admin_id = a.admin_id
+        WHERE tr.patient_id = (
+        SELECT patient_id FROM test_reservation WHERE reservation_id = #{reservationId}
+        )
     </select>
 
 </mapper>

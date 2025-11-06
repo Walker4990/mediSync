@@ -15,7 +15,7 @@ import java.util.List;
 @NoArgsConstructor
 @Alias("MedicalRecord")
 public class MedicalRecord {
-    private Long recordId, patientId, doctorId;
+    private Long recordId, patientId, adminId;
     private String patientName;
     private String diagnosis;
     private BigDecimal totalCost;

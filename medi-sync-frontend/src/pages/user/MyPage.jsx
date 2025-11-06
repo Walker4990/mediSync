@@ -20,6 +20,7 @@ import {
   ChevronRight,
   X,
 } from "lucide-react";
+import SupportChatWidget from "./SupportChatPage";
 
 // 회원정보 수정 탭 - currentUser 데이터를 prop으로 받도록 수정
 const UserInfoEdit = ({ currentUser }) => {
@@ -542,46 +543,23 @@ const ViewReservation = ({ title, icon: Icon }) => {
   );
 };
 
-// 실시간 상담 아이콘 -> 클릭 시 채팅 시작 (임의 구현)
+// 실시간 상담 아이콘 -> 클릭 시 채팅 시작
 const ChatFloatingButton = () => {
-  const [isOpen, setIsOpen] = useState(false);
+    const [isOpen, setIsOpen] = useState(false);
 
-  return (
-    <div className="fixed bottom-8 right-8 z-20">
-      {isOpen && (
-        <div className="absolute bottom-16 right-0 w-80 h-96 bg-white rounded-xl shadow-2xl border border-gray-200 flex flex-col overflow-hidden">
-          <header className="bg-blue-600 text-white p-3 flex justify-between items-center">
-            <span className="font-semibold">실시간 상담</span>
-            <button onClick={() => setIsOpen(false)}>
-              <X className="w-5 h-5" />
-            </button>
-          </header>
-          <div className="flex-grow p-4 overflow-y-auto text-sm text-gray-600">
-            {/* Chat Messages Mock */}
-            <p className="mb-2 text-right">안녕하세요, 무엇을 도와드릴까요?</p>
-            <p className="mb-2 text-left bg-gray-100 p-2 rounded-lg inline-block">
-              예약 변경 문의드립니다.
-            </p>
-          </div>
-          <footer className="p-3 border-t">
-            <input
-              type="text"
-              placeholder="메시지 입력..."
-              className="w-full p-2 border rounded-lg"
+    return (
+        <div className="fixed bottom-8 right-8 z-50">
+            {/* SupportChatWidget 자체의 버튼을 사용 */}
+            <SupportChatWidget
+                embedded={false}
+                externalControl={isOpen}
+                onToggle={() => setIsOpen(!isOpen)}
             />
-          </footer>
         </div>
-      )}
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-14 h-14 bg-green-500 text-white rounded-full shadow-xl flex items-center justify-center hover:bg-green-600 transition transform hover:scale-105"
-        title="실시간 상담"
-      >
-        <MessageSquare className="w-7 h-7" />
-      </button>
-    </div>
-  );
+    );
 };
+
+
 
 // ----------------------------------------------------
 // Main Component

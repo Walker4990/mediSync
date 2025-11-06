@@ -32,7 +32,7 @@
         r.record_id,
         r.created_at,
         r.diagnosis,
-        a.name AS adminName,
+        a.name AS doctorName,
         dept.dept_name AS deptName
         FROM medical_record r
         LEFT JOIN admin_account a ON r.admin_id = a.admin_id
@@ -59,7 +59,7 @@
         p.injection_count       AS injectionCount,
         p.unit                  AS unit,
         p.unit_price            AS unitPrice,
-        a.name                  AS adminName,
+        a.name                  AS doctorName,
         r.diagnosis             AS diagnosis
         FROM prescription p
         JOIN medical_record r ON p.record_id = r.record_id

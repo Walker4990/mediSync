@@ -6,10 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -48,5 +45,15 @@ public class ChatMessageController {
 
         chatMessageService.insertMessage(chatMessage);
         messagingTemplate.convertAndSend("/topic/chat/" + receiverId, chatMessage);
+    }
+
+    @GetMapping("/unread/{senderId}/{receiverId}")
+    public int getUnreadCount(@PathVariable Long senderId, @PathVariable Long receiverId) {
+        return chatMessageService.getUnreadCount(senderId, receiverId);
+    }
+
+    @PostMapping("/read/{senderId}/{receiverId}")
+    public void markMessagesAsRead(@PathVariable Long senderId, @PathVariable Long receiverId) {
+        chatMessageService.markMessagesAsRead(senderId, receiverId);
     }
 }

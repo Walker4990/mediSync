@@ -15,6 +15,7 @@ import {
 } from "recharts";
 
 import AdminHeader from "../../component/AdminHeader";
+import FinanceHeader from "../../component/FinanceHeader";
 
 // 가상의 데이터를 생성합니다.
 const dailyData = [
@@ -54,7 +55,7 @@ export default function DashBoard() {
   return (
     <div className="bg-gray-50 min-h-screen font-pretendard">
       {/* 상단 고정 관리자 헤더 */}
-      <AdminHeader />
+      <FinanceHeader />
 
       {/* 컨텐츠 영역 */}
       <main className="max-w-7xl mx-auto pt-24 pb-12 px-8">

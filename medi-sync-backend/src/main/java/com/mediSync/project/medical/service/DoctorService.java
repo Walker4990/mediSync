@@ -2,7 +2,6 @@ package com.mediSync.project.medical.service;
 
 import com.mediSync.project.medical.mapper.DoctorMapper;
 import com.mediSync.project.medical.vo.AdminAccount;
-import com.mediSync.project.medical.vo.Doctor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -17,12 +16,12 @@ public class DoctorService {
     public List<AdminAccount> selectAllDoctor(){
         return doctorMapper.doctorSelectAll();
     }
-    public Doctor selectDoctorById(Long doctorId){
+    public AdminAccount selectDoctorById(Long doctorId){
         return doctorMapper.doctorSelectById(doctorId);
     }
-    public void insertDoctor(Doctor doctor){ doctorMapper.insertDoctor(doctor);
+    public void insertDoctor(AdminAccount doctor){ doctorMapper.insertDoctor(doctor);
     }
-    public void editDoctor(Doctor doctor) {
+    public void editDoctor(AdminAccount doctor) {
         doctorMapper.editDoctor(doctor);
     }
     public void delDoctor(Long doctorId) {

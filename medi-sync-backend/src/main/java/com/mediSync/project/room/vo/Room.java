@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.apache.ibatis.type.Alias;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Data
@@ -22,4 +23,6 @@ public class Room {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private String department;
+    private BigDecimal dailyCost;
+    private String roomType;
 }
