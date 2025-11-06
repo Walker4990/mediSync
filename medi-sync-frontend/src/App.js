@@ -40,7 +40,9 @@ import AdminMainPage from "./pages/admin/AdminMainPage";
 
 function AppContent() {
   const location = useLocation();
-  const hideNotification = location.pathname.startsWith("/user/medicalDetail") ||  location.pathname.startsWith("/admin/finance");
+  const hideNotification = location.pathname.startsWith("/user/medicalDetail")
+      ||  location.pathname.startsWith("/admin/finance")
+      || location.pathname === "/admin";
   return (
     <>
       {!hideNotification && <WebSocketListener />}
