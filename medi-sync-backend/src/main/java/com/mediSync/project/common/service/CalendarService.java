@@ -38,13 +38,12 @@ public class CalendarService {
         if(reserList != null && !reserList.isEmpty()){
 
             for(CalendarDTO re : reserList){
-                System.out.println("가져온 값 : "+ re);
                 re.setTitle("병원 진료");
                 re.setColor("#3B82F6");
                 re.setTextColor("white");
                 re.setType("진료 예약");
                 calendarInfo.add(re);
-                System.out.println("최종 reservation : "+ re);
+
             }
         }
         // 검사 예약
@@ -54,13 +53,12 @@ public class CalendarService {
                 List<CalendarDTO> scheList = calendarMapper.getTestSchedule(tere.getScheduleId());
                 if (scheList == null || scheList.isEmpty()) continue;
                 for(CalendarDTO sche : scheList){
-                    System.out.println("가져온 값 : "+ sche);
                     sche.setTitle(sche.getTitle());
                     sche.setColor("#60A5FA");
                     sche.setTextColor("#FFFFFF");
                     sche.setType("검사 예약");
                     calendarInfo.add(sche);
-                    System.out.println("schedule : "+sche);
+
                 }
             }
         }
@@ -68,12 +66,11 @@ public class CalendarService {
         List<CalendarDTO> operList = calendarMapper.getOperation(patient_id);
         if(operList != null && !operList.isEmpty()){
             for(CalendarDTO op: operList){
-                System.out.println("가져온 값 : "+ op);
                 op.setColor("#1E40AF");
                 op.setTextColor("#FFFFFF");
                 op.setType("수술 예약");
                 calendarInfo.add(op);
-                System.out.println("operation : "+op);
+
             }
 
         }
@@ -83,63 +80,51 @@ public class CalendarService {
     //admin 페이지
     //모든 예약정보 가져오기
     @Transactional
-    public List<CalendarDTO> viewAllReservationAll(){
+    public List<CalendarDTO> viewAllReservationAll(long adminId){
         List<CalendarDTO> calendarInfo = new ArrayList<>();
-        List<CalendarDTO> reserList = calendarMapper.getReservationAll();
+        List<CalendarDTO> reserList = calendarMapper.getReservationAll(adminId);
 
         // 진료예약
         if(reserList != null && !reserList.isEmpty()){
 
             for(CalendarDTO re : reserList){
-                System.out.println("가져온 값 : "+ re);
                 re.setTitle("병원 진료");
                 re.setColor("#3B82F6");
                 re.setTextColor("white");
                 re.setType("진료 예약");
                 calendarInfo.add(re);
-                System.out.println("최종 reservation : "+ re);
+
             }
         }
             // 검사 예약
 
-         List<CalendarDTO> scheList = calendarMapper.getTestScheduleAll();
+         List<CalendarDTO> scheList = calendarMapper.getTestScheduleAll(adminId);
          if (scheList != null && !scheList.isEmpty()){
          for(CalendarDTO sche : scheList){
-                System.out.println("가져온 값 : "+ sche);
                 sche.setTitle(sche.getTitle());
                 sche.setColor("#60A5FA");
                 sche.setTextColor("#FFFFFF");
                 sche.setType("검사 예약");
                 calendarInfo.add(sche);
-                System.out.println("schedule : "+sche);
+
              }
          }
-
-
         //수술 예약
-        List<CalendarDTO> operList = calendarMapper.getOperationAll();
+        List<CalendarDTO> operList = calendarMapper.getOperationAll(adminId);
         if(operList != null && !operList.isEmpty()){
             for(CalendarDTO op: operList){
-                System.out.println("가져온 값 : "+ op);
                 op.setColor("#1E40AF");
                 op.setTextColor("#FFFFFF");
                 op.setType("수술 예약");
                 calendarInfo.add(op);
-                System.out.println("operation : "+op);
+
             }
         }
         return calendarInfo;
     }
 
 
-
-
-
-
-
-
-
-    //예약 정보 삭제하기
+    //회원이 예약 취소하기
     @Transactional
     public void cancelReservation(Long id, String type, LocalDateTime startDate){
         LocalDate date;

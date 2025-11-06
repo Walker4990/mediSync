@@ -25,10 +25,10 @@ public interface CalendarMapper {
     int cancelOperation(Map<String, Object> params);
     
     //관리자 페이지
-    List<CalendarDTO> getReservationAll();
-    List<TestReservation> getTestReservationAll();
-    List<CalendarDTO> getTestScheduleAll();
-    List<CalendarDTO> getOperationAll();
+    List<CalendarDTO> getReservationAll(long adminId);
+    List<TestReservation> getTestReservationAll(long adminId);
+    List<CalendarDTO> getTestScheduleAll(long adminId);
+    List<CalendarDTO> getOperationAll(long adminId);
     
     
 }

@@ -34,6 +34,7 @@ public class DoctorService {
     public List<AdminAccount> selectDoctorByDepartment(long dept_id){
         return doctorMapper.doctorSelectByDepartment(dept_id);
     }
+
 }
 
 

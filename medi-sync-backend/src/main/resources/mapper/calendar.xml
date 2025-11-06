@@ -87,6 +87,7 @@
         join admin_account a using(admin_id)
         join patient p using(patient_id)
         where  r.status != "CANCEL"
+        AND a.admin_id = #{adminId}
     </select>
 
     <!-- 전체 검사 예약 정보 가져오기 -->
@@ -103,6 +104,7 @@
         join admin_account a using(admin_id)
         join reservation r using(reservation_id)
         where tr.status != "CANCELED"
+        AND a.admin_id = #{adminId}
     </select>
     <!-- 해당 회원의 수술 예약 정보 가져오기 -->
     <select id="getOperationAll" resultType="calendar">
@@ -116,6 +118,7 @@
         join patient p using(patient_id)
         join admin_account a using(admin_id)
         where o.status != "CANCELED"
+        AND a.admin_id = #{adminId}
     </select>
 
 

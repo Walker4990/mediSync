@@ -87,6 +87,15 @@ public class DoctorController {
                     .body(Map.of("success", false, "message", "해당 의사의 진료비 정보 없음"));
         }
         return ResponseEntity.ok(feeInfo);
-        }
     }
+
+
+    @GetMapping("/option")
+    public List<AdminAccount> findAllDoctorsetOption(){
+        return doctorService.selectAllDoctor();
+    }
+}
+
+
+
 

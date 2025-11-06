@@ -7,26 +7,10 @@ import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 
 import "../../style/calendar.css";
+import { option, use } from "framer-motion/client";
 
 export default function AdminSchedule() {
   const ScheduleHeader = () => {
-    const [patients, setPatients] = useState([]);
-    const [search, setSearch] = useState("");
-
-    // 초기 데이터 불러오기
-    useEffect(() => {
-      fetchPatients();
-    }, []);
-
-    const fetchPatients = async () => {
-      try {
-        const res = await axios.get("http://192.168.0.24:8080/api/patients");
-        setPatients(res.data);
-      } catch (err) {
-        console.error("환자 조회 실패:", err);
-      }
-    };
-
     return (
       <div className="bg-gray-50 min-h-screen font-pretendard">
         {/* 상단 고정 관리자 헤더 */}
@@ -37,13 +21,15 @@ export default function AdminSchedule() {
           <h1 className="text-3xl font-bold text-blue-600 mb-8">
             예약일정확인
           </h1>
+          {/*의사 선택 토글*/}
 
+          {/*캘린더*/}
           <ViewReservation title="예약일정" icon={() => <></>} />
         </main>
       </div>
     );
   };
-
+  const admin_id = 1;
   // 환자 일정 탭
   const ViewReservation = ({ title, icon: Icon }) => {
     const [events, setEvents] = useState([]);
@@ -51,10 +37,26 @@ export default function AdminSchedule() {
     const [isCalendarModalOpen, setIsCalendarModalOpen] = useState(false);
     const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
     const [cancelReason, setCancelReason] = useState("");
-    // 로그인 유저 임시 번호
+    const [doctors, setDoctors] = useState([]);
+    const [selectedDoctor, setSelectedDoctor] = useState(admin_id);
+
+    const fetchDoctors = async () => {
+      try {
+        const res = await axios.get("http://localhost:8080/api/doctors/option");
+        setDoctors(res.data);
+      } catch (error) {
+        console.error("의사목록 조회 실패 : ", error);
+      }
+    };
+
+    // 의사 일정 가져오기
     const fetchCalendarData = async () => {
       try {
-        const res = await axios.get(`http://localhost:8080/api/calendar/all`);
+        const res = await axios.get(`http://localhost:8080/api/calendar/all`, {
+          params: {
+            adminId: selectedDoctor,
+          },
+        });
         console.log("받은 일정 데이터:", res.data);
         const formatted = res.data.map((item) => ({
           title: item.title,
@@ -74,16 +76,32 @@ export default function AdminSchedule() {
         console.log("일정 조회 실패", err);
       }
     };
+
     useEffect(() => {
       fetchCalendarData();
+      fetchDoctors();
     }, []);
+
+    useEffect(() => {
+      fetchCalendarData(selectedDoctor);
+    }, [selectedDoctor]);
 
     return (
       <div className="p-6 space-y-4">
         <div className="bg-white rounded-lg shadow-md p-2 h-[850px]">
-          {/* <p className="text-center text-red-500 py-4">
-            사용자 정보를 불러오는 중입니다...
-          </p> */}
+          {/*의사선택 토글*/}
+          <select
+            value={selectedDoctor}
+            onChange={(e) => setSelectedDoctor(e.target.value)}
+            className="border rounded px-3 py-2 mb-4"
+          >
+            {doctors.map((doc) => (
+              <option key={doc.adminId} value={doc.adminId}>
+                {doc.name} 의사
+              </option>
+            ))}
+          </select>
+
           <FullCalendar
             locale="ko"
             plugins={[dayGridPlugin, timeGridPlugin]}
@@ -240,17 +258,20 @@ export default function AdminSchedule() {
                       alert("취소 사유를 입력해주세요.");
                       return;
                     }
+                    const toKSTISOString = (date) => {
+                      const offsetMs = 9 * 60 * 60 * 1000;
+                      const kstDate = new Date(date.getTime() + offsetMs);
+                      return kstDate.toISOString().slice(0, 19);
+                    };
+
                     try {
-                      await axios.put(
-                        `http://localhost8080/api/calendar/admin/cancel`,
-                        null,
+                      await axios.post(
+                        `http://localhost:8080/api/calendar/admin/cancel`,
                         {
-                          params: {
-                            id: selectedEvent.id,
-                            type: selectedEvent.type,
-                            startDate: selectedEvent.start,
-                            reason: cancelReason,
-                          },
+                          id: selectedEvent.id,
+                          type: selectedEvent.type,
+                          date: toKSTISOString(new Date(selectedEvent.start)),
+                          reason: cancelReason,
                         }
                       );
                       alert("예약이 취소되었습니다.");

@@ -43,11 +43,10 @@ public class ReservationScheduler {
         List<ReservationDTO> testReservationList = testReservationMapper.findTestReservationBetween(start,end);
         System.out.println("testReservation 리스트 : "+ testReservationList);
         List<ReservationDTO> operationList = operationMapper.findOperationBetween(start,end);
-        System.out.println("Opertation 리스트 : " + operationList);
+        System.out.println("operation 리스트 : " + operationList);
 
         reservationList.addAll(testReservationList);
         reservationList.addAll(operationList);
-
 
 
         if(reservationList != null && !reservationList.isEmpty()){

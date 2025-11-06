@@ -19,4 +19,6 @@ public interface DoctorMapper {
     List<AdminAccount> doctorSelectByDepartment(long dept_id);
 
     String findDepartmentByDoctorId(Long doctorId);
+
+
 }
