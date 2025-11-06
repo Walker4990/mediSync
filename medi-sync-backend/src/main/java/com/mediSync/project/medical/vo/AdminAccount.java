@@ -23,7 +23,7 @@ public class AdminAccount {
     private String role;
     private String profileImgUrl;
     private Long deptId;
-    private String licenceNo;
+    private String licenseNo;
     private String status;
     private LocalDate hiredDate;
     private LocalDateTime createdAt;

@@ -175,16 +175,33 @@
     <select id="findScheduledAdmissionsForToday" resultType="Admission">
         SELECT a.admission_id, a.patient_id, a.room_id, r.room_no, p.name AS patient_name
         FROM admission a
-        JOIN operation o ON a.operation_id = o.operation_id
+        LEFT JOIN operation o ON a.operation_id = o.operation_id
         JOIN room r ON a.room_id = r.room_id
         JOIN patient p ON a.patient_id = p.patient_id
         WHERE a.status = 'SCHEDULED'
-        AND o.scheduled_date = CURDATE();
+        AND (
+        (o.scheduled_date BETWEEN CURDATE() AND CURDATE() + INTERVAL 1 DAY)
+        OR (a.operation_id IS NULL AND DATE(a.admitted_at) = CURDATE())
+        );
+
     </select>
+    <!-- 입원 중복 방지 -->
+    <select id="countActiveAdmissionsByPatient" resultType="int">
+        SELECT COUNT(*)
+        FROM admission
+        WHERE patient_id = #{patientId}
+        AND status = 'ADMITTED'
+    </select>
+
 
     <update id="updateAdmissionStatus">
         UPDATE admission
-        SET status = #{status}, admitted_at = NOW()
-        WHERE admission_id = #{admissionId};
+        SET status = #{status},
+        admitted_at = CASE
+        WHEN admitted_at IS NULL THEN NOW()
+        ELSE admitted_at
+        END,
+        updated_at = NOW()
+        WHERE admission_id = #{admissionId}
     </update>
 </mapper>

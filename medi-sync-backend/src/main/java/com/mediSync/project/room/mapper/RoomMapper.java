@@ -11,5 +11,5 @@ public interface RoomMapper {
     List<Room> findAvailableRooms(String department);
     int incrementRoomCount(Long roomId);
     List<Room> selectAllRooms();
-
+    Room findCostByRoomId(Long roomId);
 }

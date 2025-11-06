@@ -427,17 +427,17 @@ export default function DoctorList() {
             <tbody>
               {filtered.map((d) => (
                 <tr
-                  key={d.doctorId}
+                  key={d.adminId}
                   className="border-b hover:bg-gray-50 text-gray-700"
                 >
-                  <td className="py-2 px-4">{d.doctorId}</td>
+                  <td className="py-2 px-4">{d.adminId}</td>
                   <td
                     className="py-2 px-4 font-semibold"
                     onClick={() => {
-                      DoctorDetail(d.doctorId);
+                      DoctorDetail(d.adminId);
                     }}
                   >
-                    {d.doctorName}
+                    {d.name}
                   </td>
                   <td className="py-2 px-4">{d.deptName}</td>
                   <td className="py-2 px-4">{d.licenseNo}</td>
