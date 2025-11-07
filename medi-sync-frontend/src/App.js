@@ -9,6 +9,7 @@ import PatientList from "./pages/admin/PatientList";
 import StaffList from "./pages/admin/StaffList";
 import DoctorList from "./pages/admin/DoctorList";
 import MyPage from "./pages/user/MyPage";
+import PreExamForm from "./pages/user/PreExamForm";
 import UserHome from "./pages/user/UserHome";
 import FindAccount from "./pages/user/FindAccount";
 import MedicalConsult from "./pages/user/MedicalConsult";
@@ -37,10 +38,13 @@ import SupportChatPage from "./pages/user/SupportChatPage";
 import AdminChatPage from "./pages/admin/AdminChatPage";
 import FinanceTransactionPage from "./pages/admin/FinanceTransactionPage";
 import AdminMainPage from "./pages/admin/AdminMainPage";
+import OAuthCallback from "./component/OAuthCallback";
 
 function AppContent() {
   const location = useLocation();
-  const hideNotification = location.pathname.startsWith("/user/medicalDetail") ||  location.pathname.startsWith("/admin/finance");
+  const hideNotification =
+    location.pathname.startsWith("/user/medicalDetail") ||
+    location.pathname.startsWith("/admin/finance");
   return (
     <>
       {!hideNotification && <WebSocketListener />}
@@ -82,7 +86,9 @@ function AppContent() {
           <Route element={<UserLayout />}>
             <Route path="/" element={<UserHome />} />/
             <Route path="/findAccount" element={<FindAccount />} />/
+            <Route path="/auth/callback" element={<OAuthCallback />} />
             <Route path="/user/mypage" element={<MyPage />} />
+            <Route path="/user/pre-form" element={<PreExamForm />} />
             <Route path="/user/consult" element={<MedicalConsult />} />
             <Route path="/user/reservation" element={<Reservation />} />
             <Route path="/user/insurance" element={<Insurance />} />

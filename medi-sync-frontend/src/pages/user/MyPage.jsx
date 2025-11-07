@@ -36,6 +36,7 @@ const UserInfoEdit = ({ currentUser }) => {
   const [formData, setFormData] = useState({
     username: currentUser?.username,
     userphone: currentUser?.userphone,
+    password: currentUser?.password,
     email: currentUser?.email,
   });
 
@@ -45,6 +46,7 @@ const UserInfoEdit = ({ currentUser }) => {
       setFormData({
         username: currentUser.username || "",
         userphone: currentUser.userphone || "",
+        password: currentUser.password || "",
         email: currentUser.email || "",
       });
       // isStaff 정보도 여기서 업데이트
@@ -68,6 +70,7 @@ const UserInfoEdit = ({ currentUser }) => {
     await new Promise((resolve) => setTimeout(resolve, 1000));
     setIsChecking(false);
 
+    // TEST
     if (empId === "MS999") {
       // Mock 성공
       setIsStaff(true);
@@ -88,8 +91,6 @@ const UserInfoEdit = ({ currentUser }) => {
   //회원 정보 변경 클릭 시 화면 단
   return (
     <div className="p-6 space-y-6">
-      <h3 className="text-xl font-semibold border-b pb-2">회원정보 변경</h3>
-
       {/* 사번 조회 (직원 확인) 기능 */}
       <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 space-y-3">
         <p className="font-medium text-blue-800 flex items-center">
@@ -123,63 +124,75 @@ const UserInfoEdit = ({ currentUser }) => {
 
       {/* 기본 정보 입력 필드 - currentUser 정보 반영 */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <input
-          type="text"
-          name="username"
-          placeholder="이름"
-          className="p-3 border rounded-lg"
-          value={formData.username}
-          onChange={handleChange}
-        />
-        <input
-          type="tel"
-          name="userphone"
-          placeholder="연락처"
-          className="p-3 border rounded-lg"
-          value={formData.userphone}
-          onChange={handleChange}
-        />
-        <input
-          type="email"
-          name="email"
-          placeholder="이메일"
-          className="p-3 border rounded-lg"
-          value={formData.email}
-          onChange={handleChange}
-        />
-      </div>
+        <div className="flex flex-col">
+          <span className="mb-1 text-sm font-medium">이름</span>
+          <input
+            type="text"
+            name="username"
+            placeholder="이름"
+            className="p-3 border rounded-lg mb-4"
+            value={formData.username}
+            onChange={handleChange}
+          />
 
-      <button className="w-full py-3 bg-blue-500 text-white font-bold rounded-lg hover:bg-blue-600 transition">
-        정보 변경 저장
-      </button>
+          <span className="mb-1 text-sm font-medium">연락처</span>
+          <input
+            type="tel"
+            name="userphone"
+            placeholder="연락처"
+            className="p-3 border rounded-lg mb-4"
+            value={formData.userphone}
+            onChange={handleChange}
+          />
+
+          <span className="mb-1 text-sm font-medium">이메일</span>
+          <input
+            type="email"
+            name="email"
+            placeholder="이메일"
+            className="p-3 border rounded-lg mb-4"
+            value={formData.email}
+            onChange={handleChange}
+          />
+          <button className="w-full py-3 bg-blue-500 text-white font-bold rounded-lg hover:bg-blue-600 transition flex items-center justify-center">
+            변경사항 저장
+          </button>
+        </div>
+
+        <div className="flex flex-col">
+          <span className="mb-1 text-sm font-medium">
+            * 현재 비밀번호를 적으면 변경 가능하도록 (암호화 전)
+          </span>
+          <input
+            type="text"
+            name="password"
+            placeholder="현재 비밀번호"
+            className="w-full p-3 border rounded-lg mb-4"
+            value={formData.password}
+            onChange={handleChange}
+          />
+
+          <span className="mb-1 text-sm font-medium">새 비밀번호</span>
+          <input
+            type="password"
+            placeholder="새 비밀번호 (8자 이상)"
+            className="w-full p-3 border rounded-lg mb-4"
+          />
+
+          <span className="mb-1 text-sm font-medium">새 비밀번호 확인</span>
+          <input
+            type="password"
+            placeholder="새 비밀번호 확인"
+            className="w-full p-3 border rounded-lg mb-4"
+          />
+          <button className="w-full py-3 bg-red-500 text-white font-bold rounded-lg hover:bg-red-600 transition flex items-center justify-center">
+            <Lock className="w-5 h-5 mr-2" /> 비밀번호 변경
+          </button>
+        </div>
+      </div>
     </div>
   );
 };
-
-// 비밀번호 변경 탭
-const PasswordChange = () => (
-  <div className="p-6 space-y-6">
-    <h3 className="text-xl font-semibold border-b pb-2">비밀번호 변경</h3>
-    <input
-      type="password"
-      placeholder="현재 비밀번호"
-      className="w-full p-3 border rounded-lg"
-    />
-    <input
-      type="password"
-      placeholder="새 비밀번호 (8자 이상)"
-      className="w-full p-3 border rounded-lg"
-    />
-    <input
-      type="password"
-      placeholder="새 비밀번호 확인"
-      className="w-full p-3 border rounded-lg"
-    />
-    <button className="w-full py-3 bg-red-500 text-white font-bold rounded-lg hover:bg-red-600 transition flex items-center justify-center">
-      <Lock className="w-5 h-5 mr-2" /> 비밀번호 변경
-    </button>
-  </div>
-);
 
 // 알림 설정 on/off 탭
 const NotificationSettings = () => {
@@ -250,9 +263,6 @@ const NotificationSettings = () => {
   // 알림 설정 화면단
   return (
     <div className="p-6 space-y-4">
-      <h3 className="text-xl font-semibold border-b pb-2 flex items-center">
-        <Bell className="w-5 h-5 mr-2" /> 알림 수신 설정
-      </h3>
       <div className="bg-white rounded-lg shadow-md p-4 space-y-2">
         <SettingToggle label="이메일 알림 (진료/예약 관련)" keyName="email" />
         <SettingToggle label="SMS 수신 동의 (긴습사항)" keyName="sms" />
@@ -569,11 +579,11 @@ const MyPage = () => {
 
   useEffect(() => {
     const token = localStorage.getItem("token");
-    if (!token) {
-      alert("로그인이 필요합니다.");
-      window.location.href = "/";
-      return;
-    }
+    // if (!token) {
+    //   alert("로그인이 필요합니다.");
+    //   window.location.href = "/";
+    //   return;
+    // }
     axios
       .get("http://localhost:8080/api/users/mypage", {
         headers: { Authorization: `Bearer ${token}` },
@@ -609,12 +619,6 @@ const MyPage = () => {
         id: "info_edit",
         label: "회원 정보 변경",
         icon: User,
-        group: "profile",
-      },
-      {
-        id: "password_change",
-        label: "비밀번호 변경",
-        icon: Lock,
         group: "profile",
       },
       {
@@ -664,8 +668,6 @@ const MyPage = () => {
     switch (activeTab) {
       case "info_edit":
         return <UserInfoEdit currentUser={currentUser} />;
-      case "password_change":
-        return <PasswordChange />;
       case "notification_settings":
         return <NotificationSettings />;
       case "med_records":
@@ -746,7 +748,7 @@ const MyPage = () => {
               ))}
 
             {/* 섹션 2: 환자 기록 */}
-            <p className="text-sm font-bold text-gray-500 uppercase mt-6 mb-2 border-b pb-1">
+            <p className="text-sm font-bold text-gray-500 uppercase mt-6 mb-2 border-b pb-1 pt-5">
               나의 진료 기록
             </p>
             {menuItems

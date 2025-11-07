@@ -17,7 +17,7 @@ export default function UserHome() {
           </p>
           <div className="flex gap-4">
             <Link
-              to="/"
+              to="/user/pre-form"
               className="bg-white text-blue-500 font-semibold px-6 py-3 rounded-full hover:bg-blue-100 transition"
             >
               진료 시작하기

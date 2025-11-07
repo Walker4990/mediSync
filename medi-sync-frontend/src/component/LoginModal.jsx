@@ -1,5 +1,5 @@
 import React, { useState, useContext, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { X } from "lucide-react";
 import useModal from "./ModalContext";
@@ -21,6 +21,7 @@ export default function LoginModal() {
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false); // 중복 요청 방지
+  const navigate = useNavigate();
 
   const API_URI = "http://localhost:8080/api/users/login";
 
@@ -48,9 +49,11 @@ export default function LoginModal() {
       });
 
       if (res.data.success) {
-        localStorage.setItem("token", res.data.token);
+        // localStorage.setItem("token", res.data.token);
+        // handleLoginSuccess();
+        handleLoginSuccess(res.data.token);
+        onClose();
         alert("로그인 성공!");
-        window.location.href = "/";
       } else {
         setMessage(res.data.message || "로그인 실패");
       }
@@ -64,7 +67,7 @@ export default function LoginModal() {
   // OAuth2 로그인 함수 (미구현)
   const handleSocialLogin = (provider) => {
     // Spring Security OAuth2 시작 경로로 강제 이동합니다.
-    window.location.href = `http://localhost:3000/${provider}`;
+    window.location.href = `http://localhost:8080/oauth2/authorization/${provider}`;
   };
 
   // 회원가입 링크 클릭 시 로그인 모달을 닫고 회원가입 모달을 열기

@@ -5,13 +5,11 @@ import { ModalContext } from "./ModalContext";
 
 export default function ModalProvider({ children }) {
   // 3. 인증상태 관리 추가
-  const [isLoggedIn, setIsLoggedIn] = useState(
-    !!localStorage.getItem("authToken")
-  );
+  const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem("token"));
 
   const handleLoginSuccess = (token) => {
     // 실제 JWT 토큰을 저장
-    localStorage.setItem("authToken", token);
+    localStorage.setItem("token", token);
     setIsLoggedIn(true);
     // 로그인 모달 닫기 로직은 LoginModal 컴포넌트에서 setTimeout으로 처리
   };
@@ -29,9 +27,10 @@ export default function ModalProvider({ children }) {
         error
       );
     } finally {
-      localStorage.removeItem("authToken");
+      localStorage.removeItem("token");
       setIsLoggedIn(false);
       console.log("로그아웃 완료. 상태 업데이트됨.");
+      window.location.href = "/";
     }
   };
 
