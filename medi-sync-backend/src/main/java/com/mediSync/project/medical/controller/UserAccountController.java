@@ -41,6 +41,9 @@ public class UserAccountController {
     @Value("${spring.security.oauth2.client.provider.naver.token-uri}")
     private String tokenUri;
 
+    @Value("${spring.security.oauth2.client.provider.naver.user-info-uri}")
+    private String userInfoUri;
+
     // 전체 리스트
     @GetMapping
     public List<UserAccount> getAllUsers() {
@@ -70,7 +73,16 @@ public class UserAccountController {
         // 2. 서비스 호출하여 Access Token 받기
         String accessToken = getNaverAccessTokenTest(code, state);
 
-        System.out.println(accessToken);
+        NaverUserProfile result = getNaverUserProfile(accessToken);
+        System.out.println("========");
+        System.out.println(result.getResponse().getName());
+
+        /*
+            === 소셜 로그인 관련 TEST ===
+            access_token 발급 받아 로그인 처리 => token에 담긴 사용자 정보 추출해서 DB에 INSERT
+            id값 확인해서 강제로 login_id로 주입하고,
+            user_account에는 social 컬럼 추가해서 boolean (소셜 여부) 혹은 String (default=null, naver, kakao..)
+        */
 
         // 4. POST 요청 보내기 (네이버 토큰 URI로)
         //ResponseEntity<NaverTokenResponse> response = restTemplate.postForEntity(
@@ -133,6 +145,56 @@ public class UserAccountController {
         }
     }
 
+    @Data
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class NaverUser {
+        private String id;       // 네이버 고유 식별자
+        private String email;    // 이메일
+        private String name;     // 이름
+        // (필요에 따라 nickname, profile_image 등 scope에 맞게 추가)
+    }
+
+    @Data
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class NaverUserProfile {
+        private String resultcode;
+        private String message;
+        private NaverUser response; // **핵심: 사용자 정보는 'response' 객체 안에 중첩되어 있음**
+    }
+
+    public NaverUserProfile getNaverUserProfile(String accessToken) {
+
+        RestTemplate restTemplate = new RestTemplate();
+
+        // 2. HTTP 요청 헤더 설정
+        HttpHeaders headers = new HttpHeaders();
+        // ** (필수) Authorization 헤더에 Bearer 토큰 설정 **
+        headers.set("Authorization", "Bearer " + accessToken);
+
+        // 3. 헤더를 담은 HttpEntity 객체 생성 (GET 요청이므로 바디는 없음)
+        HttpEntity<String> entity = new HttpEntity<>(headers);
+
+        System.out.println("네이버 사용자 프로필 요청 URI: " + userInfoUri);
+
+        // 4. GET 방식으로 네이버 프로필 API에 요청 보내기
+        // (응답은 NaverUserProfile DTO 객체로 자동 매핑됩니다)
+        ResponseEntity<NaverUserProfile> response = restTemplate.exchange(
+                userInfoUri,
+                HttpMethod.GET,
+                entity,
+                NaverUserProfile.class
+        );
+
+        // 5. 응답 처리
+        if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
+            System.out.println("네이버 사용자 프로필 조회 성공: " + response.getBody());
+            return response.getBody();
+        } else {
+            System.err.println("네이버 사용자 프로필 조회 실패: " + response);
+            throw new RuntimeException("네이버 사용자 프로필 조회에 실패했습니다.");
+        }
+    }
+
     @Data // Lombok (Getter, Setter, toString 등 자동 생성)
     @JsonIgnoreProperties(ignoreUnknown = true) // 응답 JSON에 모르는 필드가 있어도 무시
     private static class NaverTokenResponse {
@@ -141,6 +203,8 @@ public class UserAccountController {
         private String token_type;
         private int expires_in;
         // (error, error_description 필드도 추가할 수 있음)
+
+        // token
     }
 
     @GetMapping("/id/{userId}")
