@@ -1,16 +1,21 @@
 package com.mediSync.project.medical.controller;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.mediSync.project.config.JwtUtil;
 import com.mediSync.project.medical.service.UserAccountService;
 import com.mediSync.project.medical.vo.UserAccount;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DuplicateKeyException;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
 import java.util.Map;
@@ -26,10 +31,116 @@ public class UserAccountController {
     @Autowired
     private JwtUtil jwtUtil;
 
+    // application.properties에서 설정값 주입
+    @Value("${spring.security.oauth2.client.registration.naver.client-id}")
+    private String clientId;
+
+    @Value("${spring.security.oauth2.client.registration.naver.client-secret}")
+    private String clientSecret;
+
+    @Value("${spring.security.oauth2.client.provider.naver.token-uri}")
+    private String tokenUri;
+
     // 전체 리스트
     @GetMapping
     public List<UserAccount> getAllUsers() {
         return userAccountService.userSelectAll();
+    }
+
+    @GetMapping("/test")
+    public void getTest(@RequestParam String code, @RequestParam String state) {
+        RestTemplate restTemplate = new RestTemplate();
+
+        // 1. 요청 헤더 설정
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+
+        // 2. 요청 파라미터(Body) 설정
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("grant_type", "authorization_code");
+        params.add("client_id", clientId);
+        params.add("client_secret", clientSecret);
+        params.add("code", code);
+        params.add("state", state);
+        // (참고: 네이버의 경우 redirect_uri는 토큰 요청 시 필수는 아님)
+
+        // 3. HttpEntity (헤더 + 바디) 생성
+        HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(params, headers);
+
+        // 2. 서비스 호출하여 Access Token 받기
+        String accessToken = getNaverAccessTokenTest(code, state);
+
+        System.out.println(accessToken);
+
+        // 4. POST 요청 보내기 (네이버 토큰 URI로)
+        //ResponseEntity<NaverTokenResponse> response = restTemplate.postForEntity(
+        //        tokenUri,
+        //        request,
+        //        NaverTokenResponse.class // 응답을 매핑할 DTO 클래스
+        //);
+
+        // 5. 응답에서 Access Token 꺼내기
+        //if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
+        //    return response.getBody().getAccess_token();
+        //} else {
+        //    throw new RuntimeException("네이버 토큰 발급에 실패했습니다. 응답: " + response);
+        //}
+    }
+
+    public String getNaverAccessTokenTest(String code, String state) {
+
+        // 1. RestTemplate 객체 생성
+        RestTemplate restTemplate = new RestTemplate();
+
+        // 2. HTTP 요청 헤더 설정
+        HttpHeaders headers = new HttpHeaders();
+        // 네이버 토큰 요청은 'application/x-www-form-urlencoded' 타입을 사용합니다.
+        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+
+        // 3. HTTP 요청 바디(Body) 설정 (필수 파라미터)
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("grant_type", "authorization_code");
+        params.add("client_id", clientId);
+        params.add("client_secret", clientSecret);
+        params.add("code", code);
+        params.add("state", state);
+        // (참고: 네이버의 경우 redirect_uri는 토큰 요청 시 필수는 아님)
+
+        // 4. 헤더와 바디를 하나의 HttpEntity 객체로 합치기
+        HttpEntity<MultiValueMap<String, String>> naverTokenRequest =
+                new HttpEntity<>(params, headers);
+
+        System.out.println("네이버 토큰 요청 URI: " + tokenUri);
+        System.out.println("네이버 토큰 요청 파라미터: " + naverTokenRequest.getBody());
+
+        // 5. POST 방식으로 네이버 토큰 발급 URI에 요청 보내기
+        // (응답은 NaverTokenResponse DTO 객체로 자동 매핑됩니다)
+        ResponseEntity<NaverTokenResponse> response = restTemplate.postForEntity(
+                tokenUri,
+                naverTokenRequest,
+                NaverTokenResponse.class
+        );
+
+        // 6. 응답 처리
+        if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
+            String accessToken = response.getBody().getAccess_token();
+            System.out.println("네이버 Access Token 발급 성공: " + accessToken);
+            return accessToken;
+        } else {
+            // 예외 상황 처리 (실제로는 구체적인 예외를 던지는 것이 좋습니다)
+            System.err.println("네이버 토큰 발급 실패: " + response);
+            throw new RuntimeException("네이버 Access Token 발급에 실패했습니다.");
+        }
+    }
+
+    @Data // Lombok (Getter, Setter, toString 등 자동 생성)
+    @JsonIgnoreProperties(ignoreUnknown = true) // 응답 JSON에 모르는 필드가 있어도 무시
+    private static class NaverTokenResponse {
+        private String access_token;
+        private String refresh_token;
+        private String token_type;
+        private int expires_in;
+        // (error, error_description 필드도 추가할 수 있음)
     }
 
     @GetMapping("/id/{userId}")
