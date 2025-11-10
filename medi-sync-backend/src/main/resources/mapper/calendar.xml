@@ -169,4 +169,35 @@
         join patient p using(patient_id)
         where operation_id = #{id}
     </select>
+
+    <!-- 노쇼 업데이트 -->
+     <update id="updateNoShowReservation">
+         <![CDATA[
+         update reservation
+         SET status = 'NO_SHOW'
+         WHERE reservation_date <= DATE_SUB(NOW(), INTERVAL 1 HOUR)
+         AND status = 'WAIT'
+         ]]>
+     </update>
+
+    <update id="updateNoShowTestReservation">
+        <![CDATA[
+         update test_reservation tr
+         join test_schedule ts using(schedule_id)
+         SET tr.status = 'NO_SHOW'
+         WHERE TIMESTAMP(ts.test_date, ts.test_time) <= DATE_SUB(NOW(), INTERVAL 1 HOUR)
+         AND tr.status = 'RESERVED'
+         ]]>
+    </update>
+
+    <update id="updateNoShowOperation">
+        <![CDATA[
+         update operation
+         SET status = 'NO_SHOW'
+         WHERE TIMESTAMP(scheduled_date, scheduled_time) <= DATE_SUB(NOW(), INTERVAL 1 HOUR)
+         AND status = 'SCHEDULED'
+         ]]>
+    </update>
+
+
 </mapper>

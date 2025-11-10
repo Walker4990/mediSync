@@ -1,5 +1,6 @@
 package com.mediSync.project.patient.service;
 
+import com.mediSync.project.common.service.CalendarService;
 import com.mediSync.project.common.service.EmailService;
 import com.mediSync.project.operation.mapper.OperationMapper;
 import com.mediSync.project.patient.dto.ReservationDTO;
@@ -8,6 +9,7 @@ import com.mediSync.project.test.mapper.TestReservationMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
@@ -22,10 +24,13 @@ public class ReservationScheduler {
     private final OperationMapper operationMapper;
 
     private final EmailService emailService;
+
+
+    private  final CalendarService calendarService;
     //(cron = "0 */5 * * * ?") << 5분간격
     //(cron = "0 0 9 * * ?") << 아침 9시
 
-    //예약 전날 오전 9시에 알림
+    //예약 전날 오전 9시에 알림 설정
     @Scheduled(cron = "0 0 9 * * ?")
     public void sendReservationReminders(){
         
@@ -74,4 +79,14 @@ public class ReservationScheduler {
             System.out.println("메일 발송 완료!");
         }
     }
+
+    //예약 시간에서 1시간이상 안오면 노쇼 처리
+    @Scheduled(cron = "0 0/10 * * * *")
+    @Transactional
+    public void markNoShows(){
+        calendarService.updateNoShowReservations();
+    }
+
+
+
 }

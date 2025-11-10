@@ -328,20 +328,38 @@ const TimeModal = ({
         {/* 예약 시간 그리드 */}
         <div className="grid grid-cols-3 gap-3 mb-8">
           {availableTimes.map((time) => {
+            const now = new Date();
+            const [startTime] = time.split("~");
+            const [hourStr, minuteStr] = startTime.split(":");
+
+            const [yearStr, monthStr, dayStr] = selectedDate.split("-");
+
+            const slotDateTime = new Date(
+              Number(yearStr),
+              Number(monthStr) - 1,
+              Number(dayStr),
+              Number(hourStr),
+              Number(minuteStr)
+            );
+
+            const isPast = slotDateTime < now;
+
             const isReserved = reservedTimes.some(
               (reserved) =>
                 reserved.replace(/'/g, "").trim() === time.split("~")[0]
             );
+
+            const isDisabled = isReserved || isPast;
             return (
               <button
                 key={time}
-                onClick={() => !isReserved && handleSelectTime(time)}
-                disabled={isReserved}
+                onClick={() => !isDisabled && handleSelectTime(time)}
+                disabled={isDisabled}
                 className={`py-3 px-1 rounded-lg text-sm transition-all duration-200
                                 ${
                                   selectedTime === time
                                     ? "bg-blue-500 text-white font-bold shadow-md"
-                                    : isReserved
+                                    : isDisabled
                                     ? "bg-gray-300 text-gray-500 cursor-not-allowed opacity-70"
                                     : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                                 }

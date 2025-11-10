@@ -40,5 +40,12 @@ public interface CalendarMapper {
     String getEmailByReservation(long id);
     String getEmailByTestReservation(long id);
     String getEmailByOperation(long id);
+    
+    
+    //노쇼했을때 상태 노쇼로 업데이트
+    int updateNoShowReservation();
+    int updateNoShowTestReservation();
+    int updateNoShowOperation();
+    
 }
 

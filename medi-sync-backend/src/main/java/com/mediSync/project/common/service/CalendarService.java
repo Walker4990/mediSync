@@ -225,6 +225,21 @@ public class CalendarService {
         );
         emailService.sendEmail(/* email */ testEmail, "[MediSync 병원 예약 취소 안내]", message);
         System.out.println("이메일 발송 완료");
+    }
 
+    // 안온 사람 노쇼 처리하기
+    @Transactional
+    public void updateNoShowReservations(){
+        //조건
+        //오늘 날짜의 현재 시간과 예약 시간을 비교했을 때
+        //이미 예약 시간이 현재 시간으로부터 1시간 이상 지났을 때
+
+        //reservation
+        calendarMapper.updateNoShowReservation();
+        //testReservation
+        calendarMapper.updateNoShowTestReservation();
+        //operation
+        calendarMapper.updateNoShowOperation();
+        System.out.println("[Scheduler] 노쇼 상태 자동 업데이트 완료");
     }
 }
