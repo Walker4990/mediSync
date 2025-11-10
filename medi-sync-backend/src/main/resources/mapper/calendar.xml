@@ -144,4 +144,29 @@
         value('OPERATION', #{patientId}, #{adminId}, #{date}, #{reason}, #{operationId})
     </insert>
 
+    <!-- 이메일 얻기 -->
+    <select id="getEmailByReservation" parameterType="long" resultType="String">
+        select
+            p.email
+        from reservation r
+        join patient p using(patient_id)
+        where r.reservation_id = #{id}
+    </select>
+
+    <select id="getEmailByTestReservation" parameterType="long" resultType="String">
+        select
+            p.email
+        from
+        test_reservation tr
+        join patient p using(patient_id)
+        where tr.reservation_id = #{id}
+    </select>
+
+    <select id="getEmailByOperation" parameterType="long" resultType="String">
+        select
+            p.email
+        from operation
+        join patient p using(patient_id)
+        where operation_id = #{id}
+    </select>
 </mapper>

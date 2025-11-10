@@ -39,6 +39,7 @@ export default function AdminSchedule() {
     const [cancelReason, setCancelReason] = useState("");
     const [doctors, setDoctors] = useState([]);
     const [selectedDoctor, setSelectedDoctor] = useState(admin_id);
+    const [iscancelling, setIsCancelling] = useState(false);
 
     const fetchDoctors = async () => {
       try {
@@ -259,11 +260,15 @@ export default function AdminSchedule() {
                   닫기
                 </button>
                 <button
+                  disabled={iscancelling}
                   onClick={async () => {
                     if (!cancelReason.trim()) {
                       alert("취소 사유를 입력해주세요.");
                       return;
                     }
+
+                    if (iscancelling) return;
+                    setIsCancelling(true);
                     const toKSTISOString = (date) => {
                       const offsetMs = 9 * 60 * 60 * 1000;
                       const kstDate = new Date(date.getTime() + offsetMs);
@@ -290,11 +295,13 @@ export default function AdminSchedule() {
                     } catch (error) {
                       console.error("예약 취소 오류 :", error);
                       alert("예약 취소 중 오류가 발생했습니다.");
+                    } finally {
+                      setIsCancelling(false);
                     }
                   }}
                   className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
                 >
-                  제출
+                  {iscancelling ? "취소 중..." : "제출"}
                 </button>
               </div>
             </div>

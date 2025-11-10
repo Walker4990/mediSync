@@ -35,5 +35,10 @@ public interface CalendarMapper {
     int insertCanceledReservation(CancelDTO dto);
     int insertCanceledTestReservation(CancelDTO dto);
     int insertCanceledOperation(CancelDTO dto);
+
+    //이메일 얻기
+    String getEmailByReservation(long id);
+    String getEmailByTestReservation(long id);
+    String getEmailByOperation(long id);
 }
 

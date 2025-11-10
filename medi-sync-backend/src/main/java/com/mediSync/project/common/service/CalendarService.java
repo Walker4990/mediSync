@@ -8,14 +8,17 @@ import com.mediSync.project.patient.vo.Reservation;
 import com.mediSync.project.test.vo.TestReservation;
 import com.mediSync.project.test.vo.TestSchedule;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.web.format.DateTimeFormatters;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -163,38 +166,65 @@ public class CalendarService {
         String time;
         //type으로 switch를 사용해서 각 경우마다 CANCEL로 바꾸기
         //reservation_cancel 테이블에 값 넣기
+        String email;
         switch (dto.getType()){
             case  "진료 예약":
+                    System.out.println("진료 예약 취소");
                     dto.setReservationId(dto.getId());
                     //type -> CANCEL로 변경
                     calendarMapper.cancelReservation(Map.of("id", dto.getId(), "date", dto.getDate()));
                     calendarMapper.insertCanceledReservation(dto);
-                    return;
+                    email = calendarMapper.getEmailByReservation(dto.getId());
+                    System.out.println("이메일 : "+ email);
+                break;
             case "검사 예약":
+                    System.out.println("검사 예약 취소");
                     dto.setReservationId(dto.getId());
                     date = dto.getDate().toLocalDate();
                     time = String.format("%02d:%02d", dto.getDate().getHour(), dto.getDate().getMinute());
                     calendarMapper.cancelTestReservation(Map.of("id", dto.getId(), "date",date,"time",time));
                     calendarMapper.insertCanceledTestReservation(dto);
-                return;
+                    email = calendarMapper.getEmailByTestReservation(dto.getId());
+                System.out.println("이메일 : "+ email);
+                break;
             case  "수술 예약":
+                System.out.println("수술 예약 취소");
                 dto.setOperationId(dto.getId());
                 date = dto.getDate().toLocalDate();
                 time = String.format("%02d:%02d", dto.getDate().getHour(), dto.getDate().getMinute());
                 calendarMapper.cancelOperation(Map.of("id", dto.getId(), "date",date,"time",time));
                 calendarMapper.insertCanceledOperation(dto);
-                return;
+                email = calendarMapper.getEmailByOperation(dto.getId());
+                System.out.println("이메일 : "+ email);
+                break;
             default: System.out.println("오류");
-
         }
-
-
+        System.out.println("예약 취소 완료");
         //이메일 발송
+        String testEmail  = "silvermoon4989@gmail.com";
+        DateTimeFormatter timeFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+        String emailTime = dto.getDate().format(timeFormat);
+        System.out.println("값 테스트 : "+ dto.getDate());
+
+        System.out.println("값 테스트 : "+ emailTime + dto.getReason());
+
+        String message = String.format(
+                "[MediSync 병원 예약 취소 안내]\n" +
+                        "안녕하세요, MediSync 병원입니다.\n\n" +
+                        "고객님의 예약하신 진료가 아래와 같은 사유로 부득이하게 취소되었습니다.\n\n" +
+                        "예약 일시 : %s\n" +
+                        "취소 사유 : %s\n\n" +
+                        "진료 이용에 불편을 드려 진심으로 사과드립니다. \n" +
+                        "다시 예약을 원하시는 경우 아래 링크를 통해 간편하게 재예약하실 수 있습니다.\n" +
+                        "[▼재예약 링크]\n"+
+                        "http://localhost:3000/user/mypage\n\n"+
+                        "감사합니다.\n"+
+                        "MediSync 병원 드림.",
+                emailTime,
+                dto.getReason()
+        );
+        emailService.sendEmail(/* email */ testEmail, "[MediSync 병원 예약 취소 안내]", message);
+        System.out.println("이메일 발송 완료");
+
     }
-
-
-
-
-
-
 }
