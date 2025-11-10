@@ -36,8 +36,8 @@ const UserInfoEdit = ({ currentUser }) => {
   const [formData, setFormData] = useState({
     username: currentUser?.username,
     userphone: currentUser?.userphone,
+    useremail: currentUser?.useremail,
     password: currentUser?.password,
-    email: currentUser?.email,
   });
 
   // currentUser 정보가 업데이트될 때 폼 데이터를 초기화 (로그인 직후 데이터 반영)
@@ -46,8 +46,8 @@ const UserInfoEdit = ({ currentUser }) => {
       setFormData({
         username: currentUser.username || "",
         userphone: currentUser.userphone || "",
+        useremail: currentUser.useremail || "",
         password: currentUser.password || "",
-        email: currentUser.email || "",
       });
       // isStaff 정보도 여기서 업데이트
       setIsStaff(currentUser.isStaff || false);
@@ -147,11 +147,11 @@ const UserInfoEdit = ({ currentUser }) => {
 
           <span className="mb-1 text-sm font-medium">이메일</span>
           <input
-            type="email"
-            name="email"
+            type="useremail"
+            name="useremail"
             placeholder="이메일"
             className="p-3 border rounded-lg mb-4"
-            value={formData.email}
+            value={formData.useremail}
             onChange={handleChange}
           />
           <button className="w-full py-3 bg-blue-500 text-white font-bold rounded-lg hover:bg-blue-600 transition flex items-center justify-center">
@@ -160,16 +160,12 @@ const UserInfoEdit = ({ currentUser }) => {
         </div>
 
         <div className="flex flex-col">
-          <span className="mb-1 text-sm font-medium">
-            * 현재 비밀번호를 적으면 변경 가능하도록 (암호화 전)
-          </span>
+          <span className="mb-1 text-sm font-medium">현재 비밀번호</span>
           <input
             type="text"
             name="password"
             placeholder="현재 비밀번호"
             className="w-full p-3 border rounded-lg mb-4"
-            value={formData.password}
-            onChange={handleChange}
           />
 
           <span className="mb-1 text-sm font-medium">새 비밀번호</span>

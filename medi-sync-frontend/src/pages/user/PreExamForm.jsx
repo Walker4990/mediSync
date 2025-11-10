@@ -1,9 +1,11 @@
 import React, { useState } from "react";
 import { ClipboardList, User, AlertTriangle, CheckSquare } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 export default function PreExamForm() {
   const [showMedicationInput, setShowMedicationInput] = useState(false);
   const [showAllergyInput, setShowAllergyInput] = useState(false);
+  const navigate = useNavigate();
 
   // 폼 데이터 상태 (필요에 따라 확장)
   const [formData, setFormData] = useState({
@@ -364,6 +366,7 @@ export default function PreExamForm() {
             <button
               type="button"
               className="w-full py-3 px-6 bg-white text-blue-600 border border-blue-600 rounded-lg font-bold hover:bg-blue-50 transition duration-300"
+              onClick={() => navigate(-1)}
             >
               이전으로
             </button>

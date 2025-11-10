@@ -18,12 +18,13 @@ public interface UserAccountMapper {
 
     // 아이디 찾기
     String selectLoginIdByNameAndPhone(@Param("name") String name, @Param("phone") String phone);
+    UserAccount selectUserForSendEmail(@Param("loginId") String loginId,
+                                       @Param("name") String name,
+                                       @Param("phone") String phone);
 
     // 비밀번호 재설정
     int updatePasswordByUserInfo(
             @Param("loginId") String loginId,
-            @Param("name") String name,
-            @Param("phone") String phone,
             @Param("password") String encodedPassword
     );
 }

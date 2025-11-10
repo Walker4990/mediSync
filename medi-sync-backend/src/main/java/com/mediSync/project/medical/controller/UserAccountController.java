@@ -1,6 +1,7 @@
 package com.mediSync.project.medical.controller;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.mediSync.project.common.service.EmailService;
 import com.mediSync.project.config.JwtUtil;
 import com.mediSync.project.medical.service.UserAccountService;
 import com.mediSync.project.medical.vo.UserAccount;
@@ -10,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.*;
+import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.util.LinkedMultiValueMap;
@@ -17,6 +19,7 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 
@@ -27,6 +30,7 @@ public class UserAccountController {
 
     private final UserAccountService userAccountService;
     private final PasswordEncoder passwordEncoder;
+    private final EmailService emailService;
 
     @Autowired
     private JwtUtil jwtUtil;
@@ -165,6 +169,8 @@ public class UserAccountController {
     public NaverUserProfile getNaverUserProfile(String accessToken) {
 
         RestTemplate restTemplate = new RestTemplate();
+        restTemplate.getMessageConverters()
+                .add(0, new StringHttpMessageConverter(StandardCharsets.UTF_8));
 
         // 2. HTTP 요청 헤더 설정
         HttpHeaders headers = new HttpHeaders();
@@ -324,22 +330,32 @@ public class UserAccountController {
         }
     }
 
-    // 비밀번호 재설정
-    @PostMapping("/reset-password")
-    public ResponseEntity<?> resetPassword(@RequestBody Map<String, String> request) {
-        String loginId = request.get("login_id");
+    // 비밀번호 분실 시 임시 재발급
+    @PostMapping("/temp-password")
+    public ResponseEntity<Map<String, Object>> sendTempPassword(@RequestBody Map<String, String> request) {
+        String loginId = request.get("loginId");
         String name = request.get("name");
         String phone = request.get("phone");
-        String newPassword = request.get("new_password");
-        // 새로운 비밀번호 암호화
-        String encodedPassword = passwordEncoder.encode(newPassword);
-        // 변경된 비밀번호 업데이트
-        int rowsAffected = userAccountService.resetPassword(loginId, name, phone, encodedPassword);
-        if (rowsAffected > 0) {
-            return ResponseEntity.ok(Map.of("success", true, "message", "비밀번호가 성공적으로 변경되었습니다."));
-        } else {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(Map.of("success", false, "message", "사용자 정보가 일치하지 않습니다."));
+
+        try {
+            UserAccount user = userAccountService.findUserForSendEmail(loginId, name, phone);
+
+            if (user == null) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(Map.of("success", false, "message", "일치하는 사용자 정보가 없습니다."));
+            }
+
+            String userEmail = user.getEmail();
+            String tempPassword = emailService.sendTempPasswordEmail(userEmail);
+            userAccountService.resetPassword(user.getLoginId(), passwordEncoder.encode(tempPassword));
+
+            return ResponseEntity.ok(Map.of("success", true, "message", "가입 시 등록한 이메일로 임시 비밀번호를 발송했습니다."));
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("success", false, "message", "처리 중 오류가 발생했습니다."));
         }
+
     }
 }
