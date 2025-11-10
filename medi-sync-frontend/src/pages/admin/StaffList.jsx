@@ -1,12 +1,14 @@
 import React, { useEffect, useState, useMemo } from "react";
 import axios from "axios";
 import { format } from "date-fns";
-import AdminHeader from "../../component/AdminHeader";
 import { FaEdit, FaTrashAlt, FaSearch } from "react-icons/fa";
+import AdminHeader from "../../component/AdminHeader";
 import ConfirmModal from "../../component/ConfirmModal";
+import AdminDetail from "../../component/AdminDetail";
 
-// API 기본 URL (백엔드 MedicalStaffController 경로와 일치)
-const API_BASE_URL = "http://192.168.0.24:8080/api/staffs";
+// API 기본 URL
+const API_BASE_URL = "http://localhost:8080/api/admins/staffs";
+const DEPT_API_URL = "http://192.168.0.24:8080/api/departments";
 
 // 직무(Position) 옵션
 const POSITION_OPTIONS = [
@@ -60,7 +62,7 @@ const StaffForm = ({ staffData, onClose }) => {
   const today = format(new Date(), "yyyy-MM-dd");
 
   const initialData = staffData || {
-    staffName: "",
+    name: "",
     department: "",
     position: POSITION_OPTIONS[0].value, // 기본값 설정
     licenseNo: "",
@@ -72,6 +74,7 @@ const StaffForm = ({ staffData, onClose }) => {
   const [formData, setFormData] = useState(initialData);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [deptList, setDeptList] = useState([]);
 
   const API_URL = API_BASE_URL;
 
@@ -85,27 +88,28 @@ const StaffForm = ({ staffData, onClose }) => {
     setLoading(true);
     setError(null);
 
-    // 필수 필드 검증 (이름, 직무, 등록 시 면허번호)
-    if (
-      !formData.staffName ||
-      !formData.position ||
-      (!isEditing && !formData.licenseNo)
-    ) {
-      setError("필수 항목(이름, 직무, 면허번호)을 모두 입력해주세요.");
+    // 필수 필드 검증
+    if (!formData.name || !formData.position) {
+      setError("필수 항목(이름, 직무)을 모두 입력해주세요.");
       setLoading(false);
       return;
     }
 
     try {
       let res;
+      const dataToSend = { ...formData };
+      delete dataToSend.deptName;
+
       if (isEditing) {
         // 수정 시에는 staffId가 포함된 formData 그대로 전송
-        res = await axios.put(API_URL, formData);
+        res = await axios.put(
+          `${API_BASE_URL}/${dataToSend.adminId}`,
+          dataToSend
+        );
         console.log("수정 성공:", res.data);
       } else {
-        // 등록 시 staffId는 백엔드에서 자동 생성되므로 제거 (새로운 등록)
         const postData = { ...formData };
-        delete postData.staffId;
+        delete postData.adminId;
 
         res = await axios.post(API_URL, postData);
         console.log("등록 성공:", res.data);
@@ -114,7 +118,7 @@ const StaffForm = ({ staffData, onClose }) => {
       // alert() 대신 커스텀 모달이나 토스트 알림 사용 권장
       alert(
         res.data.message ||
-          `${formData.staffName} 의료진 정보가 ${
+          `${formData.name} 의료진 정보가 ${
             isEditing ? "수정" : "등록"
           }되었습니다.`
       );
@@ -135,6 +139,18 @@ const StaffForm = ({ staffData, onClose }) => {
     }
   };
 
+  useEffect(() => {
+    const loadDepartments = async () => {
+      try {
+        const res = await axios.get(DEPT_API_URL);
+        setDeptList(res.data);
+      } catch (err) {
+        console.error("부서 목록 로드 실패:", err);
+      }
+    };
+    loadDepartments();
+  }, []);
+
   return (
     <div className="bg-white p-8 rounded-xl shadow-2xl w-full max-w-lg mx-auto transform transition-all duration-300">
       <h2 className="text-2xl font-bold mb-6 text-indigo-600 border-b pb-2">
@@ -147,23 +163,23 @@ const StaffForm = ({ staffData, onClose }) => {
             <label className="block text-indigo-600 font-semibold">
               고유 ID
             </label>
-            <p className="font-bold text-gray-800">{staffData.staffId}</p>
+            <p className="font-bold text-gray-800">{staffData.adminId}</p>
           </div>
         )}
 
         {/* 1. 이름 */}
         <div>
           <label
-            htmlFor="staffName"
+            htmlFor="name"
             className="block text-sm font-medium text-gray-700"
           >
             이름 *
           </label>
           <input
             type="text"
-            id="staffName"
-            name="staffName"
-            value={formData.staffName}
+            id="name"
+            name="name"
+            value={formData.name}
             onChange={handleChange}
             required
             className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
@@ -197,19 +213,26 @@ const StaffForm = ({ staffData, onClose }) => {
         {/* 3. 진료과명 / 소속 */}
         <div>
           <label
-            htmlFor="department"
+            htmlFor="deptId"
             className="block text-sm font-medium text-gray-700"
           >
             소속 진료과 (또는 부서)
           </label>
-          <input
-            type="text"
-            id="department"
-            name="department"
-            value={formData.department}
+          <select
+            id="deptId"
+            name="deptId"
+            value={formData.deptId}
             onChange={handleChange}
-            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
-          />
+            required
+            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-blue-500 focus:border-blue-500 appearance-none"
+          >
+            <option value="">진료과를 선택하세요</option>
+            {deptList.map((dept) => (
+              <option key={dept.deptId} value={dept.deptId}>
+                {dept.deptName}
+              </option>
+            ))}
+          </select>
         </div>
 
         {/* 4. 면허번호 (등록 시에만 입력 가능) */}
@@ -273,7 +296,7 @@ const StaffForm = ({ staffData, onClose }) => {
           </select>
         </div>
 
-        {/* 7. 입사일 (Hired Date) */}
+        {/* 7. 입사일 (Hired Date)
         <div>
           <label
             htmlFor="hiredDate"
@@ -289,7 +312,7 @@ const StaffForm = ({ staffData, onClose }) => {
             onChange={handleChange}
             className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
           />
-        </div>
+        </div> */}
 
         {error && <p className="text-red-500 text-sm mt-4">{error}</p>}
 
@@ -380,7 +403,7 @@ export default function MedicalStaffList() {
         );
         alert(
           res.data.message ||
-            `${deletingStaff.staffName} 의료진 정보가 삭제되었습니다.`
+            `${deletingStaff.name} 의료진 정보가 삭제되었습니다.`
         );
         fetchStaff();
       } else {
@@ -388,9 +411,7 @@ export default function MedicalStaffList() {
         setStaffList((prevStaffList) =>
           prevStaffList.filter((d) => d.staffId !== deletingStaff.staffId)
         );
-        alert(
-          `(모의) ${deletingStaff.staffName} 의료진 정보가 삭제되었습니다.`
-        );
+        alert(`(모의) ${deletingStaff.name} 의료진 정보가 삭제되었습니다.`);
       }
     } catch (err) {
       console.error(
@@ -407,9 +428,9 @@ export default function MedicalStaffList() {
   const filteredStaff = useMemo(() => {
     return staffList.filter(
       (s) =>
-        (s.staffName || "").toLowerCase().includes(search.toLowerCase()) ||
+        (s.name || "").toLowerCase().includes(search.toLowerCase()) ||
         (s.phone || "").includes(search) ||
-        (s.department || "").toLowerCase().includes(search.toLowerCase()) ||
+        (s.deptName || "").toLowerCase().includes(search.toLowerCase()) ||
         (s.licenseNo || "").toLowerCase().includes(search.toLowerCase()) ||
         getPositionLabel(s.position || "").includes(search)
     );
@@ -417,11 +438,23 @@ export default function MedicalStaffList() {
 
   // 뷰 모드에 따라 렌더링할 내용 상이 (모달 처리)
   if (viewMode === "add" || viewMode === "edit") {
-    // 기존 코드의 DropdownMenu, AdminHeader, ConfirmModal 컴포넌트가 임포트된 곳에 MedicalStaffList가 위치한다고 가정
-    // 모달 대신 전체 화면 Form으로 처리
     return (
       <div className="fixed inset-0 bg-gray-900 bg-opacity-70 flex items-center justify-center p-4 z-50">
         <StaffForm staffData={editingStaff} onClose={handleCloseForm} />
+      </div>
+    );
+  }
+
+  if (viewMode === "detail" && editingStaff) {
+    return (
+      <div className="min-h-screen bg-gray-50 font-pretendard pt-24">
+        <AdminHeader />
+        <main className="max-w-7xl mx-auto px-8">
+          <AdminDetail
+            adminId={editingStaff.adminId}
+            onBackToList={() => setViewMode("list")}
+          />
+        </main>
       </div>
     );
   }
@@ -473,7 +506,8 @@ export default function MedicalStaffList() {
                 setViewMode("add");
                 setEditingStaff(null);
               }}
-              className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors shadow-md transform hover:scale-[1.02]"
+              disabled
+              className="px-4 py-2 bg-gray-300 text-white rounded-lg hover:bg-gray-400 transition-colors shadow-md transform hover:scale-[1.02]"
             >
               신규 등록
             </button>
@@ -510,9 +544,15 @@ export default function MedicalStaffList() {
                   key={s.staffId}
                   className="border-b border-gray-100 hover:bg-indigo-50/50 text-gray-700 transition-colors"
                 >
-                  <td className="py-2 px-4 text-gray-600">{s.staffId}</td>
-                  <td className="py-2 px-4 font-bold text-gray-900">
-                    {s.staffName}
+                  <td className="py-2 px-4 text-gray-600">{s.adminId}</td>
+                  <td
+                    className="py-2 px-4 text-gray-900 cursor-pointer hover:font-bold"
+                    onClick={() => {
+                      setEditingStaff(s);
+                      setViewMode("detail");
+                    }}
+                  >
+                    {s.name}
                   </td>
                   <td className="py-2 px-4">
                     <span
@@ -527,7 +567,7 @@ export default function MedicalStaffList() {
                       {getPositionLabel(s.position)}
                     </span>
                   </td>
-                  <td className="py-2 px-4">{s.department || "-"}</td>
+                  <td className="py-2 px-4">{s.deptName || "-"}</td>
                   <td className="py-2 px-4 font-mono text-xs">{s.licenseNo}</td>
                   <td className="py-2 px-4 text-gray-500 text-xs">
                     {formatDateOnly(s.hiredDate)}
@@ -593,13 +633,13 @@ export default function MedicalStaffList() {
                 />
             )}
             */}
-      {/* 임시 alert/confirm 대체 (ConfirmModal이 없는 경우를 대비) */}
+
       {deletingStaff && (
         <div className="fixed inset-0 bg-gray-900 bg-opacity-70 flex items-center justify-center p-4 z-50">
           <div className="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full">
             <p className="text-lg font-semibold mb-4">삭제 확인</p>
             <p className="mb-6">
-              '{deletingStaff.staffName}' 의료진 정보를 정말로 삭제하시겠습니까?
+              '{deletingStaff.name}' 의료진 정보를 정말로 삭제하시겠습니까?
             </p>
             <div className="flex justify-end space-x-3">
               <button

@@ -10,6 +10,7 @@ import StaffList from "./pages/admin/StaffList";
 import DoctorList from "./pages/admin/DoctorList";
 import MyPage from "./pages/user/MyPage";
 import UserHome from "./pages/user/UserHome";
+import FindAccount from "./pages/user/FindAccount";
 import MedicalConsult from "./pages/user/MedicalConsult";
 import MediHistory from "./pages/admin/MediHistory";
 import MedicalRecordPage from "./pages/admin/MedicalRecordPage";
@@ -34,10 +35,14 @@ import "react-toastify/dist/ReactToastify.css";
 import AdminSchedule from "./pages/admin/AdminSchedule";
 import SupportChatPage from "./pages/user/SupportChatPage";
 import AdminChatPage from "./pages/admin/AdminChatPage";
+import FinanceTransactionPage from "./pages/admin/FinanceTransactionPage";
+import AdminMainPage from "./pages/admin/AdminMainPage";
 
 function AppContent() {
   const location = useLocation();
-  const hideNotification = location.pathname.startsWith("/user/medicalDetail");
+  const hideNotification = location.pathname.startsWith("/user/medicalDetail")
+      ||  location.pathname.startsWith("/admin/finance")
+      || location.pathname === "/admin";
   return (
     <>
       {!hideNotification && <WebSocketListener />}
@@ -49,7 +54,7 @@ function AppContent() {
           <Route path="/admin" element={<Home />} />
           <Route path="/admin/register" element={<AccountRegiForm />} />
           <Route path="/admin/acclist" element={<AccountList />} />
-          <Route path="/admin/dashboard" element={<DashBoard />} />
+
           <Route path="/admin/patients" element={<PatientList />} />
           <Route path="/admin/staff" element={<StaffList />} />
           <Route path="/admin/doctor" element={<DoctorList />} />
@@ -68,13 +73,17 @@ function AppContent() {
             path="/admin/operation/:operationId"
             element={<OperationDetailPage />}
           />
+          <Route path="/admin/main" element={<AdminMainPage />} />
           <Route path="/admin/operation" element={<OperationListPage />} />
           <Route path="/admin/admission" element={<AdmissionPage />} />
           <Route path="/admin/schedule" element={<AdminSchedule />} />
           <Route path="/admin/chat" element={<AdminChatPage />} />
+          <Route path="/admin/finance" element={<FinanceTransactionPage />} />
+          <Route path="/admin/finance/dashboard" element={<DashBoard />} />
           {/*유저페이지*/}
           <Route element={<UserLayout />}>
             <Route path="/" element={<UserHome />} />/
+            <Route path="/findAccount" element={<FindAccount />} />/
             <Route path="/user/mypage" element={<MyPage />} />
             <Route path="/user/consult" element={<MedicalConsult />} />
             <Route path="/user/reservation" element={<Reservation />} />

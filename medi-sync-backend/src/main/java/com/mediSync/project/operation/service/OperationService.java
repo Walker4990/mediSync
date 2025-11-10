@@ -93,7 +93,7 @@ public class OperationService {
         //  랜덤 병실 선택
         Room selectedRoomForAdmission = availableRoom.get(new Random().nextInt(availableRoom.size()));
 
-        //  입원 “예약”으로 등록 (상태: RESERVED)
+        //  입원 “예약”으로 등록 (상태: SCHEDULED)
         Admission admission = new Admission();
         admission.setPatientId(operation.getPatientId());
         admission.setOperationId(operation.getOperationId());
@@ -213,6 +213,7 @@ public class OperationService {
         ft.setAmount(op.getCost());
         ft.setCategory("OPERATION");
         ft.setType("INCOME");
+        ft.setStatus("COMPLETED");
         ft.setDescription(op.getOperationName() + " 수술 수익");
         ft.setCreatedAt(LocalDate.now());
         financeTransactionMapper.insertFinance(ft);

@@ -116,7 +116,7 @@ export default function Home() {
       title: "환자 관리",
       emoji: "👩‍⚕️",
       desc: "환자 등록 · 조회 · 진료이력 관리",
-      link: "/admin/patients",
+      link: "/admin/main",
     },
     {
       title: "보험 청구",
@@ -128,7 +128,7 @@ export default function Home() {
       title: "회계 관리",
       emoji: "📊",
       desc: "수익/지출 내역 분석 및 재무 대시보드",
-      link: "/finance",
+      link: "/admin/finance",
     },
   ];
 

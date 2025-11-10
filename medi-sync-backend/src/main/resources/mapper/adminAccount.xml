@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mediSync.project.medical.mapper.AdminAccountMapper">
+
+    <resultMap id="adminAccount" type="com.mediSync.project.medical.vo.AdminAccount">
+        <id column="admin_id" property="adminId"/>
+        <result column="emp_id" property="empId"/>
+        <result column="name" property="name"/>
+        <result column="phone" property="phone"/>
+        <result column="email" property="email"/>
+        <result column="position" property="position"/>
+        <result column="profile_img_url" property="profileImgUrl"/>
+        <result column="status" property="status"/>
+        <result column="license_no" property="licenseNo"/>
+        <result column="hired_date" property="hiredDate"/>
+        <result column="created_at" property="createdAt"/>
+
+        <result column="dept_id" property="deptId"/>
+        <result column="dept_name" property="deptName"/>
+    </resultMap>
+
+    <!-- erp 계정 등록 -->
+    <insert id="insertAdmin" parameterType="adminAccount" useGeneratedKeys="true" keyProperty="adminId">
+        INSERT INTO admin_account (
+        emp_id, password, name, phone, email, position, role, profile_img_url, dept_id, license_no, status, hired_date, created_at
+        ) VALUES (
+        #{empId}, #{password}, #{name}, #{phone}, #{email}, #{position}, 'ADMIN', #{profileImgUrl, jdbcType=VARCHAR}, #{deptId}, #{licenseNo, jdbcType=VARCHAR}, 'ACTIVE', NOW(), NOW())
+    </insert>
+
+    <!-- 중복 아이디 체크 -->
+    <select id="checkIdExists" parameterType="string" resultType="int">
+        SELECT COUNT(*)
+        FROM admin_account
+        WHERE emp_id = #{empId}
+    </select>
+
+    <!-- 전체 조회 -->
+    <select id="selectAllAdmin" resultMap="adminAccount">
+        SELECT a.*, d.dept_name
+        FROM admin_account a JOIN department d ON a.dept_id = d.dept_id
+        ORDER BY a.admin_id DESC
+    </select>
+
+    <!-- 선택 조회 -->
+    <select id="selectOneAdmin" parameterType="Long" resultMap="adminAccount">
+        SELECT a.*, d.dept_name
+        FROM admin_account a JOIN department d ON a.dept_id = d.dept_id
+        WHERE admin_id = #{adminId}
+        ORDER BY a.admin_id DESC
+    </select>
+
+    <!-- 의사 조회 -->
+    <select id="selectAllDoctor" resultMap="adminAccount">
+        SELECT a.*, d.dept_name
+        FROM admin_account a JOIN department d ON a.dept_id = d.dept_id
+        WHERE position = 'DOCTOR'
+        ORDER BY a.admin_id DESC
+    </select>
+
+    <!-- 의료진 조회 -->
+    <select id="selectAllStaff" resultMap="adminAccount">
+        SELECT a.*, d.dept_name
+        FROM admin_account a JOIN department d ON a.dept_id = d.dept_id
+        WHERE position IN ('NURSE', 'RADIOLOGIST', 'LAB_TECH', 'ASSISTANT', 'ADMIN')
+        ORDER BY a.admin_id DESC
+    </select>
+
+    <!-- 정보 수정 -->
+    <update id="updateAdmin" parameterType="adminAccount">
+        UPDATE admin_account
+        SET name = #{name}, dept_id = #{deptId}, phone = #{phone}, status = #{status}
+        <if test="password != null and password != ''">
+            , password = #{password}
+        </if>
+        WHERE admin_id = #{adminId}
+    </update>
+
+    <!-- 계정 삭제 -->
+    <delete id="deleteAdmin" parameterType="Long">
+        DELETE FROM admin_account
+        WHERE admin_id = #{adminId}
+    </delete>
+
+
+</mapper>

@@ -12,6 +12,7 @@
         a.name           AS name,
         a.phone          AS phone,
         a.email          AS email,
+        a.license_no     AS licenseNo,
         a.position       AS position,
         a.license_no     AS licenseNo,
         a.dept_id        AS deptId,

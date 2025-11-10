@@ -74,4 +74,19 @@
         WHERE user_id = #{userId}
     </delete>
 
+    <!-- 아이디 찾기 (이름 + 연락처) -->
+    <select id="selectLoginIdByNameAndPhone" resultType="String">
+        SELECT login_id
+        FROM user_account
+        WHERE name = #{name} AND phone = #{phone}
+    </select>
+
+    <!-- 비밀번호 변경 -->
+    <update id="updatePasswordByUserInfo">
+        UPDATE user_account
+        SET password = #{password}
+        WHERE login_id = #{loginId} AND name = #{name} AND phone = #{phone}
+    </update>
+
+
 </mapper>

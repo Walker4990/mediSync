@@ -17,13 +17,19 @@
 
     <update id="incrementRoomCount">
         UPDATE room
-        SET current_count = current_count + 1,
-        status = CASE WHEN current_count + 1 >= capacity THEN 'FULL' ELSE status END
-        WHERE room_id = #{roomId}
+        SET current_count = LEAST(current_count + 1, capacity),
+        status = CASE
+        WHEN current_count + 1 >= capacity THEN 'FULL'
+        ELSE 'AVAILABLE'
+        END
+        WHERE room_id = #{roomId};
     </update>
 
     <select id="selectAllRooms" resultType="room">
         SELECT * FROM room
     </select>
 
+    <select id="findCostByRoomId" resultType="room">
+        SELECT * FROM room WHERE room_id = #{roomId}
+    </select>
 </mapper>
