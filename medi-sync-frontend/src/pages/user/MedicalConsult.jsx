@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import React, { useEffect, useState, useMemo } from "react";
 import axios from "axios";
 import { header } from "framer-motion/client";
@@ -24,6 +25,8 @@ const DoctorList = ({
   isDeptDropdownOpen,
   setIsDeptDropdownOpen,
 }) => {
+  const navigate = useNavigate();
+
   return (
     <div className="w-full max-w-2xl bg-white p-6 rounded-lg">
       {/* 상단 제목 및 필터 */}
@@ -97,7 +100,8 @@ const DoctorList = ({
           doctors.map((doctor) => (
             <div
               key={doctor.adminId}
-              className="flex justify-between items-start pt-4"
+              onClick={() => navigate(`/doctor/review/${doctor.adminId}`)}
+              className="flex justify-between items-start pt-4 cursor-pointer hover:bg-gray-50 transition rounded-lg px-3"
             >
               {/* (좌측) 의사 정보 */}
 
@@ -238,7 +242,7 @@ const TimeModal = ({
     const startTime = selectedTime.split("~")[0];
     const dataToSend = {
       patientId: 1,
-      doctorId: selectedDoctor.doctorId,
+      adminId: selectedDoctor.adminId,
       reservationDate: `${selectedDate} ${startTime}:00`,
       type: type ? "ONLINE" : "OFFLINE",
     };
@@ -328,20 +332,38 @@ const TimeModal = ({
         {/* 예약 시간 그리드 */}
         <div className="grid grid-cols-3 gap-3 mb-8">
           {availableTimes.map((time) => {
+            const now = new Date();
+            const [startTime] = time.split("~");
+            const [hourStr, minuteStr] = startTime.split(":");
+
+            const [yearStr, monthStr, dayStr] = selectedDate.split("-");
+
+            const slotDateTime = new Date(
+              Number(yearStr),
+              Number(monthStr) - 1,
+              Number(dayStr),
+              Number(hourStr),
+              Number(minuteStr)
+            );
+
+            const isPast = slotDateTime < now;
+
             const isReserved = reservedTimes.some(
               (reserved) =>
                 reserved.replace(/'/g, "").trim() === time.split("~")[0]
             );
+
+            const isDisabled = isReserved || isPast;
             return (
               <button
                 key={time}
-                onClick={() => !isReserved && handleSelectTime(time)}
-                disabled={isReserved}
+                onClick={() => !isDisabled && handleSelectTime(time)}
+                disabled={isDisabled}
                 className={`py-3 px-1 rounded-lg text-sm transition-all duration-200
                                 ${
                                   selectedTime === time
                                     ? "bg-blue-500 text-white font-bold shadow-md"
-                                    : isReserved
+                                    : isDisabled
                                     ? "bg-gray-300 text-gray-500 cursor-not-allowed opacity-70"
                                     : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                                 }
@@ -414,7 +436,7 @@ export default function MedicalConsult() {
     try {
       const url =
         deft && deft.id !== 0
-          ? `${API_TEST_URL}?dept_id=${deft.id}`
+          ? `${API_TEST_URL}?deptId=${deft.id}`
           : API_TEST_URL;
 
       const res = await axios.get(url, {
@@ -456,11 +478,11 @@ export default function MedicalConsult() {
       try {
         const response = await axios.get(
           //http://192.168.0.24:8080
-          `http://localhost:8080/api/reservation/getReservationList?date=${selectedDate}&doctor_id=${selectedDoctor.doctorId}`
+          `http://localhost:8080/api/reservation/getReservationList?date=${selectedDate}&admin_id=${selectedDoctor.adminId}`
         );
 
         console.log(
-          reservedTimes,
+          "reservedTimes : ",
           reservedTimes.map((t) => `'${t}'`)
         );
         setReservedTimes(response.data);

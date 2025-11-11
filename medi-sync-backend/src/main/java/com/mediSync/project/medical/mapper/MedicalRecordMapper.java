@@ -4,6 +4,7 @@ import com.mediSync.project.medical.vo.MedicalRecord;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
@@ -30,4 +31,9 @@ public interface MedicalRecordMapper {
     //환자 진료기록 상세 조회
     MedicalRecord selectRecordDetailByRecordId(long recordId);
 
+    Map<String,Object> findById(@Param("recordId") Long recordId);
+    int updateStatus(@Param("recordId") Long recordId, @Param("status") String status);
+    int updateAmounts(@Param("recordId") Long recordId,
+                      @Param("insuranceAmount") BigDecimal insuranceAmount,
+                      @Param("patientPay") BigDecimal patientPay);
 }

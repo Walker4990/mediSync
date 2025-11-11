@@ -39,6 +39,7 @@ import AdminChatPage from "./pages/admin/AdminChatPage";
 import FinanceTransactionPage from "./pages/admin/FinanceTransactionPage";
 import AdminMainPage from "./pages/admin/AdminMainPage";
 import OAuthCallback from "./component/OAuthCallback";
+import InsurerPage from "./pages/admin/InsurerPage";
 
 function AppContent() {
   const location = useLocation();
@@ -83,6 +84,7 @@ function AppContent() {
           <Route path="/admin/chat" element={<AdminChatPage />} />
           <Route path="/admin/finance" element={<FinanceTransactionPage />} />
           <Route path="/admin/finance/dashboard" element={<DashBoard />} />
+          <Route path="/admin/insurance" element={<InsurerPage />} />
           {/*유저페이지*/}
           <Route element={<UserLayout />}>
             <Route path="/" element={<UserHome />} />/

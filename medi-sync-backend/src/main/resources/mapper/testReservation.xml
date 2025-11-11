@@ -106,4 +106,27 @@
         WHERE reservation_id = #{reservationId}
     </update>
 
+
+    <!-- 내일 예약 조회하기 -->
+    <select id="findTestReservationBetween" resultType="com.mediSync.project.patient.dto.ReservationDTO">
+        select
+        ts.test_name as type,
+        TIMESTAMP(ts.test_date, CAST(ts.test_time AS TIME)) AS reservationDate,
+        a.name as doctorName,
+        p.name as name,
+        p.email
+        from
+        test_reservation tr
+        join admin_account a using(admin_id)
+        join patient p using(patient_id)
+        join test_schedule ts ON ts.schedule_id = tr.schedule_id
+        join reservation r ON r.reservation_id = tr.reservation_id
+        join notification_setting ns ON p.patient_id = ns.patient_id
+        WHERE ns.email_enabled = 1
+        AND tr.status NOT IN ('CANCELED', 'DONE')
+        AND TIMESTAMP(ts.test_date, ts.test_time) BETWEEN #{start} AND #{end};
+    </select>
+
+
+
 </mapper>

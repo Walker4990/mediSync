@@ -1,8 +1,10 @@
 package com.mediSync.project.test.mapper;
 
+import com.mediSync.project.patient.dto.ReservationDTO;
 import com.mediSync.project.test.vo.TestReservation;
 import org.apache.ibatis.annotations.Param;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 public interface TestReservationMapper {
@@ -21,4 +23,9 @@ public interface TestReservationMapper {
             @Param("reservationId") Long reservationId,
             @Param("status") String status
     );
+
+    List<ReservationDTO> findTestReservationBetween(@Param("start") LocalDateTime start,
+                                                    @Param("end")LocalDateTime end);
+
+    int canceledTestReservation(long id);
 }

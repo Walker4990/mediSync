@@ -3,18 +3,24 @@ package com.mediSync.project.common.service;
 import com.mediSync.project.common.dto.CalendarDTO;
 import com.mediSync.project.common.mapper.CalendarMapper;
 import com.mediSync.project.operation.vo.Operation;
+import com.mediSync.project.patient.dto.CancelDTO;
+import com.mediSync.project.patient.dto.NoShowDTO;
+import com.mediSync.project.patient.vo.NoShow;
 import com.mediSync.project.patient.vo.Reservation;
 import com.mediSync.project.test.vo.TestReservation;
 import com.mediSync.project.test.vo.TestSchedule;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.web.format.DateTimeFormatters;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -24,6 +30,8 @@ import java.util.Map;
 public class CalendarService {
 
     private  final CalendarMapper calendarMapper;
+
+    private final  EmailService emailService;
     public List<CalendarDTO> getUserCalendar(Integer patient_id){
        return calendarMapper.getUserCalendar(patient_id);
     }
@@ -38,13 +46,12 @@ public class CalendarService {
         if(reserList != null && !reserList.isEmpty()){
 
             for(CalendarDTO re : reserList){
-                System.out.println("가져온 값 : "+ re);
                 re.setTitle("병원 진료");
                 re.setColor("#3B82F6");
                 re.setTextColor("white");
                 re.setType("진료 예약");
                 calendarInfo.add(re);
-                System.out.println("최종 reservation : "+ re);
+
             }
         }
         // 검사 예약
@@ -54,13 +61,12 @@ public class CalendarService {
                 List<CalendarDTO> scheList = calendarMapper.getTestSchedule(tere.getScheduleId());
                 if (scheList == null || scheList.isEmpty()) continue;
                 for(CalendarDTO sche : scheList){
-                    System.out.println("가져온 값 : "+ sche);
                     sche.setTitle(sche.getTitle());
                     sche.setColor("#60A5FA");
                     sche.setTextColor("#FFFFFF");
                     sche.setType("검사 예약");
                     calendarInfo.add(sche);
-                    System.out.println("schedule : "+sche);
+
                 }
             }
         }
@@ -68,78 +74,67 @@ public class CalendarService {
         List<CalendarDTO> operList = calendarMapper.getOperation(patient_id);
         if(operList != null && !operList.isEmpty()){
             for(CalendarDTO op: operList){
-                System.out.println("가져온 값 : "+ op);
                 op.setColor("#1E40AF");
                 op.setTextColor("#FFFFFF");
                 op.setType("수술 예약");
                 calendarInfo.add(op);
-                System.out.println("operation : "+op);
+
             }
 
         }
 
         return calendarInfo;
     }
-
+    //admin 페이지
     //모든 예약정보 가져오기
     @Transactional
-    public List<CalendarDTO> viewAllReservationAll(){
+    public List<CalendarDTO> viewAllReservationAll(long adminId){
         List<CalendarDTO> calendarInfo = new ArrayList<>();
-        List<CalendarDTO> reserList = calendarMapper.getReservationAll();
+        List<CalendarDTO> reserList = calendarMapper.getReservationAll(adminId);
 
         // 진료예약
         if(reserList != null && !reserList.isEmpty()){
-
+            System.out.println("진료예약 : "+ reserList);
             for(CalendarDTO re : reserList){
-                System.out.println("가져온 값 : "+ re);
                 re.setTitle("병원 진료");
                 re.setColor("#3B82F6");
                 re.setTextColor("white");
                 re.setType("진료 예약");
                 calendarInfo.add(re);
-                System.out.println("최종 reservation : "+ re);
+
             }
         }
             // 검사 예약
 
-         List<CalendarDTO> scheList = calendarMapper.getTestScheduleAll();
+         List<CalendarDTO> scheList = calendarMapper.getTestScheduleAll(adminId);
          if (scheList != null && !scheList.isEmpty()){
+             System.out.println("검사예약: "+ scheList);
          for(CalendarDTO sche : scheList){
-                System.out.println("가져온 값 : "+ sche);
                 sche.setTitle(sche.getTitle());
                 sche.setColor("#60A5FA");
                 sche.setTextColor("#FFFFFF");
                 sche.setType("검사 예약");
                 calendarInfo.add(sche);
-                System.out.println("schedule : "+sche);
+
              }
          }
-
-
         //수술 예약
-        List<CalendarDTO> operList = calendarMapper.getOperationAll();
+        List<CalendarDTO> operList = calendarMapper.getOperationAll(adminId);
         if(operList != null && !operList.isEmpty()){
+            System.out.println("수술예약: "+ operList);
             for(CalendarDTO op: operList){
-                System.out.println("가져온 값 : "+ op);
                 op.setColor("#1E40AF");
                 op.setTextColor("#FFFFFF");
                 op.setType("수술 예약");
                 calendarInfo.add(op);
-                System.out.println("operation : "+op);
+
             }
         }
         return calendarInfo;
     }
 
 
-
-
-
-
-
-
-
-    //예약 정보 삭제하기
+    //회원이 예약 취소하기
     @Transactional
     public void cancelReservation(Long id, String type, LocalDateTime startDate){
         LocalDate date;
@@ -164,10 +159,175 @@ public class CalendarService {
             }
 
     }
+    //의사가 예약 취소하기
+    @Transactional
+    public void cancelReservation(CancelDTO dto){
+        System.out.println("타입 : "+ dto.getType());
+        //서비스단
+        LocalDate date;
+        String time;
+        //type으로 switch를 사용해서 각 경우마다 CANCEL로 바꾸기
+        //reservation_cancel 테이블에 값 넣기
+        String email;
+        switch (dto.getType()){
+            case  "진료 예약":
+                    System.out.println("진료 예약 취소");
+                    dto.setReservationId(dto.getId());
+                    //type -> CANCEL로 변경
+                    calendarMapper.cancelReservation(Map.of("id", dto.getId(), "date", dto.getDate()));
+                    calendarMapper.insertCanceledReservation(dto);
+                    email = calendarMapper.getEmailByReservation(dto.getId());
+                    System.out.println("이메일 : "+ email);
+                break;
+            case "검사 예약":
+                    System.out.println("검사 예약 취소");
+                    dto.setReservationId(dto.getId());
+                    date = dto.getDate().toLocalDate();
+                    time = String.format("%02d:%02d", dto.getDate().getHour(), dto.getDate().getMinute());
+                    calendarMapper.cancelTestReservation(Map.of("id", dto.getId(), "date",date,"time",time));
+                    calendarMapper.insertCanceledTestReservation(dto);
+                    email = calendarMapper.getEmailByTestReservation(dto.getId());
+                System.out.println("이메일 : "+ email);
+                break;
+            case  "수술 예약":
+                System.out.println("수술 예약 취소");
+                dto.setOperationId(dto.getId());
+                date = dto.getDate().toLocalDate();
+                time = String.format("%02d:%02d", dto.getDate().getHour(), dto.getDate().getMinute());
+                calendarMapper.cancelOperation(Map.of("id", dto.getId(), "date",date,"time",time));
+                calendarMapper.insertCanceledOperation(dto);
+                email = calendarMapper.getEmailByOperation(dto.getId());
+                System.out.println("이메일 : "+ email);
+                break;
+            default: System.out.println("오류");
+        }
+        System.out.println("예약 취소 완료");
+        //이메일 발송
+        String testEmail  = "silvermoon4989@gmail.com";
+        DateTimeFormatter timeFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+        String emailTime = dto.getDate().format(timeFormat);
+        System.out.println("값 테스트 : "+ dto.getDate());
 
+        System.out.println("값 테스트 : "+ emailTime + dto.getReason());
 
+        String message = String.format(
+                "[MediSync 병원 예약 취소 안내]\n" +
+                        "안녕하세요, MediSync 병원입니다.\n\n" +
+                        "고객님의 예약하신 진료가 아래와 같은 사유로 부득이하게 취소되었습니다.\n\n" +
+                        "예약 일시 : %s\n" +
+                        "취소 사유 : %s\n\n" +
+                        "진료 이용에 불편을 드려 진심으로 사과드립니다. \n" +
+                        "다시 예약을 원하시는 경우 아래 링크를 통해 간편하게 재예약하실 수 있습니다.\n" +
+                        "[▼재예약 링크]\n"+
+                        "http://localhost:3000/user/mypage\n\n"+
+                        "감사합니다.\n"+
+                        "MediSync 병원 드림.",
+                emailTime,
+                dto.getReason()
+        );
+        emailService.sendEmail(/* email */ testEmail, "[MediSync 병원 예약 취소 안내]", message);
+        System.out.println("이메일 발송 완료");
+    }
 
+    // 안온 사람 노쇼 처리하기
+    @Transactional
+    public void updateNoShowReservations(){
 
+        //reservation
+        calendarMapper.updateNoShowReservation();
+        //testReservation
+        calendarMapper.updateNoShowTestReservation();
+        //operation
+        calendarMapper.updateNoShowOperation();
+        System.out.println("[Scheduler] 노쇼 상태 자동 업데이트 완료");
 
+    }
 
+    @Transactional
+    public void insertNoShowReservation(){
+        // 오늘 날짜의 노쇼 테이블 불러오기
+        List<NoShow> list = new ArrayList<>();
+
+        List<NoShow> reservationList =  calendarMapper.selectNoshowsReservation();
+
+        if(!reservationList.isEmpty() && reservationList != null){
+            for (NoShow no: reservationList){
+                no.setType("RESERVATION");
+                list.add(no);
+            }
+        }
+        List<NoShow> testList = calendarMapper.selectNoshowsTestReservation();
+        if(!testList.isEmpty() && testList != null){
+            for (NoShow no: testList){
+                no.setType("TEST");
+                list.add(no);
+            }
+        }
+        List<NoShow> operationList = calendarMapper.selectNoshowsOperation();
+        if(!operationList.isEmpty() && operationList != null){
+            for (NoShow no: operationList){
+                no.setType("OPERATION");
+                list.add(no);
+            }
+        }
+        System.out.println("리스트 값 : "+list);
+        //list에 값이 있으면 insert 하기
+        if(!list.isEmpty() && list != null){
+            for (NoShow vo : list){
+                calendarMapper.insertNoshows(vo);
+                System.out.println("insert 완료! : "+ vo);
+            }
+        }
+    }
+    @Transactional
+    public void sendEmailNoShow(){
+        String testEmail = "silvermoon4989@gmail.com";
+        //오늘 날짜의 PENDING 상태인 거 리스트로 가져오기
+        List<NoShowDTO> list = calendarMapper.selectSendNoShowEmail();
+        System.out.println("이메일 : "+ list);
+        //for문으로 이메일 보내고 상태 업데이트 하기
+        if(!list.isEmpty() && list != null){
+            for (NoShowDTO vo : list){
+                String typeName;
+                switch (vo.getType()){
+                    case "RESERVATION":
+                        typeName = "진료 예약";
+                        break;
+                    case "TEST":
+                        typeName = "검사 예약";
+                        break;
+                    case "OPERATION":
+                        typeName = "수술 예약";
+                        break;
+                    default:
+                        typeName = "기타 예약";
+                        break;
+                }
+
+                String message = String.format(
+                        "[병원 예약 미내원 안내]\n"+ "안녕하세요, %s님.\n" +
+                                "예약하신 일정에 내원이 확인되지 않아 아래 예약이 '미내원(NO-SHOW)' 처리 되었습니다. \n\n"+
+                                "\uD83D\uDCC5 예약일시 : %s  %s\n"+
+                                "\uD83D\uDC68\u200D⚕\uFE0F 담당의사 : %s 의사님\n"+
+                                "\uD83D\uDCAC 예약 유형 : %s\n"+
+                                "혹시 방문이 어려우셨다면, 마이페이지에서 재예약을 진행해주시기 바랍니다.\n"+
+                                "무단 미내원이 반복될 경우 향후 예약 제한이 있을 수 있습니다. \n\n"+
+                                "▼마이페이지 바로가기\n"+
+                                "http://localhost:3000/user/mypage",
+                        vo.getName(),
+                        vo.getDate(),
+                        vo.getTime(),
+                        vo.getDoctorName(),
+                        typeName
+                );
+                emailService.sendEmail(/* email */ testEmail, "[MediSync 병원 예약 미내원 안내]", message);
+                System.out.println("이메일 발송 완료");
+                calendarMapper.updateNoShowList(vo.getNoshowId());
+                System.out.println("업데이트 완료");
+            }
+        }
+        else{
+            System.out.println("리스트가 없습니다.");
+        }
+    }
 }

@@ -28,4 +28,6 @@ public interface ReservationMapper {
                                                 @Param("end")LocalDateTime end);
     // 처방시 상태변경
     int updateStatus(Long reservationId, String status);
+
+    Long findRecordIdByReservationId(Long reservationId);
 }

@@ -1,5 +1,6 @@
 package com.mediSync.project.test.service;
 
+import com.mediSync.project.patient.dto.ReservationDTO;
 import com.mediSync.project.test.mapper.TestReservationMapper;
 import com.mediSync.project.test.mapper.TestScheduleMapper;
 import com.mediSync.project.test.vo.TestReservation;
@@ -7,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -62,5 +64,9 @@ public class TestReservationService {
     }
     public List<TestReservation> searchByGroupAndKeyword(String group, String keyword, String startDate, String endDate){
         return testReservationMapper.searchByGroupAndKeyword(group, keyword,  startDate, endDate);
+    }
+
+    public List<ReservationDTO> findTestReservationBetween(LocalDateTime start, LocalDateTime end){
+        return testReservationMapper.findTestReservationBetween(start, end);
     }
 }

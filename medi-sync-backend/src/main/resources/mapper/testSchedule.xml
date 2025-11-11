@@ -60,4 +60,10 @@
         SET reserved = CASE WHEN reserved > 0 THEN reserved - 1 ELSE 0 END
         WHERE schedule_id = #{scheduleId}
     </update>
+
+
+
+
+
+
 </mapper>

@@ -122,7 +122,7 @@ export default function Home() {
       title: "보험 청구",
       emoji: "💳",
       desc: "진료 내역 기반 보험 심사 및 청구 관리",
-      link: "/claims",
+      link: "/admin/claims",
     },
     {
       title: "회계 관리",

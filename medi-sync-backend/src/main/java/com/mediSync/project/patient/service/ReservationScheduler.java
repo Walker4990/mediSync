@@ -1,11 +1,15 @@
 package com.mediSync.project.patient.service;
 
+import com.mediSync.project.common.service.CalendarService;
 import com.mediSync.project.common.service.EmailService;
+import com.mediSync.project.operation.mapper.OperationMapper;
 import com.mediSync.project.patient.dto.ReservationDTO;
 import com.mediSync.project.patient.mapper.ReservationMapper;
+import com.mediSync.project.test.mapper.TestReservationMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
@@ -16,13 +20,21 @@ import java.util.List;
 public class ReservationScheduler {
 
     private final ReservationMapper reservationMapper;
+    private final TestReservationMapper testReservationMapper;
+    private final OperationMapper operationMapper;
+
     private final EmailService emailService;
+
+
+    private  final CalendarService calendarService;
     //(cron = "0 */5 * * * ?") << 5분간격
     //(cron = "0 0 9 * * ?") << 아침 9시
 
-    //예약 전날 오전 9시에 알림
+    //예약 전날 오전 9시에 알림 설정
     @Scheduled(cron = "0 0 9 * * ?")
     public void sendReservationReminders(){
+        
+        //reservation 보내기
         String testEmail  = "silvermoon4989@gmail.com";
         LocalDateTime start = LocalDateTime.now().plusDays(1)
                                                     .withHour(0)
@@ -32,27 +44,55 @@ public class ReservationScheduler {
 
         List<ReservationDTO> reservationList = reservationMapper
                                 .findReservationBetween(start,end);
+
+        List<ReservationDTO> testReservationList = testReservationMapper.findTestReservationBetween(start,end);
+        List<ReservationDTO> operationList = operationMapper.findOperationBetween(start,end);
+
+        reservationList.addAll(testReservationList);
+        reservationList.addAll(operationList);
+
+
         if(reservationList != null && !reservationList.isEmpty()){
-
-
         for (ReservationDTO res : reservationList){
             SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm");
             String time = timeFormat.format(res.getReservationDate());
-
+            if(res.getType() == null){
+                res.setType("진료");
+            }
             String message = String.format(
                             "[병원예약 알림]\n" +
                             "병원에서 알려드립니다.\n" +
-                            "%s님! 내일 %s시에 %s 의사와의\n" +
-                            "예약이 있습니다!\n" +
+                            "%s님! 내일 %s시에 %s 의사님과의\n" +
+                            " %s 예약이 있습니다!\n" +
                             "▼만약 예약을 변경하거나 취소하시려면\n" +
-                            "http://localhost:3000/user/consult",
+                            "http://localhost:3000/user/mypage",
                     res.getName(),
                     time,
-                    res.getDoctorName());
+                    res.getDoctorName(),
+                    res.getType()
+            );
             emailService.sendEmail(/*res.getEmail()*/ testEmail, "예약 알림", message);
         }
             System.out.println(reservationList);
             System.out.println("메일 발송 완료!");
         }
+    }
+
+    //예약 시간에서 1시간이상 안오면 노쇼 처리
+    @Scheduled(cron = "0 0/10 * * * *")
+    @Transactional
+    public void markNoShows(){
+        //상태 변경
+        calendarService.updateNoShowReservations();
+        //insert
+        calendarService.insertNoShowReservation();
+
+    }
+    
+    //노쇼 메일 발송
+    @Scheduled(cron = "0 0/5 * * * *")
+    @Transactional
+    public void sendNoShowEmail(){
+        calendarService.sendEmailNoShow();
     }
 }

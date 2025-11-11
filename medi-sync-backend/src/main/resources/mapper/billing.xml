@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.mediSync.project.finance.mapper.BillingMapper">
+    <insert id="upsertByRecordId">
+        INSERT INTO billing
+        (record_id,total_amount,discount,status,created_at)
+        VALUES
+        (#{recordId},#{totalAmount},#{discount},#{status},NOW())
+        ON DUPLICATE KEY UPDATE total_amount=VALUES(total_amount),
+        discount=VALUES(discount),
+        status=VALUES(status)
+    </insert>
+
+</mapper>

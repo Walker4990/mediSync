@@ -11,10 +11,10 @@
         select
         r.reservation_date as startDate,
         r.reservation_id as id,
-        d.doctor_name,
+        a.name as doctorName,
         p.name as patientName
         from reservation r
-        join doctor d using(doctor_id)
+        join admin_account a using(admin_id)
         join patient p using(patient_id)
         where r.patient_id = #{patient_id}
         AND r.status != "CANCEL"
@@ -28,14 +28,14 @@
     <select id="getTestSchedule" parameterType="long" resultType="calendar">
         select
         ts.test_name as title,
-        d.doctor_name,
+        a.name as doctorName,
         p.name as patientName,
         r.reservation_id as id,
         CONCAT(DATE_FORMAT(ts.test_date, '%Y-%m-%d'),' ', DATE_FORMAT(CAST(ts.test_time AS TIME), '%H:%i:%s')) AS startDate
         from test_reservation tr
         join patient p using(patient_id)
         join test_schedule ts using(schedule_id)
-        join doctor d using(doctor_id)
+        join admin_account a using(admin_id)
         join reservation r using(reservation_id)
         where schedule_id = #{schedule_id}
         AND tr.status != "CANCELED"
@@ -44,13 +44,13 @@
     <select id="getOperation" parameterType="long" resultType="calendar">
         select
         o.operation_name as title,
-        d.doctor_name,
+        a.name as doctorName,
         p.name as patientName,
         o.operation_id as id,
         CONCAT(DATE_FORMAT(o.scheduled_date, '%Y-%m-%d'),' ', DATE_FORMAT(o.scheduled_time, '%H:%i:%s')) AS startDate
         from operation o
         join patient p using(patient_id)
-        join doctor d using(doctor_id)
+        join admin_account a using(admin_id)
         where patient_id = #{patient_id}
         AND o.status != "CANCELED"
     </select>
@@ -81,45 +81,214 @@
         select
         r.reservation_date as startDate,
         r.reservation_id as id,
-        d.doctor_name,
-        p.name as patientName
+        a.name as doctorName,
+        p.name as patientName,
+        p.patient_id as patientId,
+        a.admin_id as adminId
         from reservation r
-        join doctor d using(doctor_id)
+        join admin_account a using(admin_id)
         join patient p using(patient_id)
-        where  r.status != "CANCEL"
+        where  r.status != 'CANCEL'
+        AND a.admin_id = #{adminId}
     </select>
 
     <!-- 전체 검사 예약 정보 가져오기 -->
     <select id="getTestScheduleAll" resultType="calendar">
         select
         ts.test_name as title,
-        d.doctor_name,
+        a.name as doctorName,
         p.name as patientName,
         r.reservation_id as id,
+        p.patient_id as patientId,
+        a.admin_id as adminId,
+        tr.schedule_id as scheduleId,
         CONCAT(DATE_FORMAT(ts.test_date, '%Y-%m-%d'),' ', DATE_FORMAT(CAST(ts.test_time AS TIME), '%H:%i:%s')) AS startDate
         from test_reservation tr
         join patient p using(patient_id)
         join test_schedule ts using(schedule_id)
-        join doctor d using(doctor_id)
+        join admin_account a using(admin_id)
         join reservation r using(reservation_id)
-        where tr.status != "CANCELED"
+        where tr.status != 'CANCELED'
+        AND a.admin_id = #{adminId}
     </select>
     <!-- 해당 회원의 수술 예약 정보 가져오기 -->
     <select id="getOperationAll" resultType="calendar">
         select
         o.operation_name as title,
-        d.doctor_name,
+        a.name as doctorName,
         p.name as patientName,
+        p.patient_id as patientId,
+        a.admin_id as adminId,
         o.operation_id as id,
         CONCAT(DATE_FORMAT(o.scheduled_date, '%Y-%m-%d'),' ', DATE_FORMAT(o.scheduled_time, '%H:%i:%s')) AS startDate
         from operation o
         join patient p using(patient_id)
-        join doctor d using(doctor_id)
-        where o.status != "CANCELED"
+        join admin_account a using(admin_id)
+        where o.status != 'CANCELED'
+        AND a.admin_id = #{adminId}
     </select>
 
+    <!-- reservation_cancel 테이블 생성 -->
+    <insert id="insertCanceledReservation" parameterType="com.mediSync.project.patient.dto.CancelDTO">
+        insert into reservation_cancel(type, patient_id, admin_id, date, reason, reservation_id)
+        value('MEDICAL', #{patientId}, #{adminId}, #{date}, #{reason}, #{reservationId})
+    </insert>
 
+    <insert id="insertCanceledTestReservation" parameterType="com.mediSync.project.patient.dto.CancelDTO">
+        insert into reservation_cancel(type, patient_id, admin_id, date, reason, reservation_id,schedule_id)
+        value('TEST', #{patientId}, #{adminId}, #{date}, #{reason}, #{reservationId}, #{schedule_id})
+    </insert>
 
+    <insert id="insertCanceledOperation" parameterType="com.mediSync.project.patient.dto.CancelDTO">
+        insert into reservation_cancel(type, patient_id, admin_id, date, reason, operation_id)
+        value('OPERATION', #{patientId}, #{adminId}, #{date}, #{reason}, #{operationId})
+    </insert>
 
+    <!-- 이메일 얻기 -->
+    <select id="getEmailByReservation" parameterType="long" resultType="String">
+        select
+            p.email
+        from reservation r
+        join patient p using(patient_id)
+        where r.reservation_id = #{id}
+    </select>
+
+    <select id="getEmailByTestReservation" parameterType="long" resultType="String">
+        select
+            p.email
+        from
+        test_reservation tr
+        join patient p using(patient_id)
+        where tr.reservation_id = #{id}
+    </select>
+
+    <select id="getEmailByOperation" parameterType="long" resultType="String">
+        select
+            p.email
+        from operation
+        join patient p using(patient_id)
+        where operation_id = #{id}
+    </select>
+
+    <!-- 노쇼 업데이트 -->
+     <update id="updateNoShowReservation">
+         <![CDATA[
+         update reservation
+         SET status = 'NO_SHOW'
+         WHERE reservation_date <= DATE_SUB(NOW(), INTERVAL 1 HOUR)
+         AND status = 'WAIT'
+         ]]>
+     </update>
+
+    <update id="updateNoShowTestReservation">
+        <![CDATA[
+         update test_reservation tr
+         join test_schedule ts using(schedule_id)
+         SET tr.status = 'NO_SHOW'
+         WHERE TIMESTAMP(ts.test_date, ts.test_time) <= DATE_SUB(NOW(), INTERVAL 1 HOUR)
+         AND tr.status = 'RESERVED'
+         ]]>
+    </update>
+    <update id="updateNoShowOperation">
+        <![CDATA[
+         update operation
+         SET status = 'NO_SHOW'
+         WHERE TIMESTAMP(scheduled_date, scheduled_time) <= DATE_SUB(NOW(), INTERVAL 1 HOUR)
+         AND status = 'SCHEDULED'
+         ]]>
+    </update>
+
+    <select id="selectNoshowsReservation" resultType="noshow">
+        <![CDATA[
+            select
+            r.patient_Id,
+            r.admin_id,
+            r.reservation_id as typeId,
+            p.email,
+            r.reservation_date as scheduledAt
+            from reservation r
+            join patient p using(patient_id)
+            where r.status = 'NO_SHOW'
+            AND DATE(r.reservation_date) = CURDATE()
+            AND NOT EXISTS(
+            select 1
+            from no_show_log n
+            where n.type_id = r.reservation_id
+            and n.type = 'RESERVATION'
+            )
+        ]]>
+    </select>
+
+    <select id="selectNoshowsTestReservation" resultType="noshow">
+        <![CDATA[
+            select
+            tr.patient_Id,
+            tr.admin_id,
+            tr.reservation_id as typeId,
+            p.email,
+            TIMESTAMP(ts.test_date, ts.test_time) as scheduledAt
+            from test_reservation tr
+            join patient p using(patient_id)
+            join test_schedule ts using(schedule_id)
+            where tr.status = 'NO_SHOW'
+            AND ts.test_date = CURDATE()
+            AND timestamp(ts.test_date, ts.test_time) <= now()
+            AND NOT EXISTS(
+            select 1
+            from no_show_log n
+            where n.type_id = tr.reservation_id
+            and n.type = 'TEST'
+            )
+        ]]>
+    </select>
+    <select id="selectNoshowsOperation" resultType="noshow">
+        <![CDATA[
+            select
+            o.patient_Id,
+            o.admin_id,
+            o.operation_id as typeId,
+            p.email,
+            TIMESTAMP(o.scheduled_date, o.scheduled_time) as scheduledAt
+            from operation o
+            join patient p using(patient_id)
+            where o.status = 'NO_SHOW'
+            AND o.scheduled_date = CURDATE()
+            AND timestamp(o.scheduled_date, o.scheduled_time) <= now()
+            AND NOT EXISTS(
+            select 1
+            from no_show_log n
+            where n.type_id = o.operation_id
+            and n.type = 'OPERATION'
+            )
+        ]]>
+    </select>
+
+    <insert id="insertNoshows" parameterType="noshow">
+        insert into no_show_log(patient_id, admin_id, type_id, email,scheduled_at, type)
+        value(#{patientId}, #{adminId}, #{typeId}, #{email},#{scheduledAt} ,#{type})
+    </insert>
+    <select id="selectSendNoShowEmail" resultType="noshowdto">
+        <![CDATA[
+        select
+        nsl.noshow_id,
+        p.name as name,
+        nsl.email,
+        DATE(nsl.send_time) as date,
+        TIME(nsl.send_time) as time,
+        a.name as doctorName,
+        nsl.type
+        from no_show_log nsl
+        join patient p using(patient_id)
+        join admin_account a on a.admin_id = nsl.admin_id
+        where nsl.send_status = 'PENDING'
+        and DATE(nsl.send_time) = CURDATE()
+        ]]>
+    </select>
+
+    <update id="updateNoShowList" parameterType="long">
+        update no_show_log
+        set send_status = 'SUCCESS'
+        where noshow_id = #{noshowId}
+    </update>
 
 </mapper>

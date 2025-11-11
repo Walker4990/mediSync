@@ -18,13 +18,15 @@ public class DoctorController {
 
     private final DoctorService doctorService;
     @GetMapping
-    public List<AdminAccount> findAllDoctor(@RequestParam(required = false) String dept_id){
+    public List<AdminAccount> findAllDoctor(@RequestParam(required = false) Long deptId){
 
-        System.out.println("department 넘어온 값 : "+dept_id);
-        if(dept_id != null && !dept_id.equals("전체 과목")){
-            return doctorService.selectDoctorByDepartment(dept_id);
+        System.out.println("department 넘어온 값 : "+deptId);
+        if( deptId != null && deptId != 0){
+            System.out.println("토글 선택");
+            return doctorService.selectDoctorByDepartment(deptId);
         }
         else {
+            System.out.println("전체 선택");
             System.out.println(doctorService.selectAllDoctor());
             return doctorService.selectAllDoctor();
         }
@@ -85,6 +87,15 @@ public class DoctorController {
                     .body(Map.of("success", false, "message", "해당 의사의 진료비 정보 없음"));
         }
         return ResponseEntity.ok(feeInfo);
-        }
     }
+
+
+    @GetMapping("/option")
+    public List<AdminAccount> findAllDoctorsetOption(){
+        return doctorService.selectAllDoctor();
+    }
+}
+
+
+
 

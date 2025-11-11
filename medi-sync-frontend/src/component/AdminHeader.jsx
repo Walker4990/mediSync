@@ -64,9 +64,7 @@ export default function AdminHeader() {
           <Link to="/admin/insurance" className="hover:text-blue-200">
             보험관리
           </Link>
-          <Link to="/admin/finance" className="hover:text-blue-200">
-            회계관리
-          </Link>
+
         </nav>
 
         {/* 우측 사용자 + 알림 */}

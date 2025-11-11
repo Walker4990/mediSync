@@ -35,4 +35,9 @@ public class ReservationService{
     public int updateStatus(Long patientId, String status){
         return reservationMapper.updateStatus(patientId, status);
     }
+
+    public Long findRecordIdByReservationId(Long reservationId) {
+        return reservationMapper.findRecordIdByReservationId(reservationId);
+    }
+
 }

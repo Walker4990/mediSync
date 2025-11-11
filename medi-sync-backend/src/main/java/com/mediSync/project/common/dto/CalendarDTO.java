@@ -16,6 +16,9 @@ public class CalendarDTO {
     private String title;
     //reservationId, scheduleId,operationId 등
     private long id;
+    private long scheduleId;
+    private long adminId;
+    private long patientId;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss", timezone = "Asia/Seoul")
     private Date startDate;
     private String color;
