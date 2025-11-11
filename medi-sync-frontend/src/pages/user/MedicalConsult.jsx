@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import React, { useEffect, useState, useMemo } from "react";
 import axios from "axios";
 import { header } from "framer-motion/client";
@@ -24,6 +25,8 @@ const DoctorList = ({
   isDeptDropdownOpen,
   setIsDeptDropdownOpen,
 }) => {
+  const navigate = useNavigate();
+
   return (
     <div className="w-full max-w-2xl bg-white p-6 rounded-lg">
       {/* 상단 제목 및 필터 */}
@@ -97,7 +100,8 @@ const DoctorList = ({
           doctors.map((doctor) => (
             <div
               key={doctor.adminId}
-              className="flex justify-between items-start pt-4"
+              onClick={() => navigate(`/doctor/review/${doctor.adminId}`)}
+              className="flex justify-between items-start pt-4 cursor-pointer hover:bg-gray-50 transition rounded-lg px-3"
             >
               {/* (좌측) 의사 정보 */}
 
