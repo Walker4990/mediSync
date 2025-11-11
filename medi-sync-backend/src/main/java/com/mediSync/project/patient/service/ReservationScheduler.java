@@ -44,11 +44,9 @@ public class ReservationScheduler {
 
         List<ReservationDTO> reservationList = reservationMapper
                                 .findReservationBetween(start,end);
-        System.out.println("reservation 리스트 : " + reservationList);
+
         List<ReservationDTO> testReservationList = testReservationMapper.findTestReservationBetween(start,end);
-        System.out.println("testReservation 리스트 : "+ testReservationList);
         List<ReservationDTO> operationList = operationMapper.findOperationBetween(start,end);
-        System.out.println("operation 리스트 : " + operationList);
 
         reservationList.addAll(testReservationList);
         reservationList.addAll(operationList);
@@ -84,9 +82,17 @@ public class ReservationScheduler {
     @Scheduled(cron = "0 0/10 * * * *")
     @Transactional
     public void markNoShows(){
+        //상태 변경
         calendarService.updateNoShowReservations();
+        //insert
+        calendarService.insertNoShowReservation();
+
     }
-
-
-
+    
+    //노쇼 메일 발송
+    @Scheduled(cron = "0 0/5 * * * *")
+    @Transactional
+    public void sendNoShowEmail(){
+        calendarService.sendEmailNoShow();
+    }
 }

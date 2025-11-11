@@ -3,6 +3,8 @@ package com.mediSync.project.common.mapper;
 import com.mediSync.project.common.dto.CalendarDTO;
 import com.mediSync.project.operation.vo.Operation;
 import com.mediSync.project.patient.dto.CancelDTO;
+import com.mediSync.project.patient.dto.NoShowDTO;
+import com.mediSync.project.patient.vo.NoShow;
 import com.mediSync.project.patient.vo.Reservation;
 import com.mediSync.project.test.vo.TestReservation;
 import com.mediSync.project.test.vo.TestSchedule;
@@ -40,12 +42,24 @@ public interface CalendarMapper {
     String getEmailByReservation(long id);
     String getEmailByTestReservation(long id);
     String getEmailByOperation(long id);
-    
-    
+
     //노쇼했을때 상태 노쇼로 업데이트
     int updateNoShowReservation();
     int updateNoShowTestReservation();
     int updateNoShowOperation();
+
+    //등록 안된 노쇼 값 불러오기
+    List<NoShow> selectNoshowsReservation();
+    List<NoShow> selectNoshowsTestReservation();
+    List<NoShow> selectNoshowsOperation();
     
+    //등록
+    int insertNoshows(NoShow vo);
+
+    //이메일 보낼 리스트 가져오기
+    List<NoShowDTO> selectSendNoShowEmail();
+
+    //이메일 보낸 후 상태 업데이트
+    int updateNoShowList(long noshowId);
 }
 

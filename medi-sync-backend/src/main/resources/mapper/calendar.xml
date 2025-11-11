@@ -189,7 +189,6 @@
          AND tr.status = 'RESERVED'
          ]]>
     </update>
-
     <update id="updateNoShowOperation">
         <![CDATA[
          update operation
@@ -199,5 +198,97 @@
          ]]>
     </update>
 
+    <select id="selectNoshowsReservation" resultType="noshow">
+        <![CDATA[
+            select
+            r.patient_Id,
+            r.admin_id,
+            r.reservation_id as typeId,
+            p.email,
+            r.reservation_date as scheduledAt
+            from reservation r
+            join patient p using(patient_id)
+            where r.status = 'NO_SHOW'
+            AND DATE(r.reservation_date) = CURDATE()
+            AND NOT EXISTS(
+            select 1
+            from no_show_log n
+            where n.type_id = r.reservation_id
+            and n.type = 'RESERVATION'
+            )
+        ]]>
+    </select>
+
+    <select id="selectNoshowsTestReservation" resultType="noshow">
+        <![CDATA[
+            select
+            tr.patient_Id,
+            tr.admin_id,
+            tr.reservation_id as typeId,
+            p.email,
+            TIMESTAMP(ts.test_date, ts.test_time) as scheduledAt
+            from test_reservation tr
+            join patient p using(patient_id)
+            join test_schedule ts using(schedule_id)
+            where tr.status = 'NO_SHOW'
+            AND ts.test_date = CURDATE()
+            AND timestamp(ts.test_date, ts.test_time) <= now()
+            AND NOT EXISTS(
+            select 1
+            from no_show_log n
+            where n.type_id = tr.reservation_id
+            and n.type = 'TEST'
+            )
+        ]]>
+    </select>
+    <select id="selectNoshowsOperation" resultType="noshow">
+        <![CDATA[
+            select
+            o.patient_Id,
+            o.admin_id,
+            o.operation_id as typeId,
+            p.email,
+            TIMESTAMP(o.scheduled_date, o.scheduled_time) as scheduledAt
+            from operation o
+            join patient p using(patient_id)
+            where o.status = 'NO_SHOW'
+            AND o.scheduled_date = CURDATE()
+            AND timestamp(o.scheduled_date, o.scheduled_time) <= now()
+            AND NOT EXISTS(
+            select 1
+            from no_show_log n
+            where n.type_id = o.operation_id
+            and n.type = 'OPERATION'
+            )
+        ]]>
+    </select>
+
+    <insert id="insertNoshows" parameterType="noshow">
+        insert into no_show_log(patient_id, admin_id, type_id, email,scheduled_at, type)
+        value(#{patientId}, #{adminId}, #{typeId}, #{email},#{scheduledAt} ,#{type})
+    </insert>
+    <select id="selectSendNoShowEmail" resultType="noshowdto">
+        <![CDATA[
+        select
+        nsl.noshow_id,
+        p.name as name,
+        nsl.email,
+        DATE(nsl.send_time) as date,
+        TIME(nsl.send_time) as time,
+        a.name as doctorName,
+        nsl.type
+        from no_show_log nsl
+        join patient p using(patient_id)
+        join admin_account a on a.admin_id = nsl.admin_id
+        where nsl.send_status = 'PENDING'
+        and DATE(nsl.send_time) = CURDATE()
+        ]]>
+    </select>
+
+    <update id="updateNoShowList" parameterType="long">
+        update no_show_log
+        set send_status = 'SUCCESS'
+        where noshow_id = #{noshowId}
+    </update>
 
 </mapper>

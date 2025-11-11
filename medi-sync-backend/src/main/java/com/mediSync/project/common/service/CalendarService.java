@@ -4,6 +4,8 @@ import com.mediSync.project.common.dto.CalendarDTO;
 import com.mediSync.project.common.mapper.CalendarMapper;
 import com.mediSync.project.operation.vo.Operation;
 import com.mediSync.project.patient.dto.CancelDTO;
+import com.mediSync.project.patient.dto.NoShowDTO;
+import com.mediSync.project.patient.vo.NoShow;
 import com.mediSync.project.patient.vo.Reservation;
 import com.mediSync.project.test.vo.TestReservation;
 import com.mediSync.project.test.vo.TestSchedule;
@@ -230,9 +232,6 @@ public class CalendarService {
     // 안온 사람 노쇼 처리하기
     @Transactional
     public void updateNoShowReservations(){
-        //조건
-        //오늘 날짜의 현재 시간과 예약 시간을 비교했을 때
-        //이미 예약 시간이 현재 시간으로부터 1시간 이상 지났을 때
 
         //reservation
         calendarMapper.updateNoShowReservation();
@@ -241,5 +240,94 @@ public class CalendarService {
         //operation
         calendarMapper.updateNoShowOperation();
         System.out.println("[Scheduler] 노쇼 상태 자동 업데이트 완료");
+
+    }
+
+    @Transactional
+    public void insertNoShowReservation(){
+        // 오늘 날짜의 노쇼 테이블 불러오기
+        List<NoShow> list = new ArrayList<>();
+
+        List<NoShow> reservationList =  calendarMapper.selectNoshowsReservation();
+
+        if(!reservationList.isEmpty() && reservationList != null){
+            for (NoShow no: reservationList){
+                no.setType("RESERVATION");
+                list.add(no);
+            }
+        }
+        List<NoShow> testList = calendarMapper.selectNoshowsTestReservation();
+        if(!testList.isEmpty() && testList != null){
+            for (NoShow no: testList){
+                no.setType("TEST");
+                list.add(no);
+            }
+        }
+        List<NoShow> operationList = calendarMapper.selectNoshowsOperation();
+        if(!operationList.isEmpty() && operationList != null){
+            for (NoShow no: operationList){
+                no.setType("OPERATION");
+                list.add(no);
+            }
+        }
+        System.out.println("리스트 값 : "+list);
+        //list에 값이 있으면 insert 하기
+        if(!list.isEmpty() && list != null){
+            for (NoShow vo : list){
+                calendarMapper.insertNoshows(vo);
+                System.out.println("insert 완료! : "+ vo);
+            }
+        }
+    }
+    @Transactional
+    public void sendEmailNoShow(){
+        String testEmail = "silvermoon4989@gmail.com";
+        //오늘 날짜의 PENDING 상태인 거 리스트로 가져오기
+        List<NoShowDTO> list = calendarMapper.selectSendNoShowEmail();
+        System.out.println("이메일 : "+ list);
+        //for문으로 이메일 보내고 상태 업데이트 하기
+        if(!list.isEmpty() && list != null){
+            for (NoShowDTO vo : list){
+                String typeName;
+                switch (vo.getType()){
+                    case "RESERVATION":
+                        typeName = "진료 예약";
+                        break;
+                    case "TEST":
+                        typeName = "검사 예약";
+                        break;
+                    case "OPERATION":
+                        typeName = "수술 예약";
+                        break;
+                    default:
+                        typeName = "기타 예약";
+                        break;
+                }
+
+                String message = String.format(
+                        "[병원 예약 미내원 안내]\n"+ "안녕하세요, %s님.\n" +
+                                "예약하신 일정에 내원이 확인되지 않아 아래 예약이 '미내원(NO-SHOW)' 처리 되었습니다. \n\n"+
+                                "\uD83D\uDCC5 예약일시 : %s  %s\n"+
+                                "\uD83D\uDC68\u200D⚕\uFE0F 담당의사 : %s 의사님\n"+
+                                "\uD83D\uDCAC 예약 유형 : %s\n"+
+                                "혹시 방문이 어려우셨다면, 마이페이지에서 재예약을 진행해주시기 바랍니다.\n"+
+                                "무단 미내원이 반복될 경우 향후 예약 제한이 있을 수 있습니다. \n\n"+
+                                "▼마이페이지 바로가기\n"+
+                                "http://localhost:3000/user/mypage",
+                        vo.getName(),
+                        vo.getDate(),
+                        vo.getTime(),
+                        vo.getDoctorName(),
+                        typeName
+                );
+                emailService.sendEmail(/* email */ testEmail, "[MediSync 병원 예약 미내원 안내]", message);
+                System.out.println("이메일 발송 완료");
+                calendarMapper.updateNoShowList(vo.getNoshowId());
+                System.out.println("업데이트 완료");
+            }
+        }
+        else{
+            System.out.println("리스트가 없습니다.");
+        }
     }
 }
