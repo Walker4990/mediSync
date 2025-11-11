@@ -28,4 +28,6 @@
         FROM insurer
         ORDER BY insurer_name ASC
     </select>
+
+
 </mapper>

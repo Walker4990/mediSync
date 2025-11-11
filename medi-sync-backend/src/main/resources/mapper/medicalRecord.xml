@@ -12,9 +12,9 @@
             keyProperty="recordId">
 
         INSERT INTO medical_record (
-        patient_id, admin_id, diagnosis, total_cost, insurance_amount, patient_pay, status, created_at
+        patient_id, admin_id, diagnosis, total_cost, insurance_amount, patient_pay, status, created_at, reservation_id
         ) VALUES (
-        #{patientId}, #{adminId}, #{diagnosis}, #{totalCost}, #{insuranceAmount}, #{patientPay}, 'COMPLETED', NOW()
+        #{patientId}, #{adminId}, #{diagnosis}, #{totalCost}, #{insuranceAmount}, #{patientPay}, 'COMPLETED', NOW(), #{reservationId}
         )
     </insert>
 
@@ -128,5 +128,21 @@
         AND res.status IN ('WAIT', 'CONSULT')
         ORDER BY res.reservation_date ASC
     </select>
+    <!-- 보험관련 진료 조회 -->
+    <select id="findById" resultType="map">
+        SELECT record_id, patient_id, total_cost, status
+        FROM medical_record WHERE record_id = #{recordId}
+    </select>
+
+    <update id="updateStatus">
+        UPDATE medical_record SET status = #{status} WHERE record_id = #{recordId}
+    </update>
+
+    <update id="updateAmounts">
+        UPDATE medical_record
+        SET insurance_amount = #{insuranceAmount}, patient_pay = #{patientPay}
+        WHERE record_id = #{recordId}
+    </update>
+
 
 </mapper>

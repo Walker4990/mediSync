@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.mediSync.project.insurance.mapper.PatientInsuranceMapper">
+
+    <delete id="deleteByPatientId">
+        DELETE FROM patient_insurance
+        WHERE patient_id=#{patientId}
+    </delete>
+
+    <insert id="bultInsert">
+        INSERT INTO patient_insurance
+        (patient_id, insurer_code, insu_num, prod_name, coverage_rate, issue_date, exp_date, synced_at)
+        VALUES
+        <foreach collection="items" item="it" separator=",">
+            (
+                #{patientId},
+                #{it.insurer_code,jdbcType=VARCHAR},
+                #{it.insu_num,jdbcType=VARCHAR},
+                #{it.prod_name,jdbcType=VARCHAR},
+                #{it.coverage_rate,jdbcType=DECIMAL},
+                #{it.issue_date,jdbcType=VARCHAR},
+                #{it.exp_date,jdbcType=VARCHAR},
+                NOW()
+            )
+        </foreach>
+    </insert>
+
+
+    <select id="selectByPatientIdOrderByCoverageDesc" resultType="map">
+        SELECT pi.*, i.insurer_name
+        FROM patient_insurance pi
+        JOIN insurer i ON i.insurer_code = pi.insurer_code
+        WHERE pi.patient_id = #{patientId}
+        ORDER BY pi.coverage_rate DESC
+    </select>
+
+</mapper>
