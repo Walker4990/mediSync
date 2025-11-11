@@ -197,6 +197,17 @@
        ]]>
     </update>
 
+<<<<<<< HEAD
+    <select id="selectByDate" resultType="operation" parameterType="java.time.LocalDate">
+        SELECT op.*, or.room_name AS roomName
+        FROM operation op
+        JOIN operation_room or ON op.room_id = or.room_id
+
+        WHERE scheduled_date = #{scheduledDate}
+        ORDER BY scheduled_time ASC
+
+    </select>
+=======
     <!-- 내일 예약 가져오기 -->
     <select id="findOperationBetween" resultType="com.mediSync.project.patient.dto.ReservationDTO">
         select
@@ -221,4 +232,5 @@
         WHERE operation_id = #{id}
     </update>
 
+>>>>>>> main
 </mapper>

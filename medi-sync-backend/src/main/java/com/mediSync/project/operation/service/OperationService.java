@@ -381,6 +381,9 @@ public class OperationService {
         cell.setPadding(5);
         return cell;
     }
+    public List<Operation> selectByDate(LocalDate scheduledDate) {
+        return operationMapper.selectByDate(scheduledDate);
+    }
 
 }
 

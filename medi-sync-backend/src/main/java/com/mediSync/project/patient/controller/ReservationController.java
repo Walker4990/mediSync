@@ -1,5 +1,6 @@
 package com.mediSync.project.patient.controller;
 
+import com.mediSync.project.insurance.service.ClaimOrchestrator;
 import com.mediSync.project.patient.service.ReservationService;
 import com.mediSync.project.patient.vo.Reservation;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +20,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ReservationController {
     private final ReservationService reservationService;
-
+    private final ClaimOrchestrator claimOrchestrator;
     //해당 날짜에 잡힌 예약 시간 리스트 가져오기
     @GetMapping("/getReservationList")
     public List<String> getReservationList(@RequestParam String date, @RequestParam Integer admin_id) {
@@ -70,6 +71,26 @@ public class ReservationController {
             @RequestParam String status) {
 
         int result = reservationService.updateStatus(reservationId, status);
+
+        // ✅ 상태가 DONE으로 변경되면 보험 청구 자동 실행
+        if ("DONE".equalsIgnoreCase(status)) {
+            try {
+                // 예약과 연결된 진료기록 ID 조회
+                Long recordId = reservationService.findRecordIdByReservationId(reservationId);
+
+                if (recordId != null) {
+                    // 보험 자동 청구 실행
+                    claimOrchestrator.run(recordId);
+                    System.out.println("✅ [자동청구] recordId=" + recordId + " → 보험 청구 완료");
+                } else {
+                    System.out.println("⚠️ [자동청구] 연결된 recordId 없음 - reservationId=" + reservationId);
+                }
+
+            } catch (Exception e) {
+                System.err.println("❌ [자동청구 오류] " + e.getMessage());
+            }
+        }
+
         return ResponseEntity.ok(Map.of(
                 "success", result > 0,
                 "status", status

@@ -18,7 +18,8 @@
     </select>
     <!--  예약하기  -->
     <insert id="addReservation" parameterType="reservation">
-        insert into reservation(patient_id,admin_id,reservation_date,status,created_at,type)
+        insert into reservation
+        (patient_id,admin_id,reservation_date,status,created_at,type)
         values(#{patientId},#{adminId},#{reservationDate}, 'WAIT', now(), #{type})
     </insert>
 
@@ -71,4 +72,11 @@
         WHERE reservation_id = #{reservationId}
         AND status IN ('WAIT', 'CONSULT')
     </update>
+
+    <select id="findRecordIdByReservationId" resultType="long">
+        SELECT record_id
+        FROM medical_record
+        WHERE reservation_id = #{reservationId}
+        LIMIT 1
+    </select>
 </mapper>

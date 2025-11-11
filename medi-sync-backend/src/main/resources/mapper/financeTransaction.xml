@@ -59,7 +59,30 @@
         SET amount = #{amount},
             description = #{description},
             updated_at = NOW()
-        WHERE tx_id = #{txId};
+        WHERE tx_id = #{txId}
     </update>
 
+    <!-- (1) 최근 7일간 일별 수익/지출 집계 -->
+    <select id="getDailyFinance" resultType="map">
+        SELECT
+        DATE_FORMAT(created_at, '%Y-%m-%d') AS name,
+        SUM(CASE WHEN type = 'INCOME' THEN amount ELSE 0 END) AS income,
+        SUM(CASE WHEN type = 'EXPENSE' THEN amount ELSE 0 END) AS expense,
+        COUNT(*) AS totalCount
+        FROM finance_transaction
+        WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+        GROUP BY DATE_FORMAT(created_at, '%Y-%m-%d')
+        ORDER BY DATE_FORMAT(created_at, '%Y-%m-%d')
+    </select>
+
+    <!-- (2) 거래 상태별 비율 요약 -->
+    <select id="getStatusSummary" resultType="map">
+        SELECT
+        status AS name,
+        COUNT(*) AS value
+        FROM finance_transaction
+        WHERE status IN ('COMPLETED', 'PENDING', 'REFUNDED')
+        GROUP BY status
+        ORDER BY FIELD(status, 'COMPLETED', 'PENDING', 'REFUNDED')
+    </select>
 </mapper>

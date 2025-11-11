@@ -163,6 +163,7 @@ export default function MedicalRecordPage() {
                 ...form,
                 patientId: String(resv.patientId ?? ""),
                 adminId: String(resv.adminId ?? ""),
+                reservationId: resv.reservationId,
             });
 
             setPrescriptions([]);
@@ -268,6 +269,7 @@ export default function MedicalRecordPage() {
                 insuranceAmount: Math.round(Number(form.totalCost) * 0.7),
                 patientPay: Math.round(Number(form.totalCost) * 0.3),
                 prescriptions: cleanPrescriptions,
+                reservationId: form.reservationId,
             };
 
             const res = await axios.post("http://192.168.0.24:8080/api/records", payload, {
