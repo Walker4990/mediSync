@@ -116,6 +116,22 @@
         AND a.position = 'DOCTOR'
     </select>
 
+    <select id="findDoctorByAdminId" resultType="doctordto">
+        select
+        a.admin_id,
+        a.name,
+        a.phone,
+        a.email,
+        a.profile_img_url as profileImgUrl,
+        a.position,
+        d.dept_name,
+        d.description,
+        d.consult_fee,
+        d.insurance_rate
+        from admin_account a
+        join department d using(dept_id)
+        where a.admin_id = #{adminId}
+    </select>
 
 
 </mapper>

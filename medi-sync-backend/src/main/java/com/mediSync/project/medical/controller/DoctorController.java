@@ -1,5 +1,6 @@
 package com.mediSync.project.medical.controller;
 
+import com.mediSync.project.medical.dto.DoctorDTO;
 import com.mediSync.project.medical.service.DoctorService;
 import com.mediSync.project.medical.vo.AdminAccount;
 import lombok.RequiredArgsConstructor;
@@ -93,6 +94,12 @@ public class DoctorController {
     @GetMapping("/option")
     public List<AdminAccount> findAllDoctorsetOption(){
         return doctorService.selectAllDoctor();
+    }
+
+    @GetMapping("/review/{adminId}")
+    public DoctorDTO findDoctorByAdminId(@PathVariable long adminId){
+        System.out.println("의사 리뷰 정보 불러오기");
+        return doctorService.findDoctorByAdminId(adminId);
     }
 }
 

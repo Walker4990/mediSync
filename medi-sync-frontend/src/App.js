@@ -37,12 +37,14 @@ import SupportChatPage from "./pages/user/SupportChatPage";
 import AdminChatPage from "./pages/admin/AdminChatPage";
 import FinanceTransactionPage from "./pages/admin/FinanceTransactionPage";
 import AdminMainPage from "./pages/admin/AdminMainPage";
+import DoctorReview from "./pages/user/DoctorReview";
 
 function AppContent() {
   const location = useLocation();
-  const hideNotification = location.pathname.startsWith("/user/medicalDetail")
-      ||  location.pathname.startsWith("/admin/finance")
-      || location.pathname === "/admin";
+  const hideNotification =
+    location.pathname.startsWith("/user/medicalDetail") ||
+    location.pathname.startsWith("/admin/finance") ||
+    location.pathname === "/admin";
   return (
     <>
       {!hideNotification && <WebSocketListener />}
@@ -80,6 +82,7 @@ function AppContent() {
           <Route path="/admin/chat" element={<AdminChatPage />} />
           <Route path="/admin/finance" element={<FinanceTransactionPage />} />
           <Route path="/admin/finance/dashboard" element={<DashBoard />} />
+
           {/*유저페이지*/}
           <Route element={<UserLayout />}>
             <Route path="/" element={<UserHome />} />/
@@ -89,6 +92,7 @@ function AppContent() {
             <Route path="/user/reservation" element={<Reservation />} />
             <Route path="/user/insurance" element={<Insurance />} />
             <Route path="/user/support" element={<SupportChatPage />} />
+            <Route path="/doctor/review/:adminId" element={<DoctorReview />} />
           </Route>
           {/*새창 열림*/}
           <Route

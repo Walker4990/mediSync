@@ -1,5 +1,6 @@
 package com.mediSync.project.medical.mapper;
 
+import com.mediSync.project.medical.dto.DoctorDTO;
 import com.mediSync.project.medical.vo.AdminAccount;
 import org.apache.ibatis.annotations.Mapper;
 
@@ -20,5 +21,6 @@ public interface DoctorMapper {
 
     String findDepartmentByDoctorId(Long doctorId);
 
+    DoctorDTO findDoctorByAdminId(long adminId);
 
 }
