@@ -1,11 +1,14 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import AdminHeader from "../../component/AdminHeader";
+import { div } from "framer-motion/client";
 
 export default function PatientList() {
   const [patients, setPatients] = useState([]);
   const [search, setSearch] = useState("");
+  const [selectedPatient, setSelectedPatient] = useState(null);
 
+  const address = "http://192.168.0.24:8080/api";
   // 초기 데이터 불러오기
   useEffect(() => {
     fetchPatients();
@@ -13,7 +16,7 @@ export default function PatientList() {
 
   const fetchPatients = async () => {
     try {
-      const res = await axios.get("http://192.168.0.24:8080/api/patients");
+      const res = await axios.get("http://localhost:8080/api/patients");
       setPatients(res.data);
     } catch (err) {
       console.error("환자 조회 실패:", err);
@@ -77,6 +80,7 @@ export default function PatientList() {
               {filtered.map((p) => (
                 <tr
                   key={p.patientId}
+                  onClick={() => setSelectedPatient(p)}
                   className="border-b hover:bg-gray-50 text-gray-700"
                 >
                   <td className="py-2 px-4">{p.patientId}</td>
@@ -123,6 +127,89 @@ export default function PatientList() {
           </table>
         </div>
       </main>
+
+      {selectedPatient && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-50">
+          <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-2xl p-8 relative animate-fadeInScale">
+            {/*닫기 버튼*/}
+            <button
+              type="button"
+              onClick={() => setSelectedPatient(null)}
+              className="absolute top-4 right-5 text-gray-400 hover:text-gray-600 text-2xl font-bold"
+            >
+              x
+            </button>
+            {/*제목*/}
+            <h2 className="text-2xl font-bold text-blue-600 mb-4 border-b pb-3">
+              환자 상세 정보
+            </h2>
+            {/*상세정보*/}
+            <div className="grid grid-cols-2 gap-x-8 gap-y-4 text-gray-700 text-sm leading-relaxed">
+              <p>
+                <span className="font-semibold text-gray-600">이름:</span>{" "}
+                {selectedPatient.name}
+              </p>
+              <p>
+                <span className="font-semibold text-gray-600">전화번호:</span>{" "}
+                {selectedPatient.phone}
+              </p>
+              <p>
+                <span className="font-semibold text-gray-600">주소:</span>{" "}
+                {selectedPatient.address}
+              </p>
+              <p>
+                <span className="font-semibold text-gray-600">주민번호:</span>{" "}
+                {selectedPatient.residentNo}
+              </p>
+              <p>
+                <span className="font-semibold text-gray-600">보험사:</span>{" "}
+                {selectedPatient.insurerCode}
+              </p>
+              <p>
+                <span className="font-semibold text-gray-600">보험 동의:</span>{" "}
+                {selectedPatient.consentInsurance ? "동의" : "미동의"}
+              </p>
+              <p>
+                <span className="font-semibold text-gray-600">상태:</span>{" "}
+                <span
+                  className={`font-semibold ${
+                    selectedPatient.status === "ACTIVE"
+                      ? "text-green-600"
+                      : "text-red-500"
+                  }`}
+                >
+                  {selectedPatient.status}
+                </span>
+              </p>
+              <p>
+                <span className="font-semibold text-gray-600">등록일:</span>{" "}
+                {selectedPatient.createdAt}
+              </p>
+              <p>
+                <span className="font-semibold text-gray-600">수정일:</span>{" "}
+                {selectedPatient.updatedAt}
+              </p>
+            </div>
+            {/*버튼*/}
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setSelectedPatient(null)}
+                className="px-5 py-2 rounded-md bg-gray-200 hover:bg-gray-300 text-gray-700 transition"
+              >
+                닫기
+              </button>
+              <button
+                type="button"
+                onClick={() => alert("진료 이력 보기")}
+                className="px-5 py-2 rounded-md bg-blue-500 text-white hover:bg-blue-600 shadow-sm transition"
+              >
+                진료 이력 보기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

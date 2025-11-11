@@ -5,10 +5,12 @@ import com.mediSync.project.operation.vo.Operation;
 import com.mediSync.project.operation.vo.OperationLog;
 import com.mediSync.project.operation.vo.OperationRoom;
 import com.mediSync.project.operation.vo.OperationStaff;
+import com.mediSync.project.patient.dto.ReservationDTO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 
@@ -55,5 +57,14 @@ public interface OperationMapper {
 
     OperationRoom getRoomById(Long roomId);
     int updateRoomAvailable(Long roomId);
+<<<<<<< HEAD
     List<Operation> selectByDate(LocalDate scheduledDate);
+=======
+
+    List<ReservationDTO> findOperationBetween(@Param("start") LocalDateTime start,
+                                              @Param("end")LocalDateTime end);
+
+    int canceledOperation(long id);
+
+>>>>>>> main
 }

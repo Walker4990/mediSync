@@ -1,10 +1,13 @@
 package com.mediSync.project.test.mapper;
 
+import com.mediSync.project.patient.dto.ReservationDTO;
 import com.mediSync.project.test.vo.TestSchedule;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
 
 @Mapper
 public interface TestScheduleMapper {
@@ -30,4 +33,7 @@ public interface TestScheduleMapper {
     int updateTestSchedule(TestSchedule testSchedule);
     int increaseReservedCount(Long scheduleId);
     int decreaseReservedCount(Long scheduleId);
+
+
+
 }
