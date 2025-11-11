@@ -1,170 +1,142 @@
-import React from "react";
-// Recharts 라이브러리 임포트 (설치 필요: npm install recharts)
+import React, { useEffect, useState } from "react";
+import axios from "axios";
 import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  PieChart,
-  Pie,
-  Cell,
-  ResponsiveContainer,
+    BarChart,
+    Bar,
+    XAxis,
+    YAxis,
+    CartesianGrid,
+    Tooltip,
+    Legend,
+    PieChart,
+    Pie,
+    Cell,
+    ResponsiveContainer,
 } from "recharts";
-
-import AdminHeader from "../../component/AdminHeader";
 import FinanceHeader from "../../component/FinanceHeader";
 
-// 가상의 데이터를 생성합니다.
-const dailyData = [
-  { name: "월", 환자수: 4000, 청구액: 2400 },
-  { name: "화", 환자수: 3000, 청구액: 1398 },
-  { name: "수", 환자수: 2000, 청구액: 9800 },
-  { name: "목", 환자수: 2780, 청구액: 3908 },
-  { name: "금", 환자수: 1890, 청구액: 4800 },
-  { name: "토", 환자수: 2390, 청구액: 3800 },
-];
+const STATUS_COLORS = {
+    COMPLETED: "#10B981", // 초록
+    PENDING: "#FACC15",   // 노랑
+    REFUNDED: "#F87171",  // 빨강
+};
 
-const statusData = [
-  { name: "심사 완료", value: 400 },
-  { name: "심사 중", value: 300 },
-  { name: "청구 대기", value: 300 },
-  { name: "반려/보완", value: 200 },
-];
-const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042"];
-
-// 📊 개별 차트 카드 컴포넌트
-const ChartCard = ({ title, children, className = "" }) => (
-  <div
-    className={`bg-white rounded-lg shadow-xl p-6 h-96 transition duration-300 hover:shadow-2xl ${className}`}
-  >
-    <h2 className="text-xl font-semibold text-gray-800 mb-4 border-b pb-2">
-      {title}
-    </h2>
-    <div className="h-[calc(100%-48px)]">
-      {" "}
-      {/* 제목 높이만큼 빼서 차트 공간 확보 */}
-      {children}
+const ChartCard = ({ title, children }) => (
+    <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-all duration-300">
+        <div className="flex justify-between items-center mb-4">
+            <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+                <span role="img" aria-label="chart"></span>
+                {title}
+            </h2>
+            <div className="h-[4px] w-10 bg-blue-500 rounded-full"></div>
+        </div>
+        <div className="h-[25rem] flex justify-center items-center">{children}</div>
     </div>
-  </div>
 );
 
 export default function DashBoard() {
-  return (
-    <div className="bg-gray-50 min-h-screen font-pretendard">
-      {/* 상단 고정 관리자 헤더 */}
-      <FinanceHeader />
+    const [dailyData, setDailyData] = useState([]);
+    const [statusData, setStatusData] = useState([]);
 
-      {/* 컨텐츠 영역 */}
-      <main className="max-w-7xl mx-auto pt-24 pb-12 px-8">
-        <h1 className="text-3xl font-bold text-blue-600 mb-8">
-          admin님 안녕하세요!
-        </h1>
+    useEffect(() => {
+        fetchDashboardData();
+    }, []);
 
-        {/* 2x2 그리드 레이아웃 */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* 1. 주간 환자수 및 진료비 청구액 (BarChart) */}
-          <ChartCard title="주간 환자 및 청구액 현황">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart
-                data={dailyData}
-                margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-                <XAxis dataKey="name" stroke="#333" tick={{ fontSize: 13 }} />
-                <YAxis
-                  yAxisId="left"
-                  orientation="left"
-                  stroke="#8884d8"
-                  tick={{ fontSize: 13 }}
-                />{" "}
-                {/* 환자수 */}
-                <YAxis
-                  yAxisId="right"
-                  orientation="right"
-                  stroke="#82ca9d"
-                  tick={{ fontSize: 13 }}
-                />{" "}
-                {/* 청구액 */}
-                <Tooltip contentStyle={{ fontSize: "14px" }} />
-                <Legend wrapperStyle={{ fontSize: "13px" }} />
-                <Bar
-                  yAxisId="left"
-                  dataKey="환자수"
-                  fill="#3b82f6"
-                  name="환자 수 (명)"
-                />
-                <Bar
-                  yAxisId="right"
-                  dataKey="청구액"
-                  fill="#10b981"
-                  name="청구액 (천원)"
-                />
-              </BarChart>
-            </ResponsiveContainer>
-          </ChartCard>
+    const fetchDashboardData = async () => {
+        try {
+            const res = await axios.get("http://192.168.0.24:8080/api/finance/summary");
+            setDailyData(res.data.dailyData || []);
+            setStatusData(res.data.statusData || []);
+        } catch (err) {
+            console.error("❌ 대시보드 데이터 로드 실패:", err);
+        }
+    };
 
-          {/* 2. 보험 청구 심사 진행 상태 (PieChart) */}
-          <ChartCard title="보험 청구 심사 진행 상태">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={statusData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={60}
-                  outerRadius={120}
-                  fill="#8884d8"
-                  paddingAngle={5}
-                  dataKey="value"
-                  label={{ fontSize: 14 }}
-                >
-                  {statusData.map((entry, index) => (
-                    <Cell
-                      key={`cell-${index}`}
-                      fill={COLORS[index % COLORS.length]}
-                    />
-                  ))}
-                </Pie>
-                <Tooltip
-                  contentStyle={{ fontSize: "14px" }}
-                  formatter={(value, name, props) => [`${value}건`, name]}
-                />
-                <Legend
-                  layout="vertical"
-                  align="right"
-                  verticalAlign="middle"
-                  wrapperStyle={{ fontSize: "14px" }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-          </ChartCard>
+    return (
+        <div className="bg-gradient-to-b from-gray-50 to-gray-100 min-h-screen font-pretendard">
+            <FinanceHeader />
 
-          {/* 3. Placeholder */}
-          <ChartCard title="월별 매출 추이">
-            <div className="text-center pt-16 text-gray-500">
-              <p className="text-4xl mb-4">📈</p>
-              <p className="text-g">
-                데이터 분석 로드맵에 따라 차트가 표시될 예정입니다.
-              </p>
-              <p>실제 API 연동 후 구현</p>
-            </div>
-          </ChartCard>
+            <main className="max-w-7xl mx-auto pt-24 pb-16 px-6">
+                <div className="mb-10 text-center">
 
-          {/* 4. Placeholder */}
-          <ChartCard title="인사 관리 현황">
-            <div className="text-center pt-16 text-gray-500">
-              <p className="text-4xl mb-4">🧑</p>
-              <p className="text-g">
-                사용자별 상세 데이터는 인사관리 모듈과 연동됩니다.
-              </p>
-              <p>실제 API 연동 후 구현</p>
-            </div>
-          </ChartCard>
+                    <p className="text-gray-500 mt-2 text-sm">
+                        최근 수익/지출 및 거래 상태를 한눈에 확인하세요
+                    </p>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                    {/* 📊 최근 7일 수익 / 지출 추이 */}
+                    <ChartCard title="최근 7일 수익 / 지출 추이">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={dailyData}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                                <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                                <YAxis tick={{ fontSize: 12 }} />
+                                <Tooltip
+                                    formatter={(v) =>
+                                        v.toLocaleString("ko-KR", {
+                                            style: "currency",
+                                            currency: "KRW",
+                                        })
+                                    }
+                                />
+                                <Legend wrapperStyle={{ fontSize: "12px" }} />
+                                <Bar
+                                    dataKey="income"
+                                    fill="#3B82F6"
+                                    name="수익"
+                                    radius={[8, 8, 0, 0]}
+                                    barSize={35}
+                                />
+                                <Bar
+                                    dataKey="expense"
+                                    fill="#EF4444"
+                                    name="지출"
+                                    radius={[8, 8, 0, 0]}
+                                    barSize={35}
+                                />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </ChartCard>
+
+                    {/* 💰 거래 상태별 비율 */}
+                    <ChartCard title="거래 상태별 비율">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                                <Pie
+                                    data={statusData}
+                                    cx="50%"
+                                    cy="50%"
+                                    innerRadius={80}
+                                    outerRadius={120}
+                                    paddingAngle={4}
+                                    dataKey="value"
+                                    labelLine={false}
+                                    label={({ name, value }) => `${name} (${value})`}
+                                >
+                                    {statusData.map((entry, i) => (
+                                        <Cell
+                                            key={`cell-${i}`}
+                                            fill={STATUS_COLORS[entry.name] || "#CBD5E1"}
+                                        />
+                                    ))}
+                                </Pie>
+                                <Tooltip formatter={(v) => `${v}건`} />
+                                <Legend
+                                    iconType="circle"
+                                    layout="horizontal"
+                                    align="center"
+                                    verticalAlign="top"
+                                    wrapperStyle={{
+                                        fontSize: "13px",
+                                        marginBottom: "10px",
+                                    }}
+                                />
+                            </PieChart>
+                        </ResponsiveContainer>
+                    </ChartCard>
+                </div>
+            </main>
         </div>
-      </main>
-    </div>
-  );
+    );
 }

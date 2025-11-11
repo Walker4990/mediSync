@@ -55,4 +55,5 @@ public interface OperationMapper {
 
     OperationRoom getRoomById(Long roomId);
     int updateRoomAvailable(Long roomId);
+    List<Operation> selectByDate(LocalDate scheduledDate);
 }

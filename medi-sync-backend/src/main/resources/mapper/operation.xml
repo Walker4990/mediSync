@@ -197,4 +197,13 @@
        ]]>
     </update>
 
+    <select id="selectByDate" resultType="operation" parameterType="java.time.LocalDate">
+        SELECT op.*, or.room_name AS roomName
+        FROM operation op
+        JOIN operation_room or ON op.room_id = or.room_id
+
+        WHERE scheduled_date = #{scheduledDate}
+        ORDER BY scheduled_time ASC
+
+    </select>
 </mapper>

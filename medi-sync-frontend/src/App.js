@@ -37,6 +37,7 @@ import SupportChatPage from "./pages/user/SupportChatPage";
 import AdminChatPage from "./pages/admin/AdminChatPage";
 import FinanceTransactionPage from "./pages/admin/FinanceTransactionPage";
 import AdminMainPage from "./pages/admin/AdminMainPage";
+import InsurerPage from "./pages/admin/InsurerPage";
 
 function AppContent() {
   const location = useLocation();
@@ -80,7 +81,8 @@ function AppContent() {
           <Route path="/admin/chat" element={<AdminChatPage />} />
           <Route path="/admin/finance" element={<FinanceTransactionPage />} />
           <Route path="/admin/finance/dashboard" element={<DashBoard />} />
-          {/*유저페이지*/}
+          <Route path="/admin/insurance" element={<InsurerPage />} />
+                {/*유저페이지*/}
           <Route element={<UserLayout />}>
             <Route path="/" element={<UserHome />} />/
             <Route path="/findAccount" element={<FindAccount />} />/
@@ -89,6 +91,7 @@ function AppContent() {
             <Route path="/user/reservation" element={<Reservation />} />
             <Route path="/user/insurance" element={<Insurance />} />
             <Route path="/user/support" element={<SupportChatPage />} />
+
           </Route>
           {/*새창 열림*/}
           <Route

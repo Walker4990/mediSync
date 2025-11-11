@@ -12,4 +12,6 @@ public interface FinanceTransactionMapper {
     void updateFinance(FinanceTransaction ft);
     FinanceTransaction findByRef(Long refId, String refType);
     List<FinanceTransaction> selectAll(Map<String,Object> filters);
+    List<Map<String, Object>> getDailyFinance();
+    List<Map<String, Object>> getStatusSummary();
 }

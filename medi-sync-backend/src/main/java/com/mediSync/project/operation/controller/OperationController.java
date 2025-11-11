@@ -151,4 +151,9 @@ public class OperationController {
         return ResponseEntity.ok("수술이 완료되었습니다.");
     }
 
+    @GetMapping("/todayList")
+    public List<Operation> todayList(@RequestParam LocalDate scheduledDate) {
+        return operationService.selectByDate(scheduledDate);
+    }
+
 }

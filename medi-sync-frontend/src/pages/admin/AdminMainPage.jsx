@@ -22,7 +22,10 @@ export default function AdminMainPage() {
 
     const fetchOperations = async () => {
         try {
-            const res = await axios.get("http://192.168.0.24:8080/api/operation/list");
+            const today = new Date().toISOString().split("T")[0];
+            const res = await axios.get("http://192.168.0.24:8080/api/operation/todayList",{
+                params: {date: today},
+            });
             setOperations(res.data);
         } catch (err) {
             console.error("❌ 수술실 현황 조회 실패:", err);
@@ -126,7 +129,7 @@ export default function AdminMainPage() {
                                     >
                                         <div className="flex justify-between items-center mb-2">
                                             <h2 className="text-lg font-semibold">
-                                                {op.roomNo || "수술실 미지정"}
+                                                {op.roomName || "수술실 미지정"}
                                             </h2>
                                             <span
                                                 className={`text-xs px-3 py-1 rounded-full ${
@@ -161,7 +164,7 @@ export default function AdminMainPage() {
                             })
                         ) : (
                             <p className="text-gray-500 col-span-3 text-center py-10">
-                                수술실 정보를 불러오는 중...
+                                금일 예약된 수술이 없습니다.
                             </p>
                         )}
                     </div>

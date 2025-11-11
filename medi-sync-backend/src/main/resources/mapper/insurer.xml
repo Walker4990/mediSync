@@ -12,4 +12,20 @@
         WHERE insurer_code = #{insuranceCode}
     </update>
 
+    <insert id="upsertInsurer">
+        INSERT INTO insurer (insurer_code, insurer_name, api_endpoint, contact)
+        VALUES (#{code}, #{name}, #{endpoint}, #{contact})
+        ON DUPLICATE KEY UPDATE
+        insurer_name = VALUES(insurer_name),
+        api_endpoint = VALUES(api_endpoint),
+        contact      = VALUES(contact)
+    </insert>
+
+
+    <!-- 전체 목록 조회 -->
+    <select id="findAll" resultType="map">
+        SELECT insurer_code, insurer_name, api_endpoint, contact
+        FROM insurer
+        ORDER BY insurer_name ASC
+    </select>
 </mapper>
