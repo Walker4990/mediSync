@@ -57,14 +57,11 @@ public interface OperationMapper {
 
     OperationRoom getRoomById(Long roomId);
     int updateRoomAvailable(Long roomId);
-<<<<<<< HEAD
     List<Operation> selectByDate(LocalDate scheduledDate);
-=======
 
     List<ReservationDTO> findOperationBetween(@Param("start") LocalDateTime start,
                                               @Param("end")LocalDateTime end);
 
     int canceledOperation(long id);
 
->>>>>>> main
 }
