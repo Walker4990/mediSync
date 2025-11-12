@@ -126,7 +126,10 @@ const DoctorList = ({
                 {/* 클릭 시 타임 모달 */}
                 <button
                   className="mt-2 text-blue-600 border border-blue-600 text-sm px-3 py-1 rounded-md hover:bg-blue-50 transition"
-                  onClick={() => handleReservationClick(doctor)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleReservationClick(doctor);
+                  }}
                 >
                   예약하기
                 </button>

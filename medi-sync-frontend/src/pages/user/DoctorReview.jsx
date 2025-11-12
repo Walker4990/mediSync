@@ -2,12 +2,17 @@ import { useNavigate, useParams } from "react-router-dom";
 import React, { useEffect, useState, useMemo } from "react";
 import axios from "axios";
 import { div, header } from "framer-motion/client";
-import { Star } from "lucide-react";
-import { motion, percent } from "framer-motion";
+import { Star, Type } from "lucide-react";
+import { motion, percent, AnimatePresence } from "framer-motion";
 export default function DoctorReview() {
   const { adminId } = useParams();
   const [doctor, setDoctor] = useState(null);
-
+  const [showNodal, setShowModal] = useState(false);
+  const [rating, setRating] = useState(0); //별점
+  const [memo, setMemo] = useState("");
+  const [eligibleReservations, setEligibleReservations] = useState([]);
+  const patientId = 1;
+  //페이지 뜨자마자 의사 정보 가져오기
   useEffect(() => {
     const fetchDoctor = async () => {
       try {
@@ -22,6 +27,43 @@ export default function DoctorReview() {
     fetchDoctor();
   }, [adminId]);
 
+  useEffect(() => {
+    const fetchEligibility = async () => {
+      try {
+        const res = await axios.get(
+          `http://localhost8080/api/reviews/eligible/${patientId}/${adminId}`
+        );
+        setEligibleReservations(res.data);
+        console.log(res.data);
+      } catch (err) {
+        console.error("리뷰가능 리스트 불러오기 실패", err);
+      }
+    };
+    fetchEligibility();
+  });
+
+  //리뷰 제출
+  const handleSubmitReview = async () => {
+    try {
+      const res = await axios.post(`http://localhost:8080/api/reviews`, {
+        adminId,
+        rating,
+        memo,
+        patientId: 1,
+        typeId: 12, //실제 예약 키
+        isPublic: true,
+      });
+      alert("리뷰가 등록되었습니다!");
+      setShowModal(false);
+      setRating(0);
+      setMemo("");
+    } catch (err) {
+      console.error("리뷰 제출 오류 발생", err);
+      alert("리뷰 제출 오류 발생", err);
+    }
+  };
+
+  // 로딩중
   if (!doctor)
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -70,6 +112,16 @@ export default function DoctorReview() {
           <Star className="text-yellow-400 w-6 h-6 fill-yellow-400" />
           진료 후기
         </h2>
+
+        {/*리뷰 작성 버튼*/}
+        {eligibleReservations.length > 0 && (
+          <button
+            onClick={() => setShowModal(true)}
+            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded_lg shadow cursor-pointer"
+          >
+            리뷰 작성
+          </button>
+        )}
         {/*평점 요약*/}
         <div className="flex flex-col md:flex-row items-center gap-8 mb-10">
           <div className="text-center">
@@ -128,6 +180,83 @@ export default function DoctorReview() {
           </p>
         </div>
       </div>
+
+      {/*리뷰 작성 모달*/}
+      <AnimatePresence>
+        {showNodal && (
+          <motion.div
+            className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <motion.div
+              className="bg-white rounded-2xl p-8 shadow-lg w-full max-w-md"
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+            >
+              <h3 className="text-xl font-semibold mb-4">리뷰 작성</h3>
+              {/*별점 선택 */}
+              <div className="flex justify-center mb-4">
+                {[...Array(5)].map((_, i) => {
+                  const value = i + 1;
+                  return (
+                    <button
+                      key={value}
+                      onClick={() => setRating(value)}
+                      className="focus:outline-none"
+                    >
+                      <Star
+                        className={`w-8 h-8 transition-colors duration-200 ${
+                          value <= rating
+                            ? "text-yellow-400 fill-yellow-400"
+                            : "text-gray-300"
+                        }`}
+                      />
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/*메모 입력 */}
+              <textarea
+                value={memo}
+                onChange={(e) => setMemo(e.target.value)}
+                className="w-full border rounded-lg p-3 h-28 resize-none"
+                placeholder="의사에 대한 후기를 입력해주세요."
+              ></textarea>
+
+              {/*버튼 영역 */}
+              <div className="flex justify-end gap-3 mt-6">
+                <button
+                  onClick={() => {
+                    setShowModal(false);
+                    setRating(0);
+                    setMemo("");
+                  }}
+                  className="px-4 py-2 rounded-lg border text-gray-600 hover:bg-gray-100"
+                >
+                  취소
+                </button>
+
+                <button
+                  onClick={{ handleSubmitReview }}
+                  className={`px-4 py-2 rounded-lg text-white transition-colors duration-200
+                    ${
+                      rating === 0 || memo.trim() === ""
+                        ? "bg-gray-400 cursor-not-allowed"
+                        : "bg-blue-500 hover:bg-blue-600"
+                    }`}
+                  disabled={rating === 0 || memo.trim() === ""}
+                >
+                  등록
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
