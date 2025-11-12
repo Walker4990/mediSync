@@ -3,7 +3,7 @@ import React, { useEffect, useState, useMemo } from "react";
 import axios from "axios";
 import { div, header } from "framer-motion/client";
 import { Star } from "lucide-react";
-
+import { motion, percent } from "framer-motion";
 export default function DoctorReview() {
   const { adminId } = useParams();
   const [doctor, setDoctor] = useState(null);
@@ -84,25 +84,31 @@ export default function DoctorReview() {
               { label: "보통", value: 21 },
               { label: "불만족", value: 5 },
               { label: "매우 불만족", value: 15 },
-            ].map((item, idx) => (
-              <div key={idx} className="flex items-center gap-4">
-                <span className="w-24 text-sm text-gray-600">{item.label}</span>
-                {/*배경 흰색 막대*/}
-                <div className="flex-1 bg-gray-200 rounded-full h-2">
-                  {/*실제 채워지는 부분*/}
-                  <div
-                    className="bg-yellow-400 h-2 rounded-full"
-                    style={{
-                      width: `${(item.value / 5358) * 100}%`,
-                    }}
-                  ></div>
-                </div>
+            ].map((item, idx) => {
+              const max = 5358;
+              const percent = (item.value / max) * 100;
+              return (
+                <div key={idx} className="flex items-center gap-4">
+                  <span className="w-24 text-sm text-gray-600">
+                    {item.label}
+                  </span>
+                  {/*배경 흰색 막대*/}
+                  <div className="flex-1 bg-gray-200 rounded-full h-2">
+                    {/*실제 채워지는 부분*/}
+                    <motion.div
+                      className="bg-yellow-400 h-2 rounded-full"
+                      initial={{ width: 0 }}
+                      animate={{ width: `${percent}%` }}
+                      transition={{ duration: 0.8, ease: "easeOut" }}
+                    ></motion.div>
+                  </div>
 
-                <span className="text-sm text-gray-500 w-10 text-right">
-                  {item.value}
-                </span>
-              </div>
-            ))}
+                  <span className="text-sm text-gray-500 w-10 text-right">
+                    {item.value}
+                  </span>
+                </div>
+              );
+            })}
           </div>
         </div>
         {/*후기 예시*/}
