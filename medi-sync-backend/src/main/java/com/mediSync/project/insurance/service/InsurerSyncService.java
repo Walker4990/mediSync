@@ -1,10 +1,12 @@
 package com.mediSync.project.insurance.service;
 
 import com.mediSync.project.insurance.mapper.InsurerMapper;
+import com.mediSync.project.insurance.mapper.PatientInsuranceMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -13,6 +15,7 @@ import java.util.Map;
 public class InsurerSyncService {
     private final KftcInsuranceClient client;
     private final InsurerMapper insurerMapper;
+    private final PatientInsuranceMapper patientInsuranceMapper;
 
     @Transactional
     public int sync() {
@@ -129,6 +132,20 @@ public class InsurerSyncService {
         insuranceList.forEach(System.out::println);
 
         return c;
+    }
+    @Transactional
+    public int syncForPatient(Long patientId){
+        List<Map<String, Object>> mockList = client.fetchMockInsurance();
+        if(mockList.isEmpty() || mockList == null) return 0;
+
+        int inserted = 0;
+        for (Map<String, Object> data : mockList) {
+            Map<String, Object> mutableData = new HashMap<>(data); // ✅ 복제
+            mutableData.put("patient_id", patientId); // 이제 put() 가능
+            inserted += patientInsuranceMapper.upsertInsurance(mutableData);
+        }
+        System.out.printf("✅ [환자 %d] 보험가입 %d건 동기화 완료%n", patientId, inserted);
+        return inserted;
     }
 
 }

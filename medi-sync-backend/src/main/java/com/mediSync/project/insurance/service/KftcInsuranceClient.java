@@ -36,6 +36,54 @@ public class KftcInsuranceClient {
         // ✅ 'res_list' 필드에서 목록 추출
         return (List<Map<String, Object>>) body.getOrDefault("res_list", List.of());
     }
+    // 가상의 데이터 - kftc랑 연결하고 싶은데 사업자가 있어야 연결 가능
+    public List<Map<String, Object>> fetchMockInsurance() {
+        List<Map<String, Object>> insuranceList = List.of(
+                Map.of(
+                        "insu_num", "S20231122001",
+                        "prod_name", "삼성화재 실손의료보험",
+                        "insu_type", "03",
+                        "insu_status", "02",
+                        "issue_date", "20231122",
+                        "exp_date", "20331122",
+                        "insurer_code", "INS002"
+                ),
+                Map.of(
+                        "insu_num", "H20220515012",
+                        "prod_name", "현대해상 암보험",
+                        "insu_type", "01",
+                        "insu_status", "02",
+                        "issue_date", "20220515",
+                        "exp_date", "20320515",
+                        "insurer_code", "INS003"
+                ),
+                Map.of(
+                        "insu_num", "D20200105007",
+                        "prod_name", "DB손해보험 운전자보험",
+                        "insu_type", "02",
+                        "insu_status", "05",
+                        "issue_date", "20200105",
+                        "exp_date", "20250105",
+                        "insurer_code", "INS004"
+                ),
+                Map.of(
+                        "insu_num", "H20190304033",
+                        "prod_name", "한화생명 종신보험",
+                        "insu_type", "04",
+                        "insu_status", "02",
+                        "issue_date", "20190304",
+                        "exp_date", "20490304",
+                        "insurer_code", "INS005"
+                )
+        );
+
+        System.out.println("📋 Mock 보험가입 내역:");
+        insuranceList.forEach(System.out::println);
+
+        return insuranceList;
+    }
+
+
     public Map<String, Object> submitClaim(Long claimId, String insurerCode, Object insPay) {
         String token = tokenService.getAccessToken();
 

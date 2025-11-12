@@ -39,6 +39,7 @@ import FinanceTransactionPage from "./pages/admin/FinanceTransactionPage";
 import AdminMainPage from "./pages/admin/AdminMainPage";
 import DoctorReview from "./pages/user/DoctorReview";
 import InsurerPage from "./pages/admin/InsurerPage";
+import PatientInsurancePage from "./pages/user/PatientInsurancePage";
 
 function AppContent() {
   const location = useLocation();
@@ -94,6 +95,10 @@ function AppContent() {
             <Route path="/user/insurance" element={<Insurance />} />
             <Route path="/user/support" element={<SupportChatPage />} />
             <Route path="/doctor/review/:adminId" element={<DoctorReview />} />
+            <Route
+              path="/user/patient-insurance"
+              element={<PatientInsurancePage patientId={1} />}
+            />
           </Route>
           {/*새창 열림*/}
           <Route

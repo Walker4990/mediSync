@@ -28,13 +28,49 @@
         </foreach>
     </insert>
 
-
+    <!-- 가입 보험 내역 -->
     <select id="selectByPatientIdOrderByCoverageDesc" resultType="map">
-        SELECT pi.*, i.insurer_name
+        SELECT
+        pi.insurer_code AS insurerCode,
+        pi.prod_name AS prodName,
+        pi.insu_type AS insuType,
+        pi.coverage_rate AS coverageRate,
+        pi.exp_date AS expDate,
+        i.insurer_name AS insurerName,
+        pi.issue_date AS issueDate,
+        pi.insu_status AS insuStatus
         FROM patient_insurance pi
         JOIN insurer i ON i.insurer_code = pi.insurer_code
         WHERE pi.patient_id = #{patientId}
         ORDER BY pi.coverage_rate DESC
     </select>
+
+
+
+    <insert id="upsertInsurance" parameterType="map">
+        INSERT INTO patient_insurance (
+        insu_num,
+        patient_id,
+        insurer_code,
+        prod_name,
+        insu_type,
+        insu_status,
+        issue_date,
+        exp_date
+        ) VALUES (
+        #{insu_num},
+        #{patient_id},
+        #{insurer_code},
+        #{prod_name},
+        #{insu_type},
+        #{insu_status},
+        #{issue_date},
+        #{exp_date}
+        )
+        ON DUPLICATE KEY UPDATE
+        prod_name = VALUES(prod_name),
+        insu_status = VALUES(insu_status),
+        exp_date = VALUES(exp_date)
+    </insert>
 
 </mapper>

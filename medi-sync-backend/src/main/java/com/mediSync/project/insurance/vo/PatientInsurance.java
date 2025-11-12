@@ -20,5 +20,7 @@ public class PatientInsurance {
     private BigDecimal coverageRate;
     private LocalDate issueDate;
     private LocalDate expDate;
+    private String insuType;
+    private String insuStatus;
     private LocalDateTime syncedAt;
 }

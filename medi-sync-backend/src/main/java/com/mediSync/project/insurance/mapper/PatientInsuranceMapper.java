@@ -14,5 +14,6 @@ public interface PatientInsuranceMapper {
 
     List<Map<String, Object>> selectByPatientIdOrderByCoverageDesc(@Param("patientId") Long patientId);
 
-
+    List<Map<String, Object>> selectClaimHistoryByPatient(@Param("patientId") Long patientId);
+    int upsertInsurance(Map<String, Object> data);
 }
