@@ -4,6 +4,7 @@ import UserLayout from "./component/UserLayout";
 import ModalProvider from "./component/ModalProvider";
 import AccountRegiForm from "./pages/admin/AccountRegiForm";
 import AccountList from "./pages/admin/AccountList";
+import AdminMyPage from "./pages/admin/AdminMyPage";
 import DashBoard from "./pages/admin/DashBoard";
 import PatientList from "./pages/admin/PatientList";
 import StaffList from "./pages/admin/StaffList";
@@ -41,6 +42,12 @@ import AdminMainPage from "./pages/admin/AdminMainPage";
 import OAuthCallback from "./component/OAuthCallback";
 import InsurerPage from "./pages/admin/InsurerPage";
 
+import axios from "axios";
+const token = localStorage.getItem("token");
+if (token) {
+  axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+}
+
 function AppContent() {
   const location = useLocation();
   const hideNotification =
@@ -58,6 +65,7 @@ function AppContent() {
           <Route path="/admin" element={<Home />} />
           <Route path="/admin/register" element={<AccountRegiForm />} />
           <Route path="/admin/acclist" element={<AccountList />} />
+          <Route path="/admin/mypage" element={<AdminMyPage />} />
 
           <Route path="/admin/patients" element={<PatientList />} />
           <Route path="/admin/staff" element={<StaffList />} />

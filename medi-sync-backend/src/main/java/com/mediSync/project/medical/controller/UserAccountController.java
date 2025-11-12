@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.mediSync.project.common.service.EmailService;
 import com.mediSync.project.config.JwtUtil;
 import com.mediSync.project.medical.service.UserAccountService;
+import com.mediSync.project.medical.vo.AdminAccount;
 import com.mediSync.project.medical.vo.UserAccount;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -251,15 +252,19 @@ public class UserAccountController {
 
     // 로그인 기능 + 토큰 발급
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody Map<String, String> loginRequest) {
+    public ResponseEntity<?> userLogin(@RequestBody Map<String, String> loginRequest) {
         String loginId = loginRequest.get("login_id");
         String password = loginRequest.get("password");
 
         UserAccount user = userAccountService.selectUserByLoginId(loginId);
 
         if (user != null && passwordEncoder.matches(password, user.getPassword())) {
-            // JWT 생성 (payload: loginId, userId)
             String token = jwtUtil.generateToken(user.getLoginId(), user.getUserId());
+//            String token = jwtUtil.generateToken(
+//                    user.getLoginId(),  // 1. Subject (loginId)
+//                    user.getUserId(),   // 2. id (userId)
+//                    "USER"              // 3. Role ("USER")
+//            );
 
             return ResponseEntity.ok(Map.of(
                     "success", true,

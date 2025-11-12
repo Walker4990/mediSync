@@ -1,22 +1,54 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { motion } from "framer-motion";
+import axios from "axios";
 
-// 새롭게 추가된 심플 로그인 폼 컴포넌트
+const LOGIN_API_URL = "http://localhost:8080/api/admins/login";
+
 const LoginForm = ({ onLoginSuccess }) => {
-  const [userId, setUserId] = useState("");
+  const [empId, setEmpId] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setIsLoading(true);
 
-    // ID가 "admin"이고 PW가 "1234"일 때 성공
-    if (userId === "admin" && password === "1234") {
-      console.log("로그인 성공!");
-      onLoginSuccess(); // 로그인 성공 시 부모 상태 업데이트
-    } else {
-      setError("아이디 또는 비밀번호가 올바르지 않습니다.");
+    try {
+      const payload = {
+        emp_id: empId,
+        password: password,
+      };
+
+      const res = await axios.post(LOGIN_API_URL, payload);
+
+      if (res.status === 200 && res.data) {
+        console.log("로그인 성공! 응답 데이터:", res.data);
+        onLoginSuccess(res.data); // 성공 시 부모 상태 및 데이터 업데이트
+      } else {
+        setError("로그인 처리 중 오류가 발생했습니다.");
+      }
+    } catch (err) {
+      console.error("로그인 API 호출 실패:", err);
+
+      let errorMessage = "네트워크 오류 또는 서버 접속 실패";
+
+      if (err.response) {
+        // 서버 응답 에러
+        const status = err.response.status;
+        if (status === 401) {
+          errorMessage = "아이디 또는 비밀번호가 올바르지 않습니다.";
+        } else if (status === 403) {
+          errorMessage = "접근 권한이 없습니다.";
+        } else {
+          errorMessage = `로그인 실패 (코드: ${status})`;
+        }
+      }
+
+      setError(errorMessage);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -33,19 +65,20 @@ const LoginForm = ({ onLoginSuccess }) => {
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label
-            htmlFor="userId"
+            htmlFor="empId"
             className="block text-sm font-medium text-gray-700"
           >
-            아이디
+            아이디 (사원 ID)
           </label>
           <input
-            id="userId"
+            id="empId"
             type="text"
-            value={userId}
-            onChange={(e) => setUserId(e.target.value)}
+            value={empId}
+            onChange={(e) => setEmpId(e.target.value)}
             className="w-full mt-1 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="아이디"
             required
+            disabled={isLoading}
           />
         </div>
         <div>
@@ -63,25 +96,74 @@ const LoginForm = ({ onLoginSuccess }) => {
             className="w-full mt-1 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="비밀번호"
             required
+            disabled={isLoading}
           />
         </div>
         {error && <p className="text-red-500 text-sm text-center">{error}</p>}
         <button
           type="submit"
-          className="w-full py-2 px-4 bg-blue-600 text-white font-semibold rounded-md shadow-lg hover:bg-blue-700 transition duration-300"
+          disabled={isLoading}
+          className={`w-full py-2 px-4 text-white font-semibold rounded-md shadow-lg transition duration-300 flex items-center justify-center ${
+            isLoading
+              ? "bg-blue-400 cursor-not-allowed"
+              : "bg-blue-600 hover:bg-blue-700"
+          }`}
         >
-          로그인
+          {isLoading ? (
+            <>
+              <svg
+                className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                ></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8v8z"
+                ></path>
+              </svg>
+              로그인 중...
+            </>
+          ) : (
+            "로그인"
+          )}
         </button>
       </form>
     </motion.div>
   );
 };
 
-// 메인 Home 컴포넌트
+// 메인 컴포넌트
 export default function Home() {
   const [showLoginForm, setShowLoginForm] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [message, setMessage] = useState("");
+
+  const handleLoginSuccess = (loginData) => {
+    if (loginData && loginData.token) {
+      const token = loginData.token;
+      localStorage.setItem("token", token);
+      axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+    }
+
+    setIsLoggedIn(true);
+    setShowLoginForm(false);
+    setMessage("로그인 성공! 원하시는 메뉴를 클릭 시 이동합니다.");
+    console.log("로그인 성공 데이터 처리:", loginData);
+
+    setTimeout(() => {
+      setMessage("");
+    }, 1000);
+  };
 
   const handleFeatureClick = (e, link) => {
     e.preventDefault();
@@ -99,18 +181,6 @@ export default function Home() {
     }
   };
 
-  const handleLoginSuccess = () => {
-    setIsLoggedIn(true);
-    setShowLoginForm(false);
-    setMessage("로그인 성공! 원하시는 메뉴를 클릭 시 이동합니다.");
-
-    // 성공 후 메인 페이지로 리디렉션하거나, 필요한 동작을 수행
-    setTimeout(() => {
-      setMessage("");
-    }, 1500);
-  };
-
-  // 기능 카드 데이터
   const featureItems = [
     {
       title: "환자 관리",
@@ -185,8 +255,8 @@ export default function Home() {
                   initial={{ opacity: 0, y: 50 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.8, delay: i * 0.2 }}
-                  className="group bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl p-8 text-center cursor-pointer 
-                                    hover:bg-white/20 transition transform hover:-translate-y-2 hover:shadow-xl"
+                  className="group bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl p-8 text-center cursor-pointer
+                                         hover:bg-white/20 transition transform hover:-translate-y-2 hover:shadow-xl"
                 >
                   <div className="text-4xl mb-3">{item.emoji}</div>
                   <h2 className="text-2xl font-semibold mb-2">{item.title}</h2>

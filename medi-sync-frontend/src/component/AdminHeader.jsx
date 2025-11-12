@@ -1,13 +1,17 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import DropdownMenu from "./DropdownMenu";
 import { useNotifications } from "../context/NotificationContext";
-import { Bell } from "lucide-react"; // ✅ 추가
+import { Bell } from "lucide-react";
+import axios from "axios";
 
 export default function AdminHeader() {
   const { notifications, unreadCount, markAllRead } = useNotifications();
   const [open, setOpen] = useState(false);
   const [shake, setShake] = useState(false);
+  const [adminName, setAdminName] = useState("관리자");
+  const navigate = useNavigate();
+
   useEffect(() => {
     if (unreadCount > 0) {
       setShake(true);
@@ -15,6 +19,35 @@ export default function AdminHeader() {
       return () => clearTimeout(timer);
     }
   }, [unreadCount]);
+
+  // 컴포넌트 마운트 시 관리자 정보 불러오기
+  useEffect(() => {
+    const fetchAdminInfo = async () => {
+      try {
+        const response = await axios.get("/api/admins/mypage");
+        if (response.data && response.data.name) {
+          setAdminName(response.data.name);
+        }
+      } catch (error) {
+        console.error("관리자 정보 로드 실패:", error);
+        if (
+          error.response &&
+          (error.response.status === 401 || error.response.status === 403)
+        ) {
+          console.warn("인증 실패, 로그인 페이지로 이동합니다.");
+          navigate("/admin"); // 로그인 페이지로 이동
+        }
+      }
+    };
+    fetchAdminInfo();
+  }, [navigate]);
+
+  // 로그아웃
+  const handleLogout = () => {
+    localStorage.removeItem("token"); // 저장된 토큰 삭제
+    delete axios.defaults.headers.common["Authorization"];
+    navigate("/admin");
+  };
 
   return (
     <header className="bg-blue-600 text-white shadow-md fixed top-0 left-0 w-full z-50 font-pretendard">
@@ -64,7 +97,6 @@ export default function AdminHeader() {
           <Link to="/admin/insurance" className="hover:text-blue-200">
             보험관리
           </Link>
-
         </nav>
 
         {/* 우측 사용자 + 알림 */}
@@ -116,16 +148,19 @@ export default function AdminHeader() {
               </div>
             </div>
           )}
-
-          <Link to="/admin/register" className="text-sm text-blue-100">
-            관리자
-          </Link>
-          <Link
+          <DropdownMenu
+            title={adminName}
+            items={[
+              { name: "사원등록", href: "/admin/register" },
+              { name: "마이페이지", href: "/admin/mypage" },
+            ]}
+          />
+          <button
             className="bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded-md text-sm"
-            to="/admin"
+            onClick={handleLogout}
           >
-            로그아웃
-          </Link>
+                로그아웃     
+          </button>
         </div>
       </div>
     </header>
