@@ -557,10 +557,10 @@ const AccountRegiForm = () => {
             {/* footer buttons */}
             <footer className="pt-4 border-t border-gray-200 mt-8 flex justify-end space-x-4">
               <Link
-                to="/admin/dashboard"
+                to="/admin/staff"
                 className="px-6 py-2 bg-gray-200 text-gray-700 font-semibold rounded-lg shadow-md hover:bg-gray-300 transition duration-150"
               >
-                처음으로
+                목록으로
               </Link>
 
               <button
