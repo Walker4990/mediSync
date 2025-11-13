@@ -5,6 +5,7 @@ import ModalProvider from "./component/ModalProvider";
 import AccountRegiForm from "./pages/admin/AccountRegiForm";
 import AccountList from "./pages/admin/AccountList";
 import AdminMyPage from "./pages/admin/AdminMyPage";
+import OAuthRedirectHandler from "./component/OAuthRedirectHandler";
 import DashBoard from "./pages/admin/DashBoard";
 import PatientList from "./pages/admin/PatientList";
 import StaffList from "./pages/admin/StaffList";
@@ -99,6 +100,7 @@ function AppContent() {
             <Route path="/" element={<UserHome />} />/
             <Route path="/findAccount" element={<FindAccount />} />/
             <Route path="/auth/callback" element={<OAuthCallback />} />
+            <Route path="/oauth/redirect" element={<OAuthRedirectHandler />} />
             <Route path="/user/mypage" element={<MyPage />} />
             <Route path="/user/pre-form" element={<PreExamForm />} />
             <Route path="/user/consult" element={<MedicalConsult />} />
