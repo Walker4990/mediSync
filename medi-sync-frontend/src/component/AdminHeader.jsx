@@ -23,19 +23,36 @@ export default function AdminHeader() {
   // 컴포넌트 마운트 시 관리자 정보 불러오기
   useEffect(() => {
     const fetchAdminInfo = async () => {
-      try {
-        const response = await axios.get("/api/admins/mypage");
-        if (response.data && response.data.name) {
-          setAdminName(response.data.name);
-        }
-      } catch (error) {
-        console.error("관리자 정보 로드 실패:", error);
-        if (
-          error.response &&
-          (error.response.status === 401 || error.response.status === 403)
-        ) {
-          console.warn("인증 실패, 로그인 페이지로 이동합니다.");
-          navigate("/admin"); // 로그인 페이지로 이동
+      // localStorage에서 먼저 데이터 확인
+      const storedData = localStorage.getItem("admin_data");
+
+      if (storedData) {
+        // localStorage에 데이터가 있으면 API 호출 없이 바로 사용
+        const admin = JSON.parse(storedData);
+        setAdminName(admin.name || "관리자");
+      } else {
+        // localStorage에 데이터가 없으면 (토큰은 있을 수 있음) API 호출 시도
+        try {
+          console.log("localStorage에 admin_data 없음. API 호출 시도...");
+          const response = await axios.get("/api/admins/mypage");
+          if (response.data && response.data.name) {
+            setAdminName(response.data.name);
+            // API로 가져온 정보를 localStorage에 저장
+            localStorage.setItem("admin_data", JSON.stringify(response.data));
+          }
+        } catch (error) {
+          console.error("관리자 정보 로드 실패:", error);
+          if (
+            error.response &&
+            (error.response.status === 401 || error.response.status === 403)
+          ) {
+            console.warn("인증 실패, 로그인 페이지로 이동합니다.");
+            // 로그아웃 처리
+            localStorage.removeItem("admin_token");
+            localStorage.removeItem("admin_data");
+            delete axios.defaults.headers.common["Authorization"];
+            navigate("/admin"); // 로그인 페이지로 이동
+          }
         }
       }
     };
@@ -44,7 +61,8 @@ export default function AdminHeader() {
 
   // 로그아웃
   const handleLogout = () => {
-    localStorage.removeItem("token"); // 저장된 토큰 삭제
+    localStorage.removeItem("admin_token");
+    localStorage.removeItem("admin_data");
     delete axios.defaults.headers.common["Authorization"];
     navigate("/admin");
   };

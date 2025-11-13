@@ -10,6 +10,7 @@
         <result property="name" column="name"/>
         <result property="phone" column="phone"/>
         <result property="role" column="role"/>
+        <result property="social" column="social"/>
         <result property="createdAt" column="created_at"/>
         <result property="username" column="username"/>
         <result property="userphone" column="userphone"/>
@@ -31,9 +32,9 @@
     <!-- 계정 등록 -->
     <insert id="insertUser" parameterType="user" useGeneratedKeys="true" keyProperty="userId">
         INSERT INTO user_account (
-        login_id, password, name, phone, email, role, created_at
+        login_id, password, name, phone, email, role, social, created_at
         ) VALUES (
-        #{loginId}, #{password}, #{name}, #{phone}, #{email}, 'USER', NOW())
+        #{loginId}, #{password}, #{name}, #{phone}, #{email}, 'USER', #{social}, NOW())
     </insert>
 
     <!-- 전체 계정 목록 조회 -->

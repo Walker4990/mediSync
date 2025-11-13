@@ -83,6 +83,9 @@ export default function LoginModal() {
 
       // 해당 URL로 이동
       window.location.href = naverLoginUrl;
+    } else if (provider == "kakao") {
+      window.location.href = `https://kauth.kakao.com/oauth/authorize?response_type=code&client_id=9ddcb566b2cec688f9952079e973740a&redirect_uri=http://localhost:8080/login/oauth2/code/kakao
+`;
     }
   };
 

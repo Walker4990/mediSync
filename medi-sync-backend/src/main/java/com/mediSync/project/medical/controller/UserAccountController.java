@@ -20,6 +20,7 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
@@ -55,7 +56,65 @@ public class UserAccountController {
         return userAccountService.userSelectAll();
     }
 
+    // naver 로그인 테스트
     @GetMapping("/test")
+    public ResponseEntity<?> handleNaverCallback(@RequestParam String code, @RequestParam String state) {
+        // 1. 네이버 Access Token 발급
+        String accessToken;
+        try {
+            accessToken = getNaverAccessTokenTest(code, state);
+        } catch (RuntimeException e) {
+            // 토큰 발급 실패 시 클라이언트의 에러 페이지로 리다이렉트 (또는 에러 메시지 반환)
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("success", false, "message", "네이버 토큰 발급 실패"));
+        }
+
+        // 2. 네이버 사용자 프로필 조회
+        NaverUserProfile naverProfile = getNaverUserProfile(accessToken);
+        NaverUser naverUser = naverProfile.getResponse();
+
+        // 네이버 고유 ID를 우리 서비스의 login_id로 사용할 소셜 ID 생성
+        String socialLoginId = "NAVER_" + naverUser.getId();
+
+        // 3. 서비스 로그인/회원가입 처리
+        UserAccount user = userAccountService.selectUserByLoginId(socialLoginId);
+
+        // 3-1. 신규 사용자인 경우 회원가입 처리
+        if (user == null) {
+            // 소셜 회원가입 로직
+            UserAccount newUser = new UserAccount();
+            newUser.setLoginId(socialLoginId);
+            newUser.setPassword(passwordEncoder.encode(socialLoginId)); // 소셜 사용자는 임시/랜덤 비밀번호 저장
+            newUser.setName(naverUser.getName());
+            newUser.setEmail(naverUser.getEmail());
+            newUser.setPhone("000-0000-0000"); // 필수 필드이므로 임시값 또는 추가 입력 필요
+            newUser.setSocial("NAVER"); // 소셜 로그인 사용자임을 표시
+
+            try {
+                userAccountService.userInsert(newUser);
+                user = newUser; // 새로 가입된 사용자 객체 사용
+            } catch (DuplicateKeyException e) {
+                // 이메일 등이 중복될 수 있으나, 여기서는 ID 기반이므로 무시하거나 로그 남김
+            }
+        }
+
+        // 4. JWT 토큰 발급
+        String jwtToken = jwtUtil.generateToken(user.getLoginId(), user.getUserId());
+
+        // 5. 클라이언트(React)로 리다이렉트 및 토큰 전달
+        // **프론트엔드에서 토큰을 처리할 경로**를 설정해야 합니다. (예: /oauth/redirect)
+        // 이 리다이렉트는 브라우저를 클라이언트로 이동시키고, URL 파라미터를 통해 토큰을 전달합니다.
+        String frontendRedirectUrl = "http://localhost:3000/oauth/redirect?token=" + jwtToken + "&login=success";
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setLocation(URI.create(frontendRedirectUrl));
+
+        // HTTP 302 Found 응답으로 클라이언트 브라우저를 리다이렉트
+        return new ResponseEntity<>(headers, HttpStatus.FOUND);
+    }
+
+
+    @GetMapping("/test2")
     public void getTest(@RequestParam String code, @RequestParam String state) {
         RestTemplate restTemplate = new RestTemplate();
 
@@ -90,11 +149,11 @@ public class UserAccountController {
         */
 
         // 4. POST 요청 보내기 (네이버 토큰 URI로)
-        //ResponseEntity<NaverTokenResponse> response = restTemplate.postForEntity(
-        //        tokenUri,
-        //        request,
-        //        NaverTokenResponse.class // 응답을 매핑할 DTO 클래스
-        //);
+        ResponseEntity<NaverTokenResponse> response = restTemplate.postForEntity(
+                tokenUri,
+                request,
+                NaverTokenResponse.class // 응답을 매핑할 DTO 클래스
+        );
 
         // 5. 응답에서 Access Token 꺼내기
         //if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
@@ -362,5 +421,15 @@ public class UserAccountController {
                     .body(Map.of("success", false, "message", "처리 중 오류가 발생했습니다."));
         }
 
+    }
+
+    // JWT 기반 로그아웃 처리
+    @PostMapping("/logout")
+    public ResponseEntity<?> userLogout() {
+        // 1. 서버 세션 정리 (SessionCreationPolicy.STATELESS이므로 대부분 불필요)
+        // 2. JWT 블랙리스트 처리 (필요하다면 여기에 Redis 등을 이용해 무효화 로직 추가)
+        // 클라이언트에서 토큰을 삭제하는 것이 주요 목적이므로,
+        // 서버는 단순하게 200 OK를 반환하여 요청이 성공했음을 알립니다.
+        return ResponseEntity.ok(Map.of("success", true, "message", "로그아웃 요청 처리 완료"));
     }
 }

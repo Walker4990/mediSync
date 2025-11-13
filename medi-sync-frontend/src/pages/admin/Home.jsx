@@ -1,6 +1,7 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 const LOGIN_API_URL = "http://localhost:8080/api/admins/login";
 
@@ -23,7 +24,7 @@ const LoginForm = ({ onLoginSuccess }) => {
 
       const res = await axios.post(LOGIN_API_URL, payload);
 
-      if (res.status === 200 && res.data) {
+      if (res.status === 200 && res.data && res.data.token && res.data.admin) {
         console.log("로그인 성공! 응답 데이터:", res.data);
         onLoginSuccess(res.data); // 성공 시 부모 상태 및 데이터 업데이트
       } else {
@@ -145,24 +146,48 @@ const LoginForm = ({ onLoginSuccess }) => {
 // 메인 컴포넌트
 export default function Home() {
   const [showLoginForm, setShowLoginForm] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(
+    !!localStorage.getItem("admin_token")
+  );
   const [message, setMessage] = useState("");
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const token = localStorage.getItem("admin_token");
+    if (token) {
+      axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+      setIsLoggedIn(true);
+    }
+  }, []);
 
   const handleLoginSuccess = (loginData) => {
-    if (loginData && loginData.token) {
-      const token = loginData.token;
-      localStorage.setItem("token", token);
+    const { token, admin } = loginData;
+
+    if (token && admin) {
+      // 1. 토큰과 '관리자 데이터'를 localStorage에 저장
+      localStorage.setItem("admin_token", token);
+      localStorage.setItem("admin_data", JSON.stringify(admin));
+
+      // 2. Axios 헤더 설정
       axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+
+      // 3. 상태 업데이트
+      setIsLoggedIn(true);
+      setShowLoginForm(false);
+      setMessage("로그인 성공! 잠시 후 이동합니다.");
+      console.log("로그인 성공, 저장된 관리자:", admin);
+
+      // 4. 저장된 리디렉션 경로로 이동
+      const redirectPath = localStorage.getItem("admin_redirect_path");
+      localStorage.removeItem("admin_redirect_path"); // 사용 후 경로 제거
+
+      setTimeout(() => {
+        setMessage("");
+        navigate(redirectPath || "/admin/main", { replace: true });
+      }, 1000);
+    } else {
+      console.error("로그인 응답에 token 또는 admin 데이터가 없습니다.");
     }
-
-    setIsLoggedIn(true);
-    setShowLoginForm(false);
-    setMessage("로그인 성공! 원하시는 메뉴를 클릭 시 이동합니다.");
-    console.log("로그인 성공 데이터 처리:", loginData);
-
-    setTimeout(() => {
-      setMessage("");
-    }, 1000);
   };
 
   const handleFeatureClick = (e, link) => {
@@ -170,8 +195,9 @@ export default function Home() {
 
     if (isLoggedIn) {
       // 실제 로그인이 되어 있다면 해당 페이지로 이동
-      window.location.href = link;
+      navigate(link);
     } else {
+      localStorage.setItem("admin_redirect_path", link);
       // 로그인 필요 메시지 노출 후 폼 표시
       setMessage("로그인이 필요한 기능입니다");
       setTimeout(() => {

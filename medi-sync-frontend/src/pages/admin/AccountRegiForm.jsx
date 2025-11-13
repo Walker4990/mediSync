@@ -20,7 +20,7 @@ import {
 // API endpoints
 const API_URL = "http://localhost:8080/api/admins";
 const UPLOAD_API_URL = "http://localhost:8080/api/uploads/profile";
-const DEPT_API_URL = "http://192.168.0.24:8080/api/departments";
+const DEPT_API_URL = "http://localhost:8080/api/departments";
 const CHECK_ID_API = "http://localhost:8080/api/admins/check-empid";
 
 // safe converter to avoid rendering objects in JSX

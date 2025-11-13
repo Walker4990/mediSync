@@ -1,17 +1,29 @@
 import React, { useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import LoginModal from "./LoginModal";
 import RegisterModal from "./RegisterModal";
 import { ModalContext } from "./ModalContext";
 
 export default function ModalProvider({ children }) {
-  // 3. 인증상태 관리 추가
+  const navigate = useNavigate();
+  // 인증상태 관리 추가
   const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem("token"));
+  const [redirectPath, setRedirectPath] = useState("/");
 
   const handleLoginSuccess = (token) => {
     // 실제 JWT 토큰을 저장
     localStorage.setItem("token", token);
     setIsLoggedIn(true);
-    // 로그인 모달 닫기 로직은 LoginModal 컴포넌트에서 setTimeout으로 처리
+
+    // 로그인 모달 닫기 (LoginModal 내부에서 setTimeout 대신 여기서 바로 호출)
+    setIsLoginModalOpen(false);
+
+    // 리디렉션 로직 실행
+    const finalPath = redirectPath && redirectPath !== "/" ? redirectPath : "/";
+    navigate(finalPath, { replace: true });
+
+    // 경로 사용 후 초기화
+    setRedirectPath("/");
   };
 
   const handleLogout = async () => {
@@ -34,12 +46,12 @@ export default function ModalProvider({ children }) {
     }
   };
 
-  // 1. 회원가입 모달
+  // 회원가입 모달
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
   const openRegisterModal = () => setIsRegisterModalOpen(true);
   const closeRegisterModal = () => setIsRegisterModalOpen(false);
 
-  // 2. 로그인 모달
+  // 로그인 모달
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const openLoginModal = () => setIsLoginModalOpen(true);
   const closeLoginModal = () => setIsLoginModalOpen(false);
@@ -63,8 +75,11 @@ export default function ModalProvider({ children }) {
       isLoggedIn,
       handleLoginSuccess,
       handleLogout,
+
+      // 리디렉션 상태
+      setRedirectPath,
     }),
-    [isRegisterModalOpen, isLoginModalOpen, isLoggedIn]
+    [isRegisterModalOpen, isLoginModalOpen, isLoggedIn, redirectPath]
   );
 
   return (
