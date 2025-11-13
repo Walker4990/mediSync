@@ -20,7 +20,7 @@ import {
 // API endpoints
 const API_URL = "http://localhost:8080/api/admins";
 const UPLOAD_API_URL = "http://localhost:8080/api/uploads/profile";
-const DEPT_API_URL = "http://192.168.0.24:8080/api/departments";
+const DEPT_API_URL = "http://localhost:8080/api/departments";
 const CHECK_ID_API = "http://localhost:8080/api/admins/check-empid";
 
 // safe converter to avoid rendering objects in JSX
@@ -326,7 +326,7 @@ const AccountRegiForm = () => {
   const isDisabled = isSubmitting || uploading || isDeptLoading;
 
   return (
-    <div className="bg-gray-50 min-h-screen font-sans">
+    <div className="bg-gray-50 min-h-screen font-pretendard">
       <AdminHeader />
       <main className="max-w-7xl mx-auto pt-24 px-4 sm:px-6 lg:px-8">
         <div className="bg-white shadow-2xl rounded-xl p-6 sm:p-8 border border-gray-200">
@@ -557,10 +557,10 @@ const AccountRegiForm = () => {
             {/* footer buttons */}
             <footer className="pt-4 border-t border-gray-200 mt-8 flex justify-end space-x-4">
               <Link
-                to="/admin/dashboard"
+                to="/admin/staff" //acclist
                 className="px-6 py-2 bg-gray-200 text-gray-700 font-semibold rounded-lg shadow-md hover:bg-gray-300 transition duration-150"
               >
-                처음으로
+                목록으로
               </Link>
 
               <button

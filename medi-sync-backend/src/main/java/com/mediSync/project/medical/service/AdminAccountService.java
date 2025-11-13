@@ -46,4 +46,19 @@ public class AdminAccountService {
     public int adminDelete(Long adminId) {
         return adminAccountMapper.deleteAdmin(adminId);
     }
+
+    public AdminAccount selectAdminByEmpId(String empId) {
+        return adminAccountMapper.loginAdmin(empId);
+    }
+    public AdminAccount login(String empId, String password) {
+        AdminAccount admin = adminAccountMapper.loginAdmin(empId);
+        if (admin == null) {
+            return null;
+        }
+        if (passwordEncoder.matches(password, admin.getPassword())) {
+            return admin;
+        } else {
+            return null;
+        }
+    }
 }

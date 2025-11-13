@@ -48,7 +48,7 @@ const DropdownMenu = ({ title, items }) => {
         className="hover:text-gray-200 focus:outline-none"
         aria-expanded={isOpen}
       >
-        {title}
+        <span className="text-sm font-normal">{title}</span>
       </button>
 
       {/* 드롭다운 내용 */}

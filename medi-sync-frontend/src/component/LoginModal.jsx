@@ -1,5 +1,5 @@
 import React, { useState, useContext, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { X } from "lucide-react";
 import useModal from "./ModalContext";
@@ -21,6 +21,9 @@ export default function LoginModal() {
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false); // 중복 요청 방지
+  const navigate = useNavigate();
+
+  const API_URI = "http://localhost:8080/api/users/login";
 
   // isOpen 상태가 변경될 때마다 실행되며 인풋값을 초기화
   useEffect(() => {
@@ -40,15 +43,17 @@ export default function LoginModal() {
     setMessage("");
 
     try {
-      const res = await axios.post("/api/users/login", {
+      const res = await axios.post(API_URI, {
         login_id: loginId,
         password: password,
       });
 
       if (res.data.success) {
         localStorage.setItem("token", res.data.token);
+        // handleLoginSuccess();
+        handleLoginSuccess(res.data.token);
+        onClose();
         alert("로그인 성공!");
-        window.location.href = "/";
       } else {
         setMessage(res.data.message || "로그인 실패");
       }
@@ -62,7 +67,26 @@ export default function LoginModal() {
   // OAuth2 로그인 함수 (미구현)
   const handleSocialLogin = (provider) => {
     // Spring Security OAuth2 시작 경로로 강제 이동합니다.
-    window.location.href = `http://localhost:3000/${provider}`;
+    if (provider == "naver") {
+      // 1. 서버에서 고유한 state 값을 미리 받아오거나, 클라이언트에서 예측 불가능한 랜덤 문자열을 생성합니다.
+      const state = "RANDOM_UNIQUE_STRING"; // 예: "a1b2c3d4e5f6" (실제로는 동적 생성)
+
+      // 세션 스토리지 등에 state 값 임시 저장 (콜백 시 검증용)
+      sessionStorage.setItem("oauth_state", state);
+
+      // 2. 로그인 요청
+      const clientId = "W8L6n2yDe6eGoosEf7AD"; // 님의 클라이언트 ID
+      const redirectUri = "http://localhost:8080/api/users/test"; // 네이버에 등록한 URL
+
+      // state 값을 포함하여 URL 생성
+      const naverLoginUrl = `https://nid.naver.com/oauth2.0/authorize?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&state=${state}`;
+
+      // 해당 URL로 이동
+      window.location.href = naverLoginUrl;
+    } else if (provider == "kakao") {
+      window.location.href = `https://kauth.kakao.com/oauth/authorize?response_type=code&client_id=9ddcb566b2cec688f9952079e973740a&redirect_uri=http://localhost:8080/login/oauth2/code/kakao
+`;
+    }
   };
 
   // 회원가입 링크 클릭 시 로그인 모달을 닫고 회원가입 모달을 열기

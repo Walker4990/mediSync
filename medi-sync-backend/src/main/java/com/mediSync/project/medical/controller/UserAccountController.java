@@ -1,16 +1,27 @@
 package com.mediSync.project.medical.controller;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.mediSync.project.common.service.EmailService;
 import com.mediSync.project.config.JwtUtil;
 import com.mediSync.project.medical.service.UserAccountService;
+import com.mediSync.project.medical.vo.AdminAccount;
 import com.mediSync.project.medical.vo.UserAccount;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DuplicateKeyException;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
+import org.springframework.http.converter.StringHttpMessageConverter;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestTemplate;
 
+import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 
@@ -21,9 +32,23 @@ public class UserAccountController {
 
     private final UserAccountService userAccountService;
     private final PasswordEncoder passwordEncoder;
+    private final EmailService emailService;
 
     @Autowired
     private JwtUtil jwtUtil;
+
+    // application.properties에서 설정값 주입
+    @Value("${spring.security.oauth2.client.registration.naver.client-id}")
+    private String clientId;
+
+    @Value("${spring.security.oauth2.client.registration.naver.client-secret}")
+    private String clientSecret;
+
+    @Value("${spring.security.oauth2.client.provider.naver.token-uri}")
+    private String tokenUri;
+
+    @Value("${spring.security.oauth2.client.provider.naver.user-info-uri}")
+    private String userInfoUri;
 
     // 전체 리스트
     @GetMapping
@@ -31,7 +56,224 @@ public class UserAccountController {
         return userAccountService.userSelectAll();
     }
 
-    @GetMapping("/{userId}")
+    // naver 로그인 테스트
+    @GetMapping("/test")
+    public ResponseEntity<?> handleNaverCallback(@RequestParam String code, @RequestParam String state) {
+        // 1. 네이버 Access Token 발급
+        String accessToken;
+        try {
+            accessToken = getNaverAccessTokenTest(code, state);
+        } catch (RuntimeException e) {
+            // 토큰 발급 실패 시 클라이언트의 에러 페이지로 리다이렉트 (또는 에러 메시지 반환)
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("success", false, "message", "네이버 토큰 발급 실패"));
+        }
+
+        // 2. 네이버 사용자 프로필 조회
+        NaverUserProfile naverProfile = getNaverUserProfile(accessToken);
+        NaverUser naverUser = naverProfile.getResponse();
+
+        // 네이버 고유 ID를 우리 서비스의 login_id로 사용할 소셜 ID 생성
+        String socialLoginId = "NAVER_" + naverUser.getId();
+
+        // 3. 서비스 로그인/회원가입 처리
+        UserAccount user = userAccountService.selectUserByLoginId(socialLoginId);
+
+        // 3-1. 신규 사용자인 경우 회원가입 처리
+        if (user == null) {
+            // 소셜 회원가입 로직
+            UserAccount newUser = new UserAccount();
+            newUser.setLoginId(socialLoginId);
+            newUser.setPassword(passwordEncoder.encode(socialLoginId)); // 소셜 사용자는 임시/랜덤 비밀번호 저장
+            newUser.setName(naverUser.getName());
+            newUser.setEmail(naverUser.getEmail());
+            newUser.setPhone("000-0000-0000"); // 필수 필드이므로 임시값 또는 추가 입력 필요
+            newUser.setSocial("NAVER"); // 소셜 로그인 사용자임을 표시
+
+            try {
+                userAccountService.userInsert(newUser);
+                user = newUser; // 새로 가입된 사용자 객체 사용
+            } catch (DuplicateKeyException e) {
+                // 이메일 등이 중복될 수 있으나, 여기서는 ID 기반이므로 무시하거나 로그 남김
+            }
+        }
+
+        // 4. JWT 토큰 발급
+        String jwtToken = jwtUtil.generateToken(user.getLoginId(), user.getUserId());
+
+        // 5. 클라이언트(React)로 리다이렉트 및 토큰 전달
+        // **프론트엔드에서 토큰을 처리할 경로**를 설정해야 합니다. (예: /oauth/redirect)
+        // 이 리다이렉트는 브라우저를 클라이언트로 이동시키고, URL 파라미터를 통해 토큰을 전달합니다.
+        String frontendRedirectUrl = "http://localhost:3000/oauth/redirect?token=" + jwtToken + "&login=success";
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setLocation(URI.create(frontendRedirectUrl));
+
+        // HTTP 302 Found 응답으로 클라이언트 브라우저를 리다이렉트
+        return new ResponseEntity<>(headers, HttpStatus.FOUND);
+    }
+
+
+    @GetMapping("/test2")
+    public void getTest(@RequestParam String code, @RequestParam String state) {
+        RestTemplate restTemplate = new RestTemplate();
+
+        // 1. 요청 헤더 설정
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+
+        // 2. 요청 파라미터(Body) 설정
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("grant_type", "authorization_code");
+        params.add("client_id", clientId);
+        params.add("client_secret", clientSecret);
+        params.add("code", code);
+        params.add("state", state);
+        // (참고: 네이버의 경우 redirect_uri는 토큰 요청 시 필수는 아님)
+
+        // 3. HttpEntity (헤더 + 바디) 생성
+        HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(params, headers);
+
+        // 2. 서비스 호출하여 Access Token 받기
+        String accessToken = getNaverAccessTokenTest(code, state);
+
+        NaverUserProfile result = getNaverUserProfile(accessToken);
+        System.out.println("========");
+        System.out.println(result.getResponse().getName());
+
+        /*
+            === 소셜 로그인 관련 TEST ===
+            access_token 발급 받아 로그인 처리 => token에 담긴 사용자 정보 추출해서 DB에 INSERT
+            id값 확인해서 강제로 login_id로 주입하고,
+            user_account에는 social 컬럼 추가해서 boolean (소셜 여부) 혹은 String (default=null, naver, kakao..)
+        */
+
+        // 4. POST 요청 보내기 (네이버 토큰 URI로)
+        ResponseEntity<NaverTokenResponse> response = restTemplate.postForEntity(
+                tokenUri,
+                request,
+                NaverTokenResponse.class // 응답을 매핑할 DTO 클래스
+        );
+
+        // 5. 응답에서 Access Token 꺼내기
+        //if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
+        //    return response.getBody().getAccess_token();
+        //} else {
+        //    throw new RuntimeException("네이버 토큰 발급에 실패했습니다. 응답: " + response);
+        //}
+    }
+
+    public String getNaverAccessTokenTest(String code, String state) {
+
+        // 1. RestTemplate 객체 생성
+        RestTemplate restTemplate = new RestTemplate();
+
+        // 2. HTTP 요청 헤더 설정
+        HttpHeaders headers = new HttpHeaders();
+        // 네이버 토큰 요청은 'application/x-www-form-urlencoded' 타입을 사용합니다.
+        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+
+        // 3. HTTP 요청 바디(Body) 설정 (필수 파라미터)
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("grant_type", "authorization_code");
+        params.add("client_id", clientId);
+        params.add("client_secret", clientSecret);
+        params.add("code", code);
+        params.add("state", state);
+        // (참고: 네이버의 경우 redirect_uri는 토큰 요청 시 필수는 아님)
+
+        // 4. 헤더와 바디를 하나의 HttpEntity 객체로 합치기
+        HttpEntity<MultiValueMap<String, String>> naverTokenRequest =
+                new HttpEntity<>(params, headers);
+
+        System.out.println("네이버 토큰 요청 URI: " + tokenUri);
+        System.out.println("네이버 토큰 요청 파라미터: " + naverTokenRequest.getBody());
+
+        // 5. POST 방식으로 네이버 토큰 발급 URI에 요청 보내기
+        // (응답은 NaverTokenResponse DTO 객체로 자동 매핑됩니다)
+        ResponseEntity<NaverTokenResponse> response = restTemplate.postForEntity(
+                tokenUri,
+                naverTokenRequest,
+                NaverTokenResponse.class
+        );
+
+        // 6. 응답 처리
+        if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
+            String accessToken = response.getBody().getAccess_token();
+            System.out.println("네이버 Access Token 발급 성공: " + accessToken);
+            return accessToken;
+        } else {
+            // 예외 상황 처리 (실제로는 구체적인 예외를 던지는 것이 좋습니다)
+            System.err.println("네이버 토큰 발급 실패: " + response);
+            throw new RuntimeException("네이버 Access Token 발급에 실패했습니다.");
+        }
+    }
+
+    @Data
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class NaverUser {
+        private String id;       // 네이버 고유 식별자
+        private String email;    // 이메일
+        private String name;     // 이름
+        // (필요에 따라 nickname, profile_image 등 scope에 맞게 추가)
+    }
+
+    @Data
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class NaverUserProfile {
+        private String resultcode;
+        private String message;
+        private NaverUser response; // **핵심: 사용자 정보는 'response' 객체 안에 중첩되어 있음**
+    }
+
+    public NaverUserProfile getNaverUserProfile(String accessToken) {
+
+        RestTemplate restTemplate = new RestTemplate();
+        restTemplate.getMessageConverters()
+                .add(0, new StringHttpMessageConverter(StandardCharsets.UTF_8));
+
+        // 2. HTTP 요청 헤더 설정
+        HttpHeaders headers = new HttpHeaders();
+        // ** (필수) Authorization 헤더에 Bearer 토큰 설정 **
+        headers.set("Authorization", "Bearer " + accessToken);
+
+        // 3. 헤더를 담은 HttpEntity 객체 생성 (GET 요청이므로 바디는 없음)
+        HttpEntity<String> entity = new HttpEntity<>(headers);
+
+        System.out.println("네이버 사용자 프로필 요청 URI: " + userInfoUri);
+
+        // 4. GET 방식으로 네이버 프로필 API에 요청 보내기
+        // (응답은 NaverUserProfile DTO 객체로 자동 매핑됩니다)
+        ResponseEntity<NaverUserProfile> response = restTemplate.exchange(
+                userInfoUri,
+                HttpMethod.GET,
+                entity,
+                NaverUserProfile.class
+        );
+
+        // 5. 응답 처리
+        if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
+            System.out.println("네이버 사용자 프로필 조회 성공: " + response.getBody());
+            return response.getBody();
+        } else {
+            System.err.println("네이버 사용자 프로필 조회 실패: " + response);
+            throw new RuntimeException("네이버 사용자 프로필 조회에 실패했습니다.");
+        }
+    }
+
+    @Data // Lombok (Getter, Setter, toString 등 자동 생성)
+    @JsonIgnoreProperties(ignoreUnknown = true) // 응답 JSON에 모르는 필드가 있어도 무시
+    private static class NaverTokenResponse {
+        private String access_token;
+        private String refresh_token;
+        private String token_type;
+        private int expires_in;
+        // (error, error_description 필드도 추가할 수 있음)
+
+        // token
+    }
+
+    @GetMapping("/id/{userId}")
     public ResponseEntity<UserAccount> getUserById(@PathVariable Long userId) {
         UserAccount user = userAccountService.userSelectOne(userId);
         if (user != null) {
@@ -69,15 +311,19 @@ public class UserAccountController {
 
     // 로그인 기능 + 토큰 발급
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody Map<String, String> loginRequest) {
+    public ResponseEntity<?> userLogin(@RequestBody Map<String, String> loginRequest) {
         String loginId = loginRequest.get("login_id");
         String password = loginRequest.get("password");
 
         UserAccount user = userAccountService.selectUserByLoginId(loginId);
 
         if (user != null && passwordEncoder.matches(password, user.getPassword())) {
-            // JWT 생성 (payload: loginId, userId)
             String token = jwtUtil.generateToken(user.getLoginId(), user.getUserId());
+//            String token = jwtUtil.generateToken(
+//                    user.getLoginId(),  // 1. Subject (loginId)
+//                    user.getUserId(),   // 2. id (userId)
+//                    "USER"              // 3. Role ("USER")
+//            );
 
             return ResponseEntity.ok(Map.of(
                     "success", true,
@@ -92,27 +338,19 @@ public class UserAccountController {
 
     // 마이페이지
     @GetMapping("/mypage")
-    public ResponseEntity<?> getMyPage(@RequestHeader("Authorization") String authHeader) {
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+    public ResponseEntity<?> getMyPage() {
+        // 💡 SecurityContextHolder에서 인증된 객체 가져오기
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        if (principal instanceof UserAccount) {
+            UserAccount user = (UserAccount) principal;
+            // 💡 비밀번호 필드를 제외하고 사용자 정보를 반환하는 DTO를 사용하는 것이 더 안전합니다.
+            return ResponseEntity.ok(user);
+        } else {
+            // 인증 필터 (JwtFilter)가 실패하면 여기까지 오지 않겠지만, 안전 장치
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(Map.of("message", "토큰이 없습니다."));
+                    .body(Map.of("message", "인증된 사용자 정보를 찾을 수 없습니다."));
         }
-
-        String token = authHeader.substring(7);
-        if (!jwtUtil.validateToken(token)) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(Map.of("message", "토큰이 유효하지 않습니다."));
-        }
-
-        String loginId = jwtUtil.extractLoginId(token);
-        UserAccount user = userAccountService.selectUserByLoginId(loginId);
-
-        if (user == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("message", "사용자 정보를 찾을 수 없습니다."));
-        }
-
-        return ResponseEntity.ok(user);
     }
 
     // 수정
@@ -156,22 +394,42 @@ public class UserAccountController {
         }
     }
 
-    // 비밀번호 재설정
-    @PostMapping("/reset-password")
-    public ResponseEntity<?> resetPassword(@RequestBody Map<String, String> request) {
-        String loginId = request.get("login_id");
+    // 비밀번호 분실 시 임시 재발급
+    @PostMapping("/temp-password")
+    public ResponseEntity<Map<String, Object>> sendTempPassword(@RequestBody Map<String, String> request) {
+        String loginId = request.get("loginId");
         String name = request.get("name");
         String phone = request.get("phone");
-        String newPassword = request.get("new_password");
-        // 새로운 비밀번호 암호화
-        String encodedPassword = passwordEncoder.encode(newPassword);
-        // 변경된 비밀번호 업데이트
-        int rowsAffected = userAccountService.resetPassword(loginId, name, phone, encodedPassword);
-        if (rowsAffected > 0) {
-            return ResponseEntity.ok(Map.of("success", true, "message", "비밀번호가 성공적으로 변경되었습니다."));
-        } else {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(Map.of("success", false, "message", "사용자 정보가 일치하지 않습니다."));
+
+        try {
+            UserAccount user = userAccountService.findUserForSendEmail(loginId, name, phone);
+
+            if (user == null) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(Map.of("success", false, "message", "일치하는 사용자 정보가 없습니다."));
+            }
+
+            String userEmail = user.getEmail();
+            String tempPassword = emailService.sendTempPasswordEmail(userEmail);
+            userAccountService.resetPassword(user.getLoginId(), passwordEncoder.encode(tempPassword));
+
+            return ResponseEntity.ok(Map.of("success", true, "message", "가입 시 등록한 이메일로 임시 비밀번호를 발송했습니다."));
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("success", false, "message", "처리 중 오류가 발생했습니다."));
         }
+
+    }
+
+    // JWT 기반 로그아웃 처리
+    @PostMapping("/logout")
+    public ResponseEntity<?> userLogout() {
+        // 1. 서버 세션 정리 (SessionCreationPolicy.STATELESS이므로 대부분 불필요)
+        // 2. JWT 블랙리스트 처리 (필요하다면 여기에 Redis 등을 이용해 무효화 로직 추가)
+        // 클라이언트에서 토큰을 삭제하는 것이 주요 목적이므로,
+        // 서버는 단순하게 200 OK를 반환하여 요청이 성공했음을 알립니다.
+        return ResponseEntity.ok(Map.of("success", true, "message", "로그아웃 요청 처리 완료"));
     }
 }

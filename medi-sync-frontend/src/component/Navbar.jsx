@@ -1,10 +1,29 @@
 import React, { useContext } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { LogOut, LogIn } from "lucide-react";
 import useModal from "./ModalContext";
 
 export default function Navbar() {
-  const { openModal, openLoginModal, isLoggedIn, handleLogout } = useModal();
+  const {
+    openModal,
+    openLoginModal,
+    isLoggedIn,
+    handleLogout,
+    setRedirectPath,
+  } = useModal();
+  const navigate = useNavigate();
+
+  const handleMenuClick = (e, path) => {
+    if (!isLoggedIn) {
+      e.preventDefault();
+      if (setRedirectPath) {
+        setRedirectPath(path);
+      }
+      openLoginModal();
+    } else {
+      navigate(path);
+    }
+  };
 
   return (
     <nav className="fixed top-0 left-0 w-full bg-white shadow-sm z-50 font-pretendard">
@@ -16,16 +35,27 @@ export default function Navbar() {
 
         {/* 메뉴 */}
         <div className="flex items-center space-x-10 text-gray-700 font-medium">
-          <Link to="/user/insurance" className="hover:text-blue-500 transition">
+          <a
+            href="/user/insurance"
+            onClick={(e) => handleMenuClick(e, "/user/insurance")}
+            className="hover:text-blue-500 transition cursor-pointer"
+          >
             보험청구
-          </Link>
-          <Link to="/user/consult" className="hover:text-blue-500 transition">
+          </a>
+          <a
+            href="/user/consult"
+            onClick={(e) => handleMenuClick(e, "/user/consult")}
+            className="hover:text-blue-500 transition cursor-pointer"
+          >
             진료예약
-          </Link>
-          <Link to="/user/mypage" className="hover:text-blue-500 transition">
+          </a>
+          <a
+            href="/user/mypage"
+            onClick={(e) => handleMenuClick(e, "/user/mypage")}
+            className="hover:text-blue-500 transition cursor-pointer"
+          >
             마이페이지
-          </Link>
-
+          </a>
 
           {/* 구분선 */}
           <span className="w-px h-5 bg-gray-300 mx-2 hidden md:block"></span>
@@ -54,7 +84,7 @@ export default function Navbar() {
                 </button>
                 <button
                   onClick={openModal}
-                  className="text-white bg-blue-600 px-4 py-1.5 rounded-lg shadow-md hover:bg-blue-700 transition duration-200 text-sm font-semibold"
+                  className="text-white bg-blue-600 px-5 py-[7px] rounded-lg shadow-md hover:bg-blue-700 transition duration-200 text-sm font-semibold"
                 >
                   회원가입
                 </button>

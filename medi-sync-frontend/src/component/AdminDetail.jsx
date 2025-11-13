@@ -289,19 +289,25 @@ const AdminDetail = ({ adminId, onBackToList }) => {
 
   // 데이터 조회 성공 시
   return (
-    <div className="space-y-8 pb-10">
-      <div className="flex justify-between items-center mb-6">
+    <div className="space-y-5 pb-10">
+      <div className="flex justify-left items-center mb-6 px-2 border-b-2 border-blue-200">
+        <h1 className="text-4xl font-bold text-blue-600 pb-4 mr-16">
+          직원 상세 정보
+          <span className="text-gray-500 text-2xl font-semibold">
+            (ID: {adminId})
+          </span>
+        </h1>
         <button
           onClick={onBackToList}
-          className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors shadow-md flex items-center"
+          className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors shadow-md flex items-center mr-4"
         >
-          &larr; 목록으로 돌아가기
+          🧾 리스트로
         </button>
         {isEditing ? (
           <div className="flex space-x-3">
             <button
               onClick={handleSave}
-              className="px-5 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700 transition duration-200 shadow-md font-medium"
+              className="px-5 py-2 text-white bg-blue-500 rounded-md hover:bg-blue-600 transition duration-200 shadow-md font-medium"
             >
               저장
             </button>
@@ -321,13 +327,6 @@ const AdminDetail = ({ adminId, onBackToList }) => {
           </button>
         )}
       </div>
-
-      <h1 className="text-4xl font-bold text-blue-600 mb-8 border-b-2 border-blue-200 pb-4">
-        직원 상세 정보{" "}
-        <span className="text-gray-500 text-2xl font-semibold">
-          (ID: {adminId})
-        </span>
-      </h1>
 
       {/* 1. 개인 정보 섹션 */}
       <div className="bg-white p-6 shadow-xl rounded-lg border border-gray-100">

@@ -4,11 +4,13 @@ import UserLayout from "./component/UserLayout";
 import ModalProvider from "./component/ModalProvider";
 import AccountRegiForm from "./pages/admin/AccountRegiForm";
 import AccountList from "./pages/admin/AccountList";
+import AdminMyPage from "./pages/admin/AdminMyPage";
 import DashBoard from "./pages/admin/DashBoard";
 import PatientList from "./pages/admin/PatientList";
 import StaffList from "./pages/admin/StaffList";
 import DoctorList from "./pages/admin/DoctorList";
 import MyPage from "./pages/user/MyPage";
+import PreExamForm from "./pages/user/PreExamForm";
 import UserHome from "./pages/user/UserHome";
 import FindAccount from "./pages/user/FindAccount";
 import MedicalConsult from "./pages/user/MedicalConsult";
@@ -37,14 +39,22 @@ import SupportChatPage from "./pages/user/SupportChatPage";
 import AdminChatPage from "./pages/admin/AdminChatPage";
 import FinanceTransactionPage from "./pages/admin/FinanceTransactionPage";
 import AdminMainPage from "./pages/admin/AdminMainPage";
+import OAuthCallback from "./component/OAuthCallback";
 import InsurerPage from "./pages/admin/InsurerPage";
 import PatientInsurancePage from "./pages/user/PatientInsurancePage";
 
+import axios from "axios";
+const token = localStorage.getItem("token");
+if (token) {
+  axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+}
+
 function AppContent() {
   const location = useLocation();
-  const hideNotification = location.pathname.startsWith("/user/medicalDetail")
-      ||  location.pathname.startsWith("/admin/finance")
-      || location.pathname === "/admin";
+  const hideNotification =
+    location.pathname.startsWith("/user/medicalDetail") ||
+    location.pathname.startsWith("/admin/finance") ||
+    location.pathname === "/admin";
   return (
     <>
       {!hideNotification && <WebSocketListener />}
@@ -56,6 +66,7 @@ function AppContent() {
           <Route path="/admin" element={<Home />} />
           <Route path="/admin/register" element={<AccountRegiForm />} />
           <Route path="/admin/acclist" element={<AccountList />} />
+          <Route path="/admin/mypage" element={<AdminMyPage />} />
 
           <Route path="/admin/patients" element={<PatientList />} />
           <Route path="/admin/staff" element={<StaffList />} />
@@ -83,17 +94,21 @@ function AppContent() {
           <Route path="/admin/finance" element={<FinanceTransactionPage />} />
           <Route path="/admin/finance/dashboard" element={<DashBoard />} />
           <Route path="/admin/insurance" element={<InsurerPage />} />
-                {/*유저페이지*/}
+          {/*유저페이지*/}
           <Route element={<UserLayout />}>
             <Route path="/" element={<UserHome />} />/
             <Route path="/findAccount" element={<FindAccount />} />/
+            <Route path="/auth/callback" element={<OAuthCallback />} />
             <Route path="/user/mypage" element={<MyPage />} />
+            <Route path="/user/pre-form" element={<PreExamForm />} />
             <Route path="/user/consult" element={<MedicalConsult />} />
             <Route path="/user/reservation" element={<Reservation />} />
             <Route path="/user/insurance" element={<Insurance />} />
             <Route path="/user/support" element={<SupportChatPage />} />
-            <Route path="/user/patient-insurance" element={<PatientInsurancePage patientId={1}/>}/>
-
+            <Route
+              path="/user/patient-insurance"
+              element={<PatientInsurancePage patientId={1} />}
+            />
           </Route>
           {/*새창 열림*/}
           <Route

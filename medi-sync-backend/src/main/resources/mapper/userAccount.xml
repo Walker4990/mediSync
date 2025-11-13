@@ -10,10 +10,11 @@
         <result property="name" column="name"/>
         <result property="phone" column="phone"/>
         <result property="role" column="role"/>
+        <result property="social" column="social"/>
         <result property="createdAt" column="created_at"/>
         <result property="username" column="username"/>
         <result property="userphone" column="userphone"/>
-        <result property="email" column="email"/>
+        <result property="useremail" column="useremail"/>
 
         <association property="patient" javaType="com.mediSync.project.patient.vo.Patient">
             <id property="patientId" column="patient_id"/>
@@ -31,9 +32,9 @@
     <!-- 계정 등록 -->
     <insert id="insertUser" parameterType="user" useGeneratedKeys="true" keyProperty="userId">
         INSERT INTO user_account (
-        login_id, password, name, phone, role, created_at
+        login_id, password, name, phone, email, role, social, created_at
         ) VALUES (
-        #{loginId}, #{password}, #{name}, #{phone}, 'USER', NOW())
+        #{loginId}, #{password}, #{name}, #{phone}, #{email}, 'USER', #{social}, NOW())
     </insert>
 
     <!-- 전체 계정 목록 조회 -->
@@ -47,7 +48,7 @@
     </select>
 
     <!-- 중복 아이디 체크 -->
-    <select id="checkIdExists" parameterType="string" resultType="int">
+    <select id="checkIdExists" parameterType="String" resultType="int">
         SELECT COUNT(*)
         FROM user_account
         WHERE login_id = #{loginId}
@@ -55,7 +56,7 @@
 
     <!-- 로그인 -->
     <select id="selectUserByLoginId" parameterType="String" resultMap="userAccountMap">
-        SELECT u.user_id, u.login_id, u.password, u.name AS username, u.phone AS userphone, u.role, u.created_at,
+        SELECT u.user_id, u.login_id, u.password, u.name AS username, u.phone AS userphone, u.role, u.email AS useremail, u.created_at,
         p.patient_id, p.resident_no, p.address, p.insurer_code, p.consent_insurance, p.status, p.email AS email, p.age, p.gender
         FROM user_account u LEFT JOIN patient p on (u.user_id = p.user_id)
         WHERE login_id = #{loginId}
@@ -64,7 +65,7 @@
     <!-- 계정 정보 수정 -->
     <update id="updateUser" parameterType="Long">
         UPDATE user_account
-        SET name = #{name}, phone = #{phone}
+        SET name = #{name}, phone = #{phone}, email = #{email}
         WHERE user_id = #{userId}
     </update>
 
@@ -82,10 +83,15 @@
     </select>
 
     <!-- 비밀번호 변경 -->
-    <update id="updatePasswordByUserInfo">
+    <select id="selectUserForSendEmail" parameterType="user" resultType="user">
+        SELECT *
+        FROM user_account
+        WHERE login_id = #{loginId} AND name = #{name} AND phone = #{phone}
+    </select>
+    <update id="updatePasswordByUserInfo" parameterType="user">
         UPDATE user_account
         SET password = #{password}
-        WHERE login_id = #{loginId} AND name = #{name} AND phone = #{phone}
+        WHERE login_id = #{loginId}
     </update>
 
 
