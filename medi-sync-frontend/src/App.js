@@ -41,6 +41,7 @@ import FinanceTransactionPage from "./pages/admin/FinanceTransactionPage";
 import AdminMainPage from "./pages/admin/AdminMainPage";
 import OAuthCallback from "./component/OAuthCallback";
 import InsurerPage from "./pages/admin/InsurerPage";
+import PatientInsurancePage from "./pages/user/PatientInsurancePage";
 
 import axios from "axios";
 const token = localStorage.getItem("token");
@@ -104,6 +105,10 @@ function AppContent() {
             <Route path="/user/reservation" element={<Reservation />} />
             <Route path="/user/insurance" element={<Insurance />} />
             <Route path="/user/support" element={<SupportChatPage />} />
+            <Route
+              path="/user/patient-insurance"
+              element={<PatientInsurancePage patientId={1} />}
+            />
           </Route>
           {/*새창 열림*/}
           <Route

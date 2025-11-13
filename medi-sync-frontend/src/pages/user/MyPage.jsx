@@ -8,19 +8,20 @@ import timeGridPlugin from "@fullcalendar/timegrid";
 import "../../style/calendar.css";
 
 import {
-  User,
-  Lock,
-  Bell,
-  Search,
-  FileText,
-  Calendar,
-  Wallet,
-  MessageSquare,
-  Briefcase,
-  ChevronRight,
-  X,
+    User,
+    Lock,
+    Bell,
+    Search,
+    FileText,
+    Calendar,
+    Wallet,
+    MessageSquare,
+    Briefcase,
+    ChevronRight,
+    X, ShieldCheck,
 } from "lucide-react";
 import SupportChatWidget from "./SupportChatPage";
+import PatientInsurancePage from "./PatientInsurancePage";
 
 // 회원정보 수정 탭 - currentUser 데이터를 prop으로 받도록 수정
 const UserInfoEdit = ({ currentUser }) => {
@@ -623,6 +624,12 @@ const MyPage = () => {
         icon: Bell,
         group: "profile",
       },
+      {
+        id: "patient-insurance",
+        label: "내 보험 조회",
+        icon: ShieldCheck,
+        group: "profile",
+      },
 
       {
         id: "med_records",
@@ -692,6 +699,14 @@ const MyPage = () => {
             currentUser={currentUser}
           />
         );
+        case "patient-insurance":
+            return (
+                <PatientInsurancePage
+                    title="내 보험 조회"
+                    icon={ShieldCheck}
+                    patientId={1}
+                />
+            );
       default:
         return <div className="p-6 text-gray-500">선택된 메뉴가 없습니다.</div>;
     }

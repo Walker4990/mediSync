@@ -36,5 +36,85 @@
         LIMIT 1
     </select>
 
+    <!-- 진료 내역 조회 -->
+    <select id="selectTreatmentList" resultType="treatment">
+        SELECT DISTINCT
+        mr.record_id,
+        d.dept_name AS department,
+        mr.diagnosis,
+        mr.total_cost AS amount,
+        DATE(mr.created_at) AS date,
+        TIME(mr.created_at) AS time,
+        c.status AS status
+        FROM medical_record mr
+        JOIN admin_account a ON mr.admin_id = a.admin_id
+        JOIN department d ON a.dept_id = d.dept_id
+        LEFT JOIN claim_request c ON mr.record_id = c.record_id
+        WHERE mr.patient_id = #{patientId}
+        ORDER BY date DESC
+    </select>
 
+    <!-- 청구 이력 -->
+    <select id="selectClaimHistoryByPatient" resultType="map">
+        SELECT
+        cr.claim_id      AS claimId,
+        cr.claim_amount  AS claimAmount,
+        cr.created_at    AS createdAt,
+        cr.status        AS status,
+        ir.insurer_name  AS insurerName,
+        cr.payout_amount AS payoutAmount
+        FROM claim_request cr
+        JOIN insurer ir
+        ON ir.insurer_code = cr.insurer_code
+        WHERE EXISTS (
+        SELECT 1
+        FROM patient_insurance pi
+        WHERE pi.insurer_code = cr.insurer_code
+        AND pi.patient_id = #{patientId}
+        )
+        ORDER BY cr.created_at DESC
+    </select>
+
+    <!-- 보험사 목록 -->
+    <select id="selectInsurerList" resultType="insurer">
+        SELECT insurer_code, insurer_name, api_endpoint, contact
+        FROM insurer
+        ORDER BY insurer_name
+    </select>
+
+    <!-- 보험금 청구 등록 -->
+    <insert id="insertClaimRequest" parameterType="requestDto" useGeneratedKeys="true" keyProperty="claimId">
+        INSERT INTO claim_request (record_id, insurer_code, claim_amount, status, auto_generated, created_at)
+        VALUES (#{recordId}, #{insurerCode}, #{claimAmount}, 'SENT', 0, NOW());
+    </insert>
+
+    <insert id="insertClaimItems" parameterType="map">
+        INSERT INTO claim_item (claim_id, item_name, amount)
+        VALUES
+        <foreach collection="items" item="item" separator=",">
+            (#{claimId}, #{item.itemName}, #{item.amount})
+        </foreach>
+    </insert>
+
+    <select id="findTotalCostByRecordId" resultType="java.math.BigDecimal">
+        SELECT total_cost FROM medical_record WHERE record_id = #{recordId}
+    </select>
+
+    <select id="findCoverageByInsurerCode" resultType="java.math.BigDecimal">
+        SELECT coverage_rate FROM patient_insurance WHERE insurer_code = #{insurerCode} LIMIT 1
+    </select>
+    <!-- 보험사 MOCK API용 -->
+    <select id="findPendingClaims" resultType="ClaimRequest">
+        SELECT claim_id, record_id, insurer_code, claim_amount
+        FROM claim_request
+        WHERE status = 'SENT'
+    </select>
+    <update id="updateClaimPaid">
+        UPDATE claim_request
+        SET status = 'PAID',
+            payout_amount = #{claimAmount},
+            paid_date = NOW(),
+            updated_at = NOW()
+        WHERE claim_id = #{claimId}
+    </update>
 </mapper>

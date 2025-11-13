@@ -1,9 +1,15 @@
 package com.mediSync.project.insurance.mapper;
 
+import com.mediSync.project.insurance.dto.ClaimItemDto;
+import com.mediSync.project.insurance.dto.ClaimRequestDto;
+import com.mediSync.project.insurance.dto.TreatmentDto;
+import com.mediSync.project.insurance.vo.ClaimRequest;
+import com.mediSync.project.insurance.vo.Insurer;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Map;
 
 @Mapper
@@ -24,5 +30,23 @@ public interface ClaimMapper {
                             @Param("paidAmount") BigDecimal paidAmount,
                             @Param("resultCode") String resultCode,
                             @Param("message") String message);
+    List<TreatmentDto> selectTreatmentList(Long patientId);
 
+    List<Insurer> selectInsurerList();
+    List<Map<String, Object>> selectClaimHistoryByPatient(Long patientId);
+
+    int insertClaimRequest(ClaimRequestDto dto);
+
+    int insertClaimItems(@Param("claimId") Long claimId,
+                         @Param("items") List<ClaimItemDto> items);
+
+    // 이미 청구된 항목 조회용 (중복 방지용)
+    List<String> selectClaimedItems(Long recordId);
+    BigDecimal findTotalCostByRecordId(@Param("recordId") Long recordId);
+    BigDecimal findCoverageByInsurerCode(@Param("insurerCode") String insurerCode);
+
+    //보험사 Mock API용 메서드
+    List<ClaimRequest> findPendingClaims();
+    void updateClaimPaid(@Param("claimId") Long claimId,
+                         @Param("claimAmount") BigDecimal claimAmount);
 }
