@@ -24,7 +24,7 @@ export default function AdminMainPage() {
         try {
             const today = new Date().toISOString().split("T")[0];
             const res = await axios.get("http://192.168.0.24:8080/api/operation/todayList",{
-                params: {date: today},
+                params: {scheduledDate: today},
             });
             setOperations(res.data);
         } catch (err) {

@@ -22,6 +22,7 @@
         a.created_at     AS createdAt
         FROM admin_account a
         JOIN department d ON a.dept_id = d.dept_id
+        WHERE position = 'DOCTOR'
         ORDER BY a.admin_id DESC
     </select>
 

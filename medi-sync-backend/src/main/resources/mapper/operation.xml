@@ -198,10 +198,10 @@
     </update>
 
     <select id="selectByDate" resultType="operation" parameterType="java.time.LocalDate">
-        SELECT op.*, or.room_name AS roomName
+        SELECT op.*, opr.room_name AS roomName, a.name AS doctorName
         FROM operation op
-        JOIN operation_room or ON op.room_id = or.room_id
-
+        JOIN operation_room opr ON op.room_id = opr.room_id
+        JOIN admin_account a ON op.admin_id = a.admin_id
         WHERE scheduled_date = #{scheduledDate}
         ORDER BY scheduled_time ASC
 
