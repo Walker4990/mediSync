@@ -1,7 +1,7 @@
 import { useNavigate, useParams } from "react-router-dom";
 import React, { useEffect, useState, useMemo } from "react";
 import axios from "axios";
-import { div, header } from "framer-motion/client";
+import { div, header, option } from "framer-motion/client";
 import { Star, Type } from "lucide-react";
 import { motion, percent, AnimatePresence } from "framer-motion";
 export default function DoctorReview() {
@@ -11,8 +11,13 @@ export default function DoctorReview() {
   const [rating, setRating] = useState(0); //별점
   const [memo, setMemo] = useState("");
   const [eligibleReservations, setEligibleReservations] = useState([]);
+  const [selectedReservation, setSelectedReservation] = useState(null);
+  const [reviews, setReviews] = useState([]); //리뷰 목록
+  const [stats, setStats] = useState(null);
+
   const patientId = 1;
   //페이지 뜨자마자 의사 정보 가져오기
+
   useEffect(() => {
     const fetchDoctor = async () => {
       try {
@@ -27,20 +32,47 @@ export default function DoctorReview() {
     fetchDoctor();
   }, [adminId]);
 
+  const fetchEligibility = async () => {
+    try {
+      const res = await axios.get(
+        `http://localhost:8080/api/reviews/eligible/${patientId}/${adminId}`
+      );
+      setEligibleReservations(res.data);
+      console.log("리뷰 쓸 수 있는 기록", res.data);
+    } catch (err) {
+      console.error("리뷰가능 리스트 불러오기 실패", err);
+    }
+  };
+
+  //리뷰 가져오기
+  const fetchReviews = async () => {
+    try {
+      const res = await axios.get(
+        `http://localhost:8080/api/reviews/list/${adminId}`
+      );
+      setReviews(res.data);
+      console.log("리뷰 : ", res.data);
+    } catch (err) {
+      console.error("리뷰 조회 가져오기 실패", err);
+    }
+  };
+
+  const fetchStats = async () => {
+    try {
+      const res = await axios.get(
+        `http://localhost:8080/api/reviews/rating/${adminId}`
+      );
+      setReviews(res.data);
+      console.rog("별점 : ", res.data);
+    } catch (err) {
+      console.error("평점 불러오기 실패", err);
+    }
+  };
+
   useEffect(() => {
-    const fetchEligibility = async () => {
-      try {
-        const res = await axios.get(
-          `http://localhost8080/api/reviews/eligible/${patientId}/${adminId}`
-        );
-        setEligibleReservations(res.data);
-        console.log(res.data);
-      } catch (err) {
-        console.error("리뷰가능 리스트 불러오기 실패", err);
-      }
-    };
+    fetchReviews();
     fetchEligibility();
-  });
+  }, []);
 
   //리뷰 제출
   const handleSubmitReview = async () => {
@@ -50,13 +82,16 @@ export default function DoctorReview() {
         rating,
         memo,
         patientId: 1,
-        typeId: 12, //실제 예약 키
-        isPublic: true,
+        typeId: selectedReservation.typeId, //실제 예약 키
+        type: selectedReservation.type,
       });
       alert("리뷰가 등록되었습니다!");
       setShowModal(false);
       setRating(0);
       setMemo("");
+      setSelectedReservation(null);
+      fetchEligibility();
+      fetchReviews();
     } catch (err) {
       console.error("리뷰 제출 오류 발생", err);
       alert("리뷰 제출 오류 발생", err);
@@ -197,6 +232,32 @@ export default function DoctorReview() {
               exit={{ scale: 0.8, opacity: 0 }}
             >
               <h3 className="text-xl font-semibold mb-4">리뷰 작성</h3>
+
+              {/*리뷰 선택*/}
+              <div className="mb-4">
+                <label className="block text-gray-700 mb-2 font-medium">
+                  진료 선택
+                </label>
+                <select
+                  className="w-full border rounded-lg p-2"
+                  value={selectedReservation?.typeId || ""}
+                  onChange={(e) => {
+                    const selected = eligibleReservations.find(
+                      (item) => item.typeId === Number(e.target.value)
+                    );
+                    setSelectedReservation(selected);
+                  }}
+                >
+                  <option value="">진료기록을 선택하세요.</option>
+                  {eligibleReservations.map((item) => (
+                    <option key={item.typeId} value={item.typeId}>
+                      [{item.type}] {item.name || "이름 없음"}(
+                      {new Date(item.date).toLocaleString()})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               {/*별점 선택 */}
               <div className="flex justify-center mb-4">
                 {[...Array(5)].map((_, i) => {
@@ -241,7 +302,7 @@ export default function DoctorReview() {
                 </button>
 
                 <button
-                  onClick={{ handleSubmitReview }}
+                  onClick={handleSubmitReview}
                   className={`px-4 py-2 rounded-lg text-white transition-colors duration-200
                     ${
                       rating === 0 || memo.trim() === ""
