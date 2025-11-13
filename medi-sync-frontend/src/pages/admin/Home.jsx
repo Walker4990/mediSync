@@ -24,11 +24,11 @@ const LoginForm = ({ onLoginSuccess }) => {
 
       const res = await axios.post(LOGIN_API_URL, payload);
 
-      if (res.status === 200 && res.data && res.data.token && res.data.admin) {
-        console.log("로그인 성공! 응답 데이터:", res.data);
+      if (res.status === 200 && res.data && res.data.token) {
+        console.log("로그인 성공! 응답 데이터:", res.data.token);
         onLoginSuccess(res.data); // 성공 시 부모 상태 및 데이터 업데이트
       } else {
-        setError("로그인 처리 중 오류가 발생했습니다.");
+        setError(res.data.message || "로그인 처리 중 오류가 발생했습니다.");
       }
     } catch (err) {
       console.error("로그인 API 호출 실패:", err);
@@ -161,12 +161,11 @@ export default function Home() {
   }, []);
 
   const handleLoginSuccess = (loginData) => {
-    const { token, admin } = loginData;
+    const { token } = loginData;
 
-    if (token && admin) {
-      // 1. 토큰과 '관리자 데이터'를 localStorage에 저장
+    if (token) {
+      // 1. 토큰을 localStorage에 저장
       localStorage.setItem("admin_token", token);
-      localStorage.setItem("admin_data", JSON.stringify(admin));
 
       // 2. Axios 헤더 설정
       axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
@@ -175,7 +174,7 @@ export default function Home() {
       setIsLoggedIn(true);
       setShowLoginForm(false);
       setMessage("로그인 성공! 잠시 후 이동합니다.");
-      console.log("로그인 성공, 저장된 관리자:", admin);
+      console.log("로그인 성공, 토큰 저장 완료.");
 
       // 4. 저장된 리디렉션 경로로 이동
       const redirectPath = localStorage.getItem("admin_redirect_path");
