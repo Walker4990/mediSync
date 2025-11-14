@@ -98,11 +98,11 @@
         ar.admin_id,
         COUNT(*) as total,
         ROUND(AVG(ar.rating),2) AS avgRating,
-        SUM(CASE WHEN ar.rating = 5 THEN 1 ELSE 0 END) AS ratingCount5,
-        SUM(CASE WHEN ar.rating = 4 THEN 1 ELSE 0 END) AS ratingCount4,
-        SUM(CASE WHEN ar.rating = 3 THEN 1 ELSE 0 END) AS ratingCount3,
-        SUM(CASE WHEN ar.rating = 2 THEN 1 ELSE 0 END) AS ratingCount2,
-        SUM(CASE WHEN ar.rating = 1 THEN 1 ELSE 0 END) AS ratingCount1
+        SUM(CASE WHEN ar.rating = 5 THEN 1 ELSE 0 END) AS rating5Count,
+        SUM(CASE WHEN ar.rating = 4 THEN 1 ELSE 0 END) AS rating4Count,
+        SUM(CASE WHEN ar.rating = 3 THEN 1 ELSE 0 END) AS rating3Count,
+        SUM(CASE WHEN ar.rating = 2 THEN 1 ELSE 0 END) AS rating2Count,
+        SUM(CASE WHEN ar.rating = 1 THEN 1 ELSE 0 END) AS rating1Count
         from admin_review ar
         WHERE ar.admin_id = #{adminId}
         GROUP BY ar.admin_id;

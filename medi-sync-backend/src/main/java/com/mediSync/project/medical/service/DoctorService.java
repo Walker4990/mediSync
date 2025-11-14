@@ -1,6 +1,7 @@
 package com.mediSync.project.medical.service;
 
 import com.mediSync.project.medical.dto.DoctorDTO;
+import com.mediSync.project.medical.dto.DoctorInfoDTO;
 import com.mediSync.project.medical.mapper.DoctorMapper;
 import com.mediSync.project.medical.vo.AdminAccount;
 import lombok.RequiredArgsConstructor;
@@ -14,7 +15,7 @@ import java.util.Map;
 public class DoctorService {
     private final DoctorMapper doctorMapper;
 
-    public List<AdminAccount> selectAllDoctor(){
+    public List<DoctorInfoDTO> selectAllDoctor(){
         return doctorMapper.doctorSelectAll();
     }
     public AdminAccount selectDoctorById(Long doctorId){
@@ -32,7 +33,7 @@ public class DoctorService {
         return doctorMapper.getConsultFeeByDoctorId(doctorId);
     }
     //의사 서치
-    public List<AdminAccount> selectDoctorByDepartment(long dept_id){
+    public List<DoctorInfoDTO> selectDoctorByDepartment(long dept_id){
         return doctorMapper.doctorSelectByDepartment(dept_id);
     }
 

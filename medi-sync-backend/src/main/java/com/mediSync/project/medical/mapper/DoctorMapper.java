@@ -1,6 +1,7 @@
 package com.mediSync.project.medical.mapper;
 
 import com.mediSync.project.medical.dto.DoctorDTO;
+import com.mediSync.project.medical.dto.DoctorInfoDTO;
 import com.mediSync.project.medical.vo.AdminAccount;
 import org.apache.ibatis.annotations.Mapper;
 
@@ -9,7 +10,7 @@ import java.util.Map;
 
 @Mapper
 public interface DoctorMapper {
-    List<AdminAccount> doctorSelectAll();
+    List<DoctorInfoDTO> doctorSelectAll();
     AdminAccount doctorSelectById(Long doctorId);
     void insertDoctor(AdminAccount doctor);
     void editDoctor(AdminAccount doctor);
@@ -17,7 +18,7 @@ public interface DoctorMapper {
     Map<String, Object> getConsultFeeByDoctorId(Long doctorId);
 
     //의사 서치
-    List<AdminAccount> doctorSelectByDepartment(long dept_id);
+    List<DoctorInfoDTO> doctorSelectByDepartment(long dept_id);
 
     String findDepartmentByDoctorId(Long doctorId);
 

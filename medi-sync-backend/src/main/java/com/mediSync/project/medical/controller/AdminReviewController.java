@@ -46,7 +46,9 @@ public class AdminReviewController {
     //해당 의사의 별점 가져오기
     @GetMapping("/rating/{adminId}")
     public ReviewStateDTO selectRatingByAdminid(@PathVariable long adminId){
-        return adminReviewService.selectRatingByAdminId(adminId);
+        ReviewStateDTO dto = adminReviewService.selectRatingByAdminId(adminId);
+        System.out.println("별점 : "+ dto);
+        return dto;
     }
 
 }
