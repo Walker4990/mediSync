@@ -39,6 +39,7 @@ import SupportChatPage from "./pages/user/SupportChatPage";
 import AdminChatPage from "./pages/admin/AdminChatPage";
 import FinanceTransactionPage from "./pages/admin/FinanceTransactionPage";
 import AdminMainPage from "./pages/admin/AdminMainPage";
+import DoctorReview from "./pages/user/DoctorReview";
 import OAuthCallback from "./component/OAuthCallback";
 import InsurerPage from "./pages/admin/InsurerPage";
 import PatientInsurancePage from "./pages/user/PatientInsurancePage";
@@ -105,6 +106,7 @@ function AppContent() {
             <Route path="/user/reservation" element={<Reservation />} />
             <Route path="/user/insurance" element={<Insurance />} />
             <Route path="/user/support" element={<SupportChatPage />} />
+            <Route path="/doctor/review/:adminId" element={<DoctorReview />} />
             <Route
               path="/user/patient-insurance"
               element={<PatientInsurancePage />}

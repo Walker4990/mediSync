@@ -113,20 +113,23 @@ const DoctorList = ({
                   </h3>
                   {/* 별점 표시 - review 테이블에서 rating + count 추출 */}
                   <span className="text-yellow-500 text-sm font-semibold flex items-center">
-                    ★3.5 (100+)
+                    ★{doctor.avgRating.toFixed(1)} ({doctor.ratingCount}+)
                     {/* ★{doctor.rating} ({doctor.reviewCount}+) */}
                   </span>
                 </div>
 
                 {/* 스케쥴 테이블 반영 */}
                 <p className="text-green-500 font-semibold text-xs">
-                  10/23 (THU) 10:00 ~ 14:00
+                  10/23 (THU) 09:00 ~ 17:00
                 </p>
 
                 {/* 클릭 시 타임 모달 */}
                 <button
                   className="mt-2 text-blue-600 border border-blue-600 text-sm px-3 py-1 rounded-md hover:bg-blue-50 transition"
-                  onClick={() => handleReservationClick(doctor)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleReservationClick(doctor);
+                  }}
                 >
                   예약하기
                 </button>
@@ -233,11 +236,6 @@ const TimeModal = ({
       alert("진료 시간을 선택해주세요.");
       return;
     }
-    // alert(
-    //   `담당자 : ${selectedDoctor.department} / ${selectedDoctor.doctorName} 의사 \n일정 : ${selectedDate} ${selectedTime} 을 선택하였습니다.`
-    // );
-
-    // "11:00~12:00" → "11:00"
 
     const startTime = selectedTime.split("~")[0];
     const dataToSend = {
@@ -428,11 +426,6 @@ export default function MedicalConsult() {
     setIsLoading(true);
     setApiError(false);
 
-    // const res = await axios.get(API_BASE_URL);
-    // let url = API_TEST_URL;
-    // if (deft && deft !== "전체 과목") {
-    //   url += `?department=${encodeURIComponent(deft)}`;
-    // }
     try {
       const url =
         deft && deft.id !== 0
