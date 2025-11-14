@@ -12,14 +12,17 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @Alias("patient")
 public class Patient {
-    private Long patientId;
+    private Long patientId, userId;
     private String name;
     private String residentNo;
     private String phone;
     private String address;
+    private String email;
     private String insurerCode;
     private String status;
     private boolean consentInsurance;
+    private String gender;
+    private int age;
     private String admissionStatus;
     private String roomNo;
     private LocalDateTime admissionDate;

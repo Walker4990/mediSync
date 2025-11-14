@@ -11,7 +11,7 @@ import java.util.List;
 @Mapper
 public interface PatientMapper {
     int insertPatient(Patient patient);
-    int insertPatientAccount(PatientAccount account);
+    int updatePatient(Patient patient);
     List<Patient> allPatient();
     List<MedicalRecord> getPatientRecords(Long patientId);
     List<Prescription> getPatientPrescriptions(Long patientId);

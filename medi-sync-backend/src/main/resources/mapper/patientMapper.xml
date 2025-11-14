@@ -5,23 +5,29 @@
 
 <mapper namespace="com.mediSync.project.patient.mapper.PatientMapper">
 
-    <!-- 1. 환자 정보 저장 -->
+    <!-- 환자 정보 저장 -->
     <insert id="insertPatient" useGeneratedKeys="true" keyProperty="patientId">
         INSERT INTO patient
-        (name, resident_no, phone, address, consent_insurance)
+        (name, phone, email, user_id, resident_no, address)
         VALUES
-        (#{name}, #{residentNo}, #{phone}, #{address}, #{consentInsurance})
+        (#{name}, #{phone}, #{email}, #{userId}, #{residentNo}, #{address})
     </insert>
 
-    <!-- 2. 계정 정보 저장 -->
-    <insert id="insertPatientAccount">
-        INSERT INTO patient_account
-        (patient_id, user_id, password)
-        VALUES
-        (#{patientId}, #{userId}, #{password})
-    </insert>
+    <!-- 환자 정보 수정 -->
+    <update id="updatePatient" parameterType="patient">
+        UPDATE patient SET
+        name = #{name},
+        phone = #{phone},
+        email = #{email},
+        resident_no = #{residentNo},
+        age = #{age},
+        gender = #{gender},
+        address = #{address},
+        consent_insurance = #{consentInsurance}
+        WHERE user_id = #{userId}
+    </update>
 
-    <!-- 3. 환자 정보 조회 -->
+    <!-- 환자 정보 조회 -->
     <select id="allPatient" resultType="patient">
         SELECT * FROM patient
     </select>

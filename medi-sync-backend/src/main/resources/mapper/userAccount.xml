@@ -44,7 +44,10 @@
 
     <!-- 계정 선택 조회 -->
     <select id="selectUserById" parameterType="Long" resultType="user">
-        SELECT * FROM user_account WHERE user_id = #{userId}
+        SELECT *
+        FROM user_account
+        JOIN patient USING (user_id)
+        WHERE user_id = #{userId}
     </select>
 
     <!-- 중복 아이디 체크 -->
@@ -63,9 +66,12 @@
     </select>
 
     <!-- 계정 정보 수정 -->
-    <update id="updateUser" parameterType="Long">
+    <update id="updateUser" parameterType="user">
         UPDATE user_account
         SET name = #{name}, phone = #{phone}, email = #{email}
+        <if test="password != null and password != ''">
+            , password = #{password}
+        </if>
         WHERE user_id = #{userId}
     </update>
 
@@ -82,7 +88,7 @@
         WHERE name = #{name} AND phone = #{phone}
     </select>
 
-    <!-- 비밀번호 변경 -->
+    <!-- 비밀번호 분실 초기화 -->
     <select id="selectUserForSendEmail" parameterType="user" resultType="user">
         SELECT *
         FROM user_account
