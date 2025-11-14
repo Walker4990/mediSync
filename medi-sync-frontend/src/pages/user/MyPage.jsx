@@ -23,6 +23,7 @@ import {
 import SupportChatWidget from "./SupportChatPage";
 import PatientInsurancePage from "./PatientInsurancePage";
 import {jwtDecode} from "jwt-decode";
+import PaymentPage from "../../component/PaymentPage";
 
 const token = localStorage.getItem("token");
 const decoded = token ? jwtDecode(token) : null;
@@ -697,7 +698,7 @@ const MyPage = () => {
         );
       case "insurance_payment":
         return (
-          <ViewReservation
+          <PaymentPage
             title="보험/수납 내역"
             icon={Wallet}
             currentUser={currentUser}

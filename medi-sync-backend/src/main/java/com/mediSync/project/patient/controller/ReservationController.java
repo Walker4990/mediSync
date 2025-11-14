@@ -1,10 +1,12 @@
 package com.mediSync.project.patient.controller;
 
 import com.mediSync.project.insurance.service.ClaimOrchestrator;
+import com.mediSync.project.medical.vo.UserAccount;
 import com.mediSync.project.patient.service.ReservationService;
 import com.mediSync.project.patient.vo.Reservation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -43,10 +45,21 @@ public class ReservationController {
 
     //병원 예약 하기
     @PostMapping("/addReservation")
-    public int addReservation(@RequestBody Reservation reservation){
+    public int addReservation(
+            @RequestBody Reservation reservation,
+            @AuthenticationPrincipal UserAccount userAccount) { // ✅ 로그인 사용자 정보 주입
+
+        // JWT에서 인증된 사용자 정보 확인
+        if (userAccount != null) {
+            reservation.setPatientId(userAccount.getUserId()); // ✅ patientId 자동 설정
+            System.out.println("✅ JWT 인증된 patientId 자동 주입: " + userAccount.getUserId());
+        } else {
+            System.err.println("⚠️ 비로그인 상태 요청 (patientId 수동 필요)");
+            return 0; // 또는 예외 처리
+        }
+
         System.out.println("📥 받은 예약 데이터: " + reservation);
-        int res = reservationService.addReservation(reservation);
-        return res;
+        return reservationService.addReservation(reservation);
     }
 
     //병원 예약 취소하기

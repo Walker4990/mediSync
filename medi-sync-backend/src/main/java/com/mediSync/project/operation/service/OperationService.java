@@ -215,7 +215,6 @@ public class OperationService {
         ft.setType("INCOME");
         ft.setStatus("COMPLETED");
         ft.setDescription(op.getOperationName() + " 수술 수익");
-        ft.setCreatedAt(LocalDate.now());
         financeTransactionMapper.insertFinance(ft);
 
         Map<String, Object> payload = new HashMap<>();

@@ -45,6 +45,10 @@ import InsurerPage from "./pages/admin/InsurerPage";
 import PatientInsurancePage from "./pages/user/PatientInsurancePage";
 
 import axios from "axios";
+import PaymentFail from "./component/PaymentFail";
+import PaymentSuccess from "./component/PaymentSuccess";
+import TossCallback from "./component/TossCallback";
+import PaymentPage from "./component/PaymentPage";
 const token = localStorage.getItem("token");
 if (token) {
   axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
@@ -63,6 +67,9 @@ function AppContent() {
 
       <ModalProvider>
         <Routes>
+            <Route path="/toss/callback" element={<TossCallback />} />
+            <Route path="/payment/success" element={<PaymentSuccess />} />
+            <Route path="/payment/fail" element={<PaymentFail />} />
           {/*관리자 페이지*/}
           <Route path="/admin" element={<Home />} />
           <Route path="/admin/register" element={<AccountRegiForm />} />
@@ -112,6 +119,9 @@ function AppContent() {
               element={<PatientInsurancePage />}
             />
           </Route>
+            <Route path="/user/mypage/payment" element={<PaymentPage />} />
+
+
           {/*새창 열림*/}
           <Route
             path="/user/medicalDetail/:recordId"
