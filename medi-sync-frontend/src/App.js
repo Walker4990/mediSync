@@ -107,7 +107,7 @@ function AppContent() {
             <Route path="/user/support" element={<SupportChatPage />} />
             <Route
               path="/user/patient-insurance"
-              element={<PatientInsurancePage patientId={1} />}
+              element={<PatientInsurancePage />}
             />
           </Route>
           {/*새창 열림*/}
