@@ -42,6 +42,12 @@ export default function SupportChatWidget() {
         return () => client.deactivate();
     }, [isOpen]);
 
+    useEffect(() => {
+        if (chatRef.current) {
+            chatRef.current.scrollTop = chatRef.current.scrollHeight;
+        }
+    }, [messages]);
+
     // ✅ 메시지 전송
     const send = () => {
         if (!input.trim()) return;

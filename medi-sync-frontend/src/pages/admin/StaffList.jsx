@@ -530,10 +530,9 @@ export default function MedicalStaffList() {
                 <th className="py-3 px-4 text-left w-28">직무</th>
                 <th className="py-3 px-4 text-left w-32">소속 진료과</th>
                 <th className="py-3 px-4 text-left w-32">자격번호</th>
+                <th className="py-3 px-4 text-left w-28">연락처</th>
                 <th className="py-3 px-4 text-left w-28">입사일</th>
                 <th className="py-3 px-4 text-left w-28">재직 상태</th>
-                <th className="py-3 px-4 text-left w-28">연락처</th>
-                <th className="py-3 px-4 text-left w-36">등록일시</th>
                 <th className="py-3 px-4 text-center w-24">관리</th>
               </tr>
             </thead>
@@ -546,7 +545,7 @@ export default function MedicalStaffList() {
                 >
                   <td className="py-2 px-4 text-gray-600">{s.adminId}</td>
                   <td
-                    className="py-2 px-4 text-gray-900 cursor-pointer hover:font-bold"
+                    className="py-2 px-4 text-blue-600 cursor-pointer hover:font-bold"
                     onClick={() => {
                       setEditingStaff(s);
                       setViewMode("detail");
@@ -569,6 +568,7 @@ export default function MedicalStaffList() {
                   </td>
                   <td className="py-2 px-4">{s.deptName || "-"}</td>
                   <td className="py-2 px-4 font-mono text-xs">{s.licenseNo}</td>
+                  <td className="py-2 px-4 text-xs">{s.phone || "-"}</td>
                   <td className="py-2 px-4 text-gray-500 text-xs">
                     {formatDateOnly(s.hiredDate)}
                   </td>
@@ -584,10 +584,6 @@ export default function MedicalStaffList() {
                     >
                       {getStatusLabel(s.status)}
                     </span>
-                  </td>
-                  <td className="py-2 px-4 text-xs">{s.phone || "-"}</td>
-                  <td className="py-2 px-4 text-gray-500 text-xs">
-                    {formatDateTime(s.createdAt)}
                   </td>
                   <td className="py-2 px-4 text-center whitespace-nowrap space-x-2">
                     <button

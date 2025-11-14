@@ -15,7 +15,7 @@ const AccountList = () => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${API_URL}/all`);
+      const response = await fetch(`${API_URL}`);
       if (!response.ok) {
         // HTTP 오류 코드가 반환된 경우
         const errorText = await response.text();

@@ -6,6 +6,7 @@
     <resultMap id="adminAccount" type="com.mediSync.project.medical.vo.AdminAccount">
         <id column="admin_id" property="adminId"/>
         <result column="emp_id" property="empId"/>
+        <result column="password" property="password"/>
         <result column="name" property="name"/>
         <result column="phone" property="phone"/>
         <result column="email" property="email"/>
@@ -47,7 +48,13 @@
         SELECT a.*, d.dept_name
         FROM admin_account a JOIN department d ON a.dept_id = d.dept_id
         WHERE admin_id = #{adminId}
-        ORDER BY a.admin_id DESC
+    </select>
+
+    <!-- 로그인 -->
+    <select id="loginAdmin" parameterType="String" resultMap="adminAccount">
+        SELECT a.*, d.dept_name
+        FROM admin_account a JOIN department d ON a.dept_id = d.dept_id
+        WHERE emp_id = #{empId}
     </select>
 
     <!-- 의사 조회 -->

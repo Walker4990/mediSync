@@ -16,4 +16,5 @@ public interface AdminAccountMapper {
     int checkIdExists(@Param("empId") String empId);
     int updateAdmin(AdminAccount vo);
     int deleteAdmin(Long adminId);
+    AdminAccount loginAdmin(@Param("empId") String empId);
 }

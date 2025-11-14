@@ -37,15 +37,6 @@ const InfoModal = ({ message, onClose, title = "알림" }) => (
   </div>
 );
 
-const DoctorDetail = ({ adminId }) => {
-  return (
-    <div className="bg-gray-50 p-8 rounded-xl shadow-inner w-full text-center text-gray-600">
-      <p className="text-lg font-medium">개인정보 페이지 ({adminId})</p>
-      <p className="text-sm mt-1">내용을 채워주세요</p>
-    </div>
-  );
-};
-
 // 재직 상태(Status) 옵션
 const STATUS_OPTIONS = [
   { value: "ACTIVE", label: "재직 중" },

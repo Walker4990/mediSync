@@ -51,7 +51,10 @@ public class UserAccountService {
     public String findLoginIdByNameAndPhone(String name, String phone) {
         return userAccountMapper.selectLoginIdByNameAndPhone(name, phone);
     }
-    public int resetPassword(String loginId, String name, String phone, String encodedPassword) {
-        return userAccountMapper.updatePasswordByUserInfo(loginId, name, phone, encodedPassword);
+    public  UserAccount findUserForSendEmail(String loginId, String name, String phone){
+        return userAccountMapper.selectUserForSendEmail(loginId, name, phone);
+    }
+    public int resetPassword(String loginId, String encodedPassword) {
+        return userAccountMapper.updatePasswordByUserInfo(loginId, encodedPassword);
     }
 }

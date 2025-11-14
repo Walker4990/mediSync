@@ -15,6 +15,7 @@ export default function RegisterModal() {
   const [form, setForm] = useState({
     name: "",
     phone: "",
+    email: "",
     loginId: "",
     password: "",
     confirmPassword: "",
@@ -33,6 +34,7 @@ export default function RegisterModal() {
       setForm({
         name: "",
         phone: "",
+        email: "",
         loginId: "",
         password: "",
         confirmPassword: "",
@@ -135,6 +137,7 @@ export default function RegisterModal() {
     const dataToSend = {
       name: form.name,
       phone: form.phone,
+      email: form.email,
       loginId: form.loginId,
       password: form.password,
     };
@@ -149,6 +152,7 @@ export default function RegisterModal() {
         setForm({
           name: "",
           phone: "",
+          email: "",
           loginId: "",
           password: "",
           confirmPassword: "",
@@ -247,6 +251,22 @@ export default function RegisterModal() {
                 onChange={handleChange}
                 className={inputStyle}
                 placeholder="숫자만 입력 (예: 01012345678)"
+                required
+              />
+            </label>
+
+            {/* 이메일 */}
+            <label className="block">
+              <span className="block text-gray-700 font-medium text-sm mb-1 text-left pl-2">
+                이메일
+              </span>
+              <input
+                type="email"
+                name="email"
+                value={form.email}
+                onChange={handleChange}
+                className={inputStyle}
+                placeholder="이메일 주소 입력 (예: admin@medisync.com)"
                 required
               />
             </label>
