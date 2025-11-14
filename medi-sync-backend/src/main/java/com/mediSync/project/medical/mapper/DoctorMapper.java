@@ -2,6 +2,7 @@ package com.mediSync.project.medical.mapper;
 
 import com.mediSync.project.medical.dto.DoctorDTO;
 import com.mediSync.project.medical.dto.DoctorInfoDTO;
+import com.mediSync.project.medical.dto.DoctorScheduleDTO;
 import com.mediSync.project.medical.vo.AdminAccount;
 import org.apache.ibatis.annotations.Mapper;
 
@@ -19,7 +20,8 @@ public interface DoctorMapper {
 
     //의사 서치
     List<DoctorInfoDTO> doctorSelectByDepartment(long dept_id);
-
+    List<DoctorScheduleDTO> selectDoctorSchedule();
+    List<DoctorScheduleDTO> selectDoctorScheduleByAdminId(long adminId);
     String findDepartmentByDoctorId(Long doctorId);
 
     DoctorDTO findDoctorByAdminId(long adminId);
