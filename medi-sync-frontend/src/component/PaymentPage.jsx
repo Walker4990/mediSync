@@ -7,7 +7,7 @@ import PaymentFail from "./PaymentFail";
 export default function PaymentPage() {
     const [payments, setPayments] = React.useState([]);
     const [unpaid, setUnpaid] = React.useState(null);
-
+    const [unpaidList, setUnpaidList] = React.useState([]);
     const token = localStorage.getItem("token");
     const decoded = jwtDecode(token);
     const patientId = decoded?.userId;
@@ -21,6 +21,7 @@ export default function PaymentPage() {
         );
         setPayments(res.data.history || []);
         setUnpaid(res.data.unpaid || null);
+        setUnpaidList(res.data.unpaidList || []);
     };
 
     useEffect(() => {
@@ -31,7 +32,7 @@ export default function PaymentPage() {
         try {
             const prepare = await axios.post(
                 "http://192.168.0.24:8080/api/payment/prepare",
-                { patientId, amount: unpaid.amount }
+                { patientId, amount: unpaid }
             );
 
             const { orderId } = prepare.data;
@@ -42,7 +43,7 @@ export default function PaymentPage() {
 
             tossPayments.requestPayment("카드", {
                 orderId,
-                amount: unpaid.amount,
+                amount: unpaid,
                 orderName: "병원 진료비",
                 flowMode: "CHECKOUT",
                 windowTarget: "popup",
@@ -65,11 +66,26 @@ export default function PaymentPage() {
             {unpaid ? (
                 <div className="p-4 bg-red-50 rounded-lg border mb-6">
                     <p className="text-red-700 font-semibold">
-                        미납금 : {unpaid.amount?.toLocaleString()}원
+                        미납금 : {unpaid?.toLocaleString()}원
                     </p>
+
+                    {/* 🔥 미납 내역 리스트 추가 */}
+                    {unpaidList.length > 0 && (
+                        <div className="mt-3 bg-white p-3 rounded border">
+                            <p className="font-semibold mb-2">미납 상세 내역</p>
+                            <ul className="list-disc ml-5">
+                                {unpaidList.map((item) => (
+                                    <li key={item.txId}>
+                                        {item.description} — {Math.floor(item.amount).toLocaleString()}원
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
+
                     <button
                         onClick={handlePay}
-                        className="mt-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                        className="mt-3 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                     >
                         결제하기
                     </button>
@@ -90,6 +106,7 @@ export default function PaymentPage() {
                         <th className="p-3">일시</th>
                         <th className="p-3">금액</th>
                         <th className="p-3">상태</th>
+                        <th className="p-3">영수증</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -100,6 +117,19 @@ export default function PaymentPage() {
                                 {Math.floor(Number(p.amount)).toLocaleString("ko-KR")}원
                             </td>
                             <td className="p-3">{p.status}</td>
+                            <td className="p-3">
+                                {p.status === "COMPLETED" && (
+                                    <button
+                                        onClick={() =>
+                                            window.location.href =
+                                                `http://192.168.0.24:8080/api/receipt/payment/${p.orderId}`
+                                        }
+                                        className="px-3 py-1 bg-green-600 text-white rounded"
+                                    >
+                                        영수증
+                                    </button>
+                                )}
+                            </td>
                         </tr>
                     ))}
                     </tbody>

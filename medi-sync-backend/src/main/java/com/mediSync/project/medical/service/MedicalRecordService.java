@@ -109,18 +109,7 @@ public class MedicalRecordService {
                 p.setRecordId(recordId);
                 prescriptionMapper.insertPrescription(p);
 
-                // (1) 회계 트랜잭션 기록
-                FinanceTransaction patientFt = new FinanceTransaction();
-                patientFt.setRefType("RECORD");
-                patientFt.setRefId(recordId);
-                patientFt.setPatientId(mr.getPatientId());
-                patientFt.setAdminId(mr.getAdminId());
-                patientFt.setType("INCOME");
-                patientFt.setCategory(p.getType());
-                patientFt.setAmount(mr.getPatientPay());
-                patientFt.setDescription("진료비 (본인 부담금)");
-                patientFt.setStatus("COMPLETED");
-                financeTransactionMapper.insertFinance(patientFt);
+
 
                 FinanceTransaction insuranceFt = new FinanceTransaction();
                 insuranceFt.setRefType("RECORD");
@@ -193,7 +182,17 @@ public class MedicalRecordService {
                 }
 
             }
-            reservationMapper.updateStatus(mr.getPatientId(), "DONE");
+            FinanceTransaction totalIncome = new FinanceTransaction();
+            totalIncome.setRefType("RECORD");
+            totalIncome.setRefId(recordId);
+            totalIncome.setPatientId(mr.getPatientId());
+            totalIncome.setAdminId(mr.getAdminId());
+            totalIncome.setType("INCOME");
+            totalIncome.setCategory("TOTAL_COST");
+            totalIncome.setAmount(mr.getPatientPay());
+            totalIncome.setDescription("진료비 총액 (본인 부담금)");
+            totalIncome.setStatus("PENDING");
+            financeTransactionMapper.insertFinance(totalIncome);
         }
 
         return result;

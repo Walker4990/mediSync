@@ -1,12 +1,20 @@
 package com.mediSync.project.finance.service;
 
+import com.itextpdf.text.Document;
+import com.itextpdf.text.DocumentException;
+import com.itextpdf.text.Font;
+import com.itextpdf.text.Paragraph;
+import com.itextpdf.text.pdf.PdfWriter;
 import com.mediSync.project.finance.mapper.FinanceTransactionMapper;
 import com.mediSync.project.finance.mapper.PaymentMapper;
 import com.mediSync.project.finance.vo.FinanceTransaction;
 import com.mediSync.project.finance.vo.Payment;
+import com.mediSync.project.patient.mapper.PatientMapper;
+import com.mediSync.project.patient.vo.Patient;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
@@ -18,6 +26,7 @@ public class PaymentService {
 
     private final PaymentMapper paymentMapper;
     private final FinanceTransactionMapper financeTransactionMapper;
+    private final PatientMapper patientMapper;
     // toss API key
     private final String TOSS_SECRET = "test_sk_ma60RZblrqoaLvBo6j2R3wzYWBn1";
 
@@ -70,13 +79,51 @@ public class PaymentService {
     }
 
 
+    public Map<String, Object> getPaymentHistory(Long patientId) {
+        Map<String, Object> result = new HashMap<>();
 
-    public Map<String, Object> getPaymentHistory(Long patientId){
         List<FinanceTransaction> history = paymentMapper.findByPatientId(patientId);
+        result.put("history", history);
 
-        FinanceTransaction unpaid = paymentMapper.findUnpaidByPatientId(patientId);
+        Long unpaidTotal = paymentMapper.findTotalUnpaidByPatientId(patientId);
+        result.put("unpaid", unpaidTotal);
+        List<FinanceTransaction> unpaidList = paymentMapper.findUnpaidListByPatientId(patientId);
+        result.put("unpaidList", unpaidList);
+        return result;
+    }
 
-        return Map.of("history", history,
-                    "unpaid", unpaid);
+    public byte[] generatePaymentReceipt(String orderId) {
+        Payment p = paymentMapper.findByOrderId(orderId);
+        Patient patient = patientMapper.getPatientDetail(p.getPatientId());
+
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        Document doc = new Document();
+
+        try {
+            PdfWriter.getInstance(doc, baos);
+            doc.open();
+
+            Font title = new Font(Font.FontFamily.HELVETICA, 20, Font.BOLD);
+            Font normal = new Font(Font.FontFamily.HELVETICA, 12);
+
+            doc.add(new Paragraph("진료비 영수증", title));
+            doc.add(new Paragraph(" "));
+
+            doc.add(new Paragraph("환자명: " + patient.getName(), normal));
+            doc.add(new Paragraph("결제일: " + p.getSuccessAt(), normal));
+            doc.add(new Paragraph("결제 금액: " + String.format("%,d원", p.getAmount().intValue()), normal));
+            doc.add(new Paragraph("결제 수단: 카드", normal));
+            doc.add(new Paragraph("거래번호(Order ID): " + p.getOrderId(), normal));
+            doc.add(new Paragraph("PG사 번호(Payment key): " + p.getPaymentKey(), normal));
+
+            doc.add(new Paragraph("\n감사합니다.", normal));
+
+
+        } catch (Exception e) {
+            throw new RuntimeException("영수증 발행 실패", e);
+        } finally {
+            doc.close();
+        }
+        return baos.toByteArray();
     }
 }

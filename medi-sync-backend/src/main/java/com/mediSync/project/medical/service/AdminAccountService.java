@@ -6,7 +6,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -60,5 +62,10 @@ public class AdminAccountService {
         } else {
             return null;
         }
+    }
+    public List<AdminAccount> getRecommandedDoctor() {
+        List<AdminAccount> list = adminAccountMapper.getRecommandedDoctor();
+        Collections.shuffle(list);
+        return list.stream().limit(3).collect(Collectors.toList());
     }
 }

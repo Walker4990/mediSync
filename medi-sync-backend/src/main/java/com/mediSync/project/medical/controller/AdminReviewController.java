@@ -6,6 +6,7 @@ import com.mediSync.project.medical.dto.ReviewStateDTO;
 import com.mediSync.project.medical.service.AdminReviewService;
 import com.mediSync.project.medical.vo.AdminReview;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -50,5 +51,8 @@ public class AdminReviewController {
         System.out.println("별점 : "+ dto);
         return dto;
     }
-
+    @GetMapping("/random")
+    public ResponseEntity<?> getRandomFiveStarReview() {
+        return ResponseEntity.ok(adminReviewService.getRandomFiveStarReview());
+    }
 }

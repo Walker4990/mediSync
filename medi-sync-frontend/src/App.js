@@ -49,6 +49,8 @@ import PaymentFail from "./component/PaymentFail";
 import PaymentSuccess from "./component/PaymentSuccess";
 import TossCallback from "./component/TossCallback";
 import PaymentPage from "./component/PaymentPage";
+import ServiceListPage from "./pages/user/ServiceListPage";
+import ServiceDetailPage from "./pages/user/ServiceDetailPage";
 const token = localStorage.getItem("token");
 if (token) {
   axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
@@ -121,7 +123,8 @@ function AppContent() {
           </Route>
             <Route path="/user/mypage/payment" element={<PaymentPage />} />
 
-
+            <Route path="/services" element={<ServiceListPage />} />
+            <Route path="/services/:id" element={<ServiceDetailPage />} />
           {/*새창 열림*/}
           <Route
             path="/user/medicalDetail/:recordId"

@@ -51,4 +51,13 @@ public class PaymentController {
 
         return result;
     }
+
+    @GetMapping("/receipt/{orderId}")
+    public ResponseEntity<byte[]> downloadReceipt(@PathVariable String orderId){
+        byte[] pdf = paymentService.generatePaymentReceipt(orderId);
+
+        return ResponseEntity.ok().header("Content-Type", "application/pdf")
+                .header("Content-Disposition", "attachment; filename=receipt-" + orderId + ".pdf")
+                .body(pdf);
+    }
 }

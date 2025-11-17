@@ -9,16 +9,26 @@
         SELECT *
         FROM finance_transaction
         WHERE patient_id = #{patientId}
+        AND status = 'COMPLETED'
+        AND TYPE = 'INCOME'
         ORDER BY created_at DESC
     </select>
 
-    <select id="findUnpaidByPatientId" resultType="finance">
+    <select id="findUnpaidListByPatientId" resultType="finance">
         SELECT *
         FROM finance_transaction
         WHERE patient_id = #{patientId}
         AND status = 'PENDING'
+        AND type = 'INCOME'
         ORDER BY created_at ASC
-        LIMIT 1
+    </select>
+
+    <select id="findTotalUnpaidByPatientId" resultType="long">
+        SELECT COALESCE(SUM(amount), 0)
+        FROM finance_transaction
+        WHERE patient_id = #{patientId}
+        AND status = 'PENDING'
+        AND type = 'INCOME'
     </select>
 
     <insert id="insertPending" parameterType="payment"

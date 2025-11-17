@@ -656,7 +656,7 @@ const MyPage = () => {
       },
       {
         id: "insurance_payment",
-        label: "보험/수납 관련",
+        label: "보험/수납 조회",
         icon: Wallet,
         group: "patient",
       },

@@ -67,6 +67,7 @@ public class PatientController {
     public List<Patient> selectInpatient() {
         return patientService.selectInpatient();
     }
+
     @GetMapping("/history/{patientId}")
     public List<Prescription> findByPatientId(@PathVariable("patientId") Long patientId) {
         return patientService.findByPatientId(patientId);

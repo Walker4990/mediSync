@@ -92,15 +92,13 @@
         p.admission_date   AS admissionDate,
         p.discharge_date   AS dischargeDate
         FROM patient p
-        LEFT JOIN room r ON p.room_id = r.room_id
-        LEFT JOIN medical_record mr ON mr.record_id = (
-        SELECT record_id
-        FROM medical_record
-        WHERE patient_id = p.patient_id
-        ORDER BY created_at DESC
-        LIMIT 1
-        )
-        LEFT JOIN admin_account a ON mr.admin_id = a.admin_id
+        LEFT JOIN room r
+        ON p.room_id = r.room_id
+        LEFT JOIN medical_record mr
+        ON mr.patient_id = p.patient_id
+        AND mr.status IN ('PENDING', 'IN_PROGRESS')
+        LEFT JOIN admin_account a
+        ON mr.admin_id = a.admin_id
         WHERE p.admission_status = 'INPATIENT'
         ORDER BY r.room_no ASC;
     </select>
@@ -108,21 +106,20 @@
     <!-- 환자 과거 처방 내역 조회 -->
     <select id="findByPatientId" parameterType="long" resultType="prescription">
         SELECT
-        p.prescription_id,
-        p.type,
-        p.drug_name,
-        p.dosage,
-        p.duration,
-        p.test_name,
-        p.test_area,
-        p.injection_name,
-        p.injection_count,
-        p.unit,
-        p.created_at
-        FROM prescription p
-        LEFT JOIN medical_record mr ON p.record_id = mr.record_id
-        WHERE mr.patient_id = #{patientId}
-        ORDER BY p.created_at DESC
+        prescription_id,
+        type,
+        drug_name,
+        dosage,
+        duration,
+        test_name,
+        test_area,
+        injection_name,
+        injection_count,
+        unit,
+        created_at
+        FROM prescription
+        WHERE patient_id = #{patientId}
+        ORDER BY created_at DESC
     </select>
 
     <update id="updatePatientAdmissionStatus" parameterType="patient">
