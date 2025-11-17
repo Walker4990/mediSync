@@ -22,4 +22,5 @@ public class ClaimRequest {
     private BigDecimal payoutAmount;
     private LocalDateTime paidDate;
     private LocalDateTime updatedAt;
+    private Long patientId;
 }

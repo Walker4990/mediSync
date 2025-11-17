@@ -83,6 +83,37 @@ export default function PrescriptionModal({ visible, onClose, onSave, patient })
 
     const handleSubmit = (e) => {
         e.preventDefault();
+        if (!form.type) return alert("처방 구분을 선택하세요");
+        if (!form.itemName || form.itemName.trim() === "") return alert("항목을 입력하세요.")
+
+        if (form.type === "DRUG") {
+            if(!form.dosage) return alert("용량을 입력하세요")
+            if(!form.duration) return alert("기간을 입력하세요")
+            if(!form.unit) return alert("단위를 입력하세요.")
+        }
+        if (form.type === "INJECTION") {
+            if (!form.dosage) return alert("투여량을 입력하세요.")
+            if (!form.unit) return alert("단위를 입력하세요")
+        }
+        // ✅ TEST일 때 검사 날짜가 과거인지 체크
+        if (form.type === "TEST") {
+            const today = new Date().setHours(0,0,0,0);
+            const selected = new Date(form.testDate).setHours(0,0,0,0);
+
+            if (!form.testDate) {
+                alert("검사 날짜를 선택해주세요.");
+                return;
+            }
+            if (selected < today) {
+                alert("과거 날짜로는 검사를 예약할 수 없습니다.");
+                return;
+            }
+            if (!form.testTime) {
+                alert("검사 시간을 선택해주세요.");
+                return;
+            }
+        }
+
         onSave(form);
     };
 

@@ -16,6 +16,7 @@ import java.time.LocalDateTime;
 public class Prescription {
     private Long prescriptionId;
     private Long recordId;
+    private Long patientId;
 
     // 약 처방
     private String drugName;

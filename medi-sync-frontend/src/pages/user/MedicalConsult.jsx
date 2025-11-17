@@ -113,20 +113,23 @@ const DoctorList = ({
                   </h3>
                   {/* 별점 표시 - review 테이블에서 rating + count 추출 */}
                   <span className="text-yellow-500 text-sm font-semibold flex items-center">
-                    ★3.5 (100+)
+                    ★{doctor.avgRating.toFixed(1)} ({doctor.ratingCount}+)
                     {/* ★{doctor.rating} ({doctor.reviewCount}+) */}
                   </span>
                 </div>
 
                 {/* 스케쥴 테이블 반영 */}
                 <p className="text-green-500 font-semibold text-xs">
-                  10/23 (THU) 10:00 ~ 14:00
+                  10/23 (THU) 09:00 ~ 17:00
                 </p>
 
                 {/* 클릭 시 타임 모달 */}
                 <button
                   className="mt-2 text-blue-600 border border-blue-600 text-sm px-3 py-1 rounded-md hover:bg-blue-50 transition"
-                  onClick={() => handleReservationClick(doctor)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleReservationClick(doctor);
+                  }}
                 >
                   예약하기
                 </button>
@@ -228,47 +231,46 @@ const TimeModal = ({
   const handleSelectTime = (time) => setSelectedTime(time);
 
   // 예약하기 버튼 클릭 시 이벤트 발생
-  const handleNextStep = async (e) => {
-    if (!selectedTime) {
-      alert("진료 시간을 선택해주세요.");
-      return;
-    }
-    // alert(
-    //   `담당자 : ${selectedDoctor.department} / ${selectedDoctor.doctorName} 의사 \n일정 : ${selectedDate} ${selectedTime} 을 선택하였습니다.`
-    // );
+    const handleNextStep = async (e) => {
+        if (!selectedTime) {
+            alert("진료 시간을 선택해주세요.");
+            return;
+        }
 
-    // "11:00~12:00" → "11:00"
-
-    const startTime = selectedTime.split("~")[0];
-    const dataToSend = {
-      patientId: 1,
-      adminId: selectedDoctor.adminId,
-      reservationDate: `${selectedDate} ${startTime}:00`,
-      type: type ? "ONLINE" : "OFFLINE",
-    };
-    console.log("📤 보내는 데이터:", JSON.stringify(dataToSend, null, 2));
-    try {
-      const res = await axios.post(
-        "http://localhost:8080/api/reservation/addReservation",
-        dataToSend,
-        { headers: { "Content-Type": "application/json" } }
-      );
-      console.log(dataToSend);
-      // 백엔드가 숫자를 반환하는 경우
-      if (res.data === 1) {
-        alert("✅ 예약이 성공적으로 등록되었습니다!");
         const startTime = selectedTime.split("~")[0];
-        setReservedTimes((prev) => [...prev, startTime]);
-        setSelectedTime(null);
-        onClose();
-      } else {
-        alert("⚠️ 예약 등록에 실패했습니다.");
-      }
-    } catch (err) {
-      console.error("❌ 네트워크 오류:", err);
-      alert("❌ 네트워크 오류: " + err.message);
-    }
-  };
+        const dataToSend = {
+            adminId: selectedDoctor.adminId,
+            reservationDate: `${selectedDate} ${startTime}:00`,
+            type: type ? "ONLINE" : "OFFLINE",
+        };
+
+        const token = localStorage.getItem("token"); // JWT 토큰
+        try {
+            const res = await axios.post(
+                "http://localhost:8080/api/reservation/addReservation",
+                dataToSend,
+                {
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+
+            if (res.data === 1) {
+                alert("✅ 예약이 성공적으로 등록되었습니다!");
+                const startTime = selectedTime.split("~")[0];
+                setReservedTimes((prev) => [...prev, startTime]);
+                setSelectedTime(null);
+                onClose();
+            } else {
+                alert("⚠️ 예약 등록에 실패했습니다.");
+            }
+        } catch (err) {
+            console.error("❌ 네트워크 오류:", err);
+            alert("❌ 네트워크 오류: " + err.message);
+        }
+    };
 
   const handleClose = () => {
     // 모달 종료 시 선택값 초기화
@@ -428,11 +430,6 @@ export default function MedicalConsult() {
     setIsLoading(true);
     setApiError(false);
 
-    // const res = await axios.get(API_BASE_URL);
-    // let url = API_TEST_URL;
-    // if (deft && deft !== "전체 과목") {
-    //   url += `?department=${encodeURIComponent(deft)}`;
-    // }
     try {
       const url =
         deft && deft.id !== 0

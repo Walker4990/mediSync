@@ -137,4 +137,8 @@ public class AdminAccountController {
         }
     }
 
+    @GetMapping("/recommanded")
+    public List<AdminAccount> getRecommandedDoctor(){
+        return adminAccountService.getRecommandedDoctor();
+    }
 }

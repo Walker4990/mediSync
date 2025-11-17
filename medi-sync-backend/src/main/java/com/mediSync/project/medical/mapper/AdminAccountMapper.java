@@ -17,4 +17,6 @@ public interface AdminAccountMapper {
     int updateAdmin(AdminAccount vo);
     int deleteAdmin(Long adminId);
     AdminAccount loginAdmin(@Param("empId") String empId);
+    List<AdminAccount> getRecommandedDoctor();
+
 }

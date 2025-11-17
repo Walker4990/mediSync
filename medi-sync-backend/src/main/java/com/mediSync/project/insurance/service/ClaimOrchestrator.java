@@ -30,90 +30,91 @@ public class ClaimOrchestrator {
     private final KftcInsuranceClient kftcInsuranceClient;
 
     @Transactional
-    public Map<String,Object> run(Long recordId) {
+    public Map<String, Object> run(Long recordId) {
 
-        // <-- 변수들을 try 밖에서 선언 (원본과 동일한 흐름 유지)
-        java.math.BigDecimal total = java.math.BigDecimal.ZERO;
-        java.math.BigDecimal insPay = java.math.BigDecimal.ZERO;
-        java.math.BigDecimal patientPay = java.math.BigDecimal.ZERO;
+        BigDecimal total = BigDecimal.ZERO;
+        BigDecimal insPay = BigDecimal.ZERO;
+        BigDecimal patientPay = BigDecimal.ZERO;
         double rate = 0.0;
         Long claimId = null;
         String resultCode = null;
-        java.math.BigDecimal paidAmount = java.math.BigDecimal.ZERO;
+        BigDecimal paidAmount = BigDecimal.ZERO;
         String message = null;
 
         try {
-            // 1) 진료기록 조회
+            // 1️⃣ 진료기록 조회
             var rec = medicalRecordMapper.findById(recordId);
             Long patientId = ((Number) rec.get("patient_id")).longValue();
             total = toBD(rec.get("total_cost") != null ? rec.get("total_cost") : rec.get("totalCost"));
             System.out.println("🧾 rec map => " + rec);
-            System.out.println("🧾 total_cost(raw) => " + rec.get("total_cost"));
-            System.out.println("🧾 totalCost(camel) => " + rec.get("totalCost"));
 
-            // 2) 환자 보험 목록
+            // 2️⃣ 환자 보험 목록 조회
             var insList = patientInsuranceMapper.selectByPatientIdOrderByCoverageDesc(patientId);
-            rate = insList.isEmpty() ? 0.0 : toDouble(insList.get(0).get("coverage_rate"));
-            String insurerCode = insList.isEmpty() ? null : String.valueOf(insList.get(0).get("insurer_code"));
 
-            // 3) 금액 계산
+            String rawInsurerCode = insList.isEmpty()
+                    ? null
+                    : (insList.get(0).get("insurer_code") == null
+                    ? null
+                    : String.valueOf(insList.get(0).get("insurer_code")).trim());
+
+            Double rawRate = insList.isEmpty()
+                    ? null
+                    : toDouble(insList.get(0).get("coverage_rate"));
+
+            String insurerCode;
+
+            if (rawInsurerCode == null || rawInsurerCode.isEmpty() || rawInsurerCode.equalsIgnoreCase("null")) {
+                insurerCode = "INS001";
+                rate = 80.0;
+            } else {
+                insurerCode = rawInsurerCode;
+                rate = rawRate != null ? rawRate : 0.0;
+            }
+
+            // 3️⃣ 금액 계산
             insPay = total.multiply(bd(rate)).divide(bd(100));
             patientPay = total.subtract(insPay);
 
-            // 4) medical_record & billing 반영
+            // 4️⃣ 진료기록 및 청구금액 반영
             medicalRecordMapper.updateAmounts(recordId, insPay, patientPay);
             billingMapper.upsertByRecordId(recordId, total, insPay, "WAIT");
             System.out.printf("✅ rate=%.2f, insPay=%s, total=%s%n", rate, insPay, total);
 
-            // 5) 청구 생성
+            // 5️⃣ 청구 생성
             claimMapper.insertClaim(recordId, insurerCode, insPay, 1);
             var lastClaim = claimMapper.findLastClaimByRecord(recordId);
             claimId = ((Number) lastClaim.get("claim_id")).longValue();
 
-            // ✅ ClaimItemDto 리스트 생성
+            // 6️⃣ 청구 항목 기본 구성
             List<ClaimItemDto> items = new ArrayList<>();
             items.add(new ClaimItemDto("진찰료", insPay.multiply(BigDecimal.valueOf(0.3))));
             items.add(new ClaimItemDto("검사료", insPay.multiply(BigDecimal.valueOf(0.4))));
             items.add(new ClaimItemDto("약제비", insPay.multiply(BigDecimal.valueOf(0.3))));
-
-// ✅ Mapper 호출 (시그니처에 맞게)
             claimMapper.insertClaimItems(claimId, items);
-
-
-            // 5.1 -> 초기 로그 남기기 (원본 방식 유지)
             claimMapper.insertClaimLog(claimId, "SENT", "자동 청구 생성");
 
-            // 6) 보험사로 전송 (mock 또는 실제)
+            // 7️⃣ 보험사 전송 (mock API)
             Map<String, Object> resp = kftcInsuranceClient.submitClaim(claimId, insurerCode, insPay);
             System.out.println("🧩 [DEBUG] CLAIM RESP: " + resp);
 
-            // 6.1 응답 키 유연 처리 (camel / snake 둘다 허용)
             resultCode = (String) (resp.get("result_code") != null ? resp.get("result_code") : resp.get("resultCode"));
             Object paidObj = resp.get("paid_amount") != null ? resp.get("paid_amount") : resp.get("paidAmount");
-            if (paidObj != null) {
-                // 안전하게 BigDecimal 변환
-                paidAmount = new java.math.BigDecimal(paidObj.toString());
-            } else {
-                paidAmount = java.math.BigDecimal.ZERO;
-            }
+            paidAmount = paidObj != null ? new BigDecimal(paidObj.toString()) : BigDecimal.ZERO;
             message = (String) resp.getOrDefault("message", "");
 
-            // 7) 응답 반영 — 먼저 update 시도, 변경된 로우가 없으면 (0) insert 시도 (아래에 mapper 추가 예시 있음)
+            // 8️⃣ 청구 응답 저장
             int updated = claimMapper.updateClaimResponse(claimId, paidAmount, resultCode, message);
             if (updated == 0) {
-                // insertClaimResponse가 Mapper에 정의되어 있어야 함 (아래 참조)
                 try {
                     claimMapper.insertClaimResponse(claimId, paidAmount, resultCode, message);
                 } catch (NoSuchMethodError | AbstractMethodError ex) {
-                    // 만약 Mapper에 insertClaimResponse가 없으면 여기서 잡아서 로그만 남김
-                    System.err.println("⚠️ insertClaimResponse 메서드 없음 — update만 수행됨. 에러: " + ex.getMessage());
+                    System.err.println("⚠️ insertClaimResponse 없음 — update만 수행됨: " + ex.getMessage());
                 }
             }
 
-            // 7.1 로그 남기기
             claimMapper.insertClaimLog(claimId, resultCode, message);
 
-            // 8) 회계 반영 (보험 입금 확정 시)
+            // 9️⃣ 회계 반영
             if ("SUCCESS".equalsIgnoreCase(resultCode)) {
                 FinanceTransaction ft = new FinanceTransaction();
                 ft.setType("CLAIM");
@@ -123,18 +124,14 @@ public class ClaimOrchestrator {
                 ft.setDescription("보험금");
                 ft.setAmount(paidAmount);
                 ft.setStatus("COMPLETED");
-
                 financeTransactionMapper.insertFinance(ft);
             }
 
         } catch (Exception e) {
-            // 정정: 예외를 완전히 무시하면 원인 파악 불가하니 반드시 로그 남겨라
             e.printStackTrace();
-            // 필요하면 다시 던져서 밖에서 롤백/처리하자. 여기서는 재던지기로 변경(원하면 주석 처리)
             throw new RuntimeException("ClaimOrchestrator.run 실패", e);
         }
 
-        // 안전하게 로컬 변수들을 리턴 (선언부가 try 밖에 있으므로 접근 가능)
         return Map.of(
                 "recordId", recordId,
                 "total", total,
@@ -145,6 +142,7 @@ public class ClaimOrchestrator {
                 "claimResult", resultCode
         );
     }
+
 
 
     private static BigDecimal toBD(Object o){

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import {jwtDecode} from "jwt-decode";
 
 const Insurance = () => {
     const [treatmentHistory, setTreatmentHistory] = useState([]);
@@ -10,12 +11,16 @@ const Insurance = () => {
     const [currentClaimHistory, setCurrentClaimHistory] = useState([]);
     const [patientInsurances, setPatientInsurances] = useState([]);
 
-    const patientId = 1; // 추후 로그인 세션으로 대체 예정
-
+    const token = localStorage.getItem("token");
+    const decoded = token ? jwtDecode(token) : null;
+    const patientId = decoded?.userId || null; // 추후 로그인 세션으로 대체 예정
     // ------------------------------
     // ✅ 1. 진료 수납 내역 + 보험사 목록 조회
     // ------------------------------
+
+
     useEffect(() => {
+        if (!patientId) return;
         axios
             .get(`http://192.168.0.24:8080/api/claim/treatment/${patientId}`)
             .then((res) => setTreatmentHistory(res.data))
@@ -33,7 +38,7 @@ const Insurance = () => {
                 setPatientInsurances(res.data)
             })
             .catch((err) => console.error("❌ 환자 보험 목록 조회 실패:", err));
-    }, []);
+    }, [patientId]);
 
 
 

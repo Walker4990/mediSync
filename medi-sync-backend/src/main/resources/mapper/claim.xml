@@ -105,9 +105,10 @@
     </select>
     <!-- 보험사 MOCK API용 -->
     <select id="findPendingClaims" resultType="ClaimRequest">
-        SELECT claim_id, record_id, insurer_code, claim_amount
-        FROM claim_request
-        WHERE status = 'SENT'
+        SELECT c.claim_id, c.record_id, c.insurer_code, c.claim_amount, m.patient_id
+        FROM claim_request c
+        JOIN medical_record m ON c.record_id = m.record_id
+        WHERE c.status = 'SENT'
     </select>
     <update id="updateClaimPaid">
         UPDATE claim_request

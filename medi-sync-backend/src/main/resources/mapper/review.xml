@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.mediSync.project.medical.mapper.AdminReviewMapper">
+    <!-- 리뷰 가능 리스트 찾기 -->
+    <select id="selectReservationByReview" resultType="reviewdto">
+        select
+        r.reservation_id as typeId,
+        r.patient_id,
+        r.admin_id,
+        r.reservation_date as date
+        from reservation r
+        LEFT JOIN admin_review ar
+        ON r.reservation_id = ar.type_id
+        AND r.admin_id = ar.admin_id
+        AND r.patient_id = ar.patient_id
+        WHERE r.patient_id = #{patientId}
+        AND r.admin_id = #{adminId}
+        AND ar.review_id IS NULL
+        AND r.status = 'DONE'
+    </select>
+    <!-- 리뷰 가능 리스트 찾기 -->
+    <select id="selectTestReservationByReview" resultType="reviewdto">
+        select
+        tr.schedule_id as typeId,
+        tr.patient_id,
+        tr.admin_id,
+        ts.test_name as name,
+        TIMESTAMP(ts.test_date, ts.test_time) as date
+        from test_reservation tr
+        JOIN test_schedule ts ON ts.schedule_id = tr.schedule_id
+        LEFT JOIN admin_review ar
+        ON tr.schedule_id = ar.type_id
+        AND tr.admin_id = ar.admin_id
+        AND tr.patient_id = ar.patient_id
+        WHERE tr.patient_id = #{patientId}
+        AND tr.admin_id = #{adminId}
+        AND ar.review_id IS NULL
+        AND tr.status = 'COMPLETED'
+    </select>
+    <!-- 리뷰 가능 리스트 찾기 -->
+    <select id="selectOperationByReview" resultType="reviewdto">
+        select
+        o.operation_id as typeId,
+        o.patient_id,
+        o.admin_id,
+        o.operation_name as name,
+        TIMESTAMP(o.scheduled_date, o.scheduled_time) as date
+        from operation o
+        LEFT JOIN admin_review ar
+        ON o.operation_id = ar.type_id
+        AND o.admin_id = ar.admin_id
+        AND o.patient_id = ar.patient_id
+        WHERE o.patient_id = #{patientId}
+        AND o.admin_id = #{adminId}
+        AND ar.review_id IS NULL
+        AND o.status = 'COMPLETED'
+    </select>
+
+    <!-- 리뷰 등록 하기 -->
+    <insert id="insertReservationReview" parameterType="review">
+        insert into admin_review(admin_id, patient_id, type_id, type, rating, memo )
+        values(#{adminId}, #{patientId}, #{typeId}, #{type}, #{rating}, #{memo})
+    </insert>
+
+    <!--의사 아이디로 리뷰 가져오기 -->
+    <select id="selectReviewByAdminId" resultType="reviewdto2">
+        select
+        ar.review_id,
+        ar.patient_id,
+        ar.admin_id,
+        p.name,
+        ar.rating,
+        ar.memo,
+        ar.created_at,
+        ar.type,
+        ar.type_id
+        from admin_review ar
+        join patient p ON p.patient_id = ar.patient_id
+        where ar.admin_id = #{adminId};
+
+    </select>
+
+    <select id="getReviewTitleByTestSchedule" resultType="String">
+        select test_name from test_schedule
+        where schedule_id = #{typeId}
+    </select>
+
+    <select id="getReviewTitleByOperation" resultType="String">
+        select operation_name from operation
+        where operation_id = #{typeId}
+    </select>
+
+    <select id="selectRatingByAdminId" resultType="reviewstatedto">
+        select
+        ar.admin_id,
+        COUNT(*) as total,
+        ROUND(AVG(ar.rating),2) AS avgRating,
+        SUM(CASE WHEN ar.rating = 5 THEN 1 ELSE 0 END) AS rating5Count,
+        SUM(CASE WHEN ar.rating = 4 THEN 1 ELSE 0 END) AS rating4Count,
+        SUM(CASE WHEN ar.rating = 3 THEN 1 ELSE 0 END) AS rating3Count,
+        SUM(CASE WHEN ar.rating = 2 THEN 1 ELSE 0 END) AS rating2Count,
+        SUM(CASE WHEN ar.rating = 1 THEN 1 ELSE 0 END) AS rating1Count
+        from admin_review ar
+        WHERE ar.admin_id = #{adminId}
+        GROUP BY ar.admin_id;
+
+    </select>
+
+    <select id="getRandomFiveStarReview" resultType="map">
+    SELECT
+    r.review_id AS reviewId,
+    r.rating AS rating,
+    r.memo AS memo,
+    r.created_at AS createdAt,
+    a.admin_id AS doctorId,
+    a.name AS name,
+    d.dept_name AS deptName
+    FROM admin_review r
+    JOIN admin_account a ON r.admin_id = a.admin_id
+    JOIN department d ON a.dept_id = d.dept_id
+    WHERE r.rating = 5
+    ORDER BY RAND()
+    LIMIT 1
+</select>
+
+
+</mapper>

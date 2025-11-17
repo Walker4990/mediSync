@@ -92,6 +92,17 @@
         JOIN patient pa ON mr.patient_id = pa.patient_id
         LEFT JOIN prescription p ON mr.record_id = p.record_id
         WHERE mr.record_id = #{recordId}
+        GROUP BY
+        mr.record_id,
+        mr.patient_id,
+        mr.admin_id,
+        a.name,
+        dept.dept_name,
+        mr.diagnosis,
+        mr.total_cost,
+        mr.status,
+        mr.created_at,
+        pa.name
     </select>
 
     <!-- 처방전 조회 -->

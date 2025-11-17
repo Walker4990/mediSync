@@ -1,5 +1,7 @@
 package com.mediSync.project.medical.controller;
 
+import com.mediSync.project.medical.dto.DoctorDTO;
+import com.mediSync.project.medical.dto.DoctorInfoDTO;
 import com.mediSync.project.medical.service.DoctorService;
 import com.mediSync.project.medical.vo.AdminAccount;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +20,7 @@ public class DoctorController {
 
     private final DoctorService doctorService;
     @GetMapping
-    public List<AdminAccount> findAllDoctor(@RequestParam(required = false) Long deptId){
+    public List<DoctorInfoDTO> findAllDoctor(@RequestParam(required = false) Long deptId){
 
         System.out.println("department 넘어온 값 : "+deptId);
         if( deptId != null && deptId != 0){
@@ -91,8 +93,14 @@ public class DoctorController {
 
 
     @GetMapping("/option")
-    public List<AdminAccount> findAllDoctorsetOption(){
+    public List<DoctorInfoDTO> findAllDoctorsetOption(){
         return doctorService.selectAllDoctor();
+    }
+
+    @GetMapping("/review/{adminId}")
+    public DoctorDTO findDoctorByAdminId(@PathVariable long adminId){
+        System.out.println("의사 리뷰 정보 불러오기");
+        return doctorService.findDoctorByAdminId(adminId);
     }
 }
 

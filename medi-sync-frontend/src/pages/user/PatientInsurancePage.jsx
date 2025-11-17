@@ -2,16 +2,27 @@ import React, {useEffect, useState} from "react";
 import {insuranceApi} from "../../api/InsuranceApi";
 import InsuranceList from "../../component/InsuranceList";
 import ClaimHistory from "../../component/ClaimHistory";
+import {jwtDecode} from "jwt-decode";
 
-export default function PatientInsurancePage({patientId}) {
-
+export default function PatientInsurancePage() {
+    const [patientId, setPatientId] = useState(null);
     const [insList, setInsList] = useState([]);
     const [ claims, setClaims] = useState([]);
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
+        const token = localStorage.getItem("token");
+        if (token) {
+            const decoded = jwtDecode(token);
+            setPatientId(decoded.userId || decoded.patientId);
+            console.log('환자 아이디 : ', decoded.userId || decoded.patientId);
+        }
+    })
+
+    useEffect(() => {
+        if (!patientId) return; // patientId 없으면 실행 안함
         loadData();
-    }, [])
+    }, [patientId]);
 
     const loadData = async () => {
         const [insRes, claimRes] = await Promise.all([

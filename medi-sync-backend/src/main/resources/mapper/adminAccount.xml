@@ -89,5 +89,22 @@
         WHERE admin_id = #{adminId}
     </delete>
 
+    <select id="getRecommandedDoctor" resultType="adminAccount">
+        SELECT
+            a.admin_id AS adminId,
+            a.name AS name,
+            a.position AS position,
+        a.dept_id AS deptId,
+        d.dept_name AS deptName,
+        IFNULL(AVG(r.rating), 0) AS rating
+        FROM admin_account a
+            JOIN department d ON a.dept_id = d.dept_id
+            LEFT JOIN admin_review r ON a.admin_id = r.admin_id
+        WHERE a.position = 'DOCTOR'
+        GROUP BY a.admin_id
+        ORDER BY rating DESC
+        LIMIT 10
+
+    </select>
 
 </mapper>

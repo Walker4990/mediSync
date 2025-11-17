@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.mediSync.project.finance.mapper.PaymentMapper">
+
+    <select id="findByPatientId" resultType="finance">
+        SELECT *
+        FROM finance_transaction
+        WHERE patient_id = #{patientId}
+        AND status = 'COMPLETED'
+        AND TYPE = 'INCOME'
+        ORDER BY created_at DESC
+    </select>
+
+    <select id="findUnpaidListByPatientId" resultType="finance">
+        SELECT *
+        FROM finance_transaction
+        WHERE patient_id = #{patientId}
+        AND status = 'PENDING'
+        AND type = 'INCOME'
+        ORDER BY created_at ASC
+    </select>
+
+    <select id="findTotalUnpaidByPatientId" resultType="long">
+        SELECT COALESCE(SUM(amount), 0)
+        FROM finance_transaction
+        WHERE patient_id = #{patientId}
+        AND status = 'PENDING'
+        AND type = 'INCOME'
+    </select>
+
+    <insert id="insertPending" parameterType="payment"
+            useGeneratedKeys="true" keyProperty="paymentId">
+        INSERT INTO payment
+        (patient_id, amount, order_id, status)
+        VALUES (#{patientId}, #{amount}, #{orderId}, 'REQUESTED')
+    </insert>
+
+    <select id="findByOrderId" resultType="payment">
+        SELECT
+        payment_id,
+        patient_id,
+        amount,
+        order_id,
+        payment_key,
+        method,
+        status,
+        created_at,
+        updated_at
+        FROM payment
+        WHERE order_id = #{orderId}
+        LIMIT 1
+    </select>
+
+    <update id="updatePaymentSuccess" parameterType="payment">
+        UPDATE payment
+        SET status = 'SUCCESS',
+        payment_key = #{paymentKey},
+        method = #{method},
+        updated_at = NOW()
+        WHERE order_id = #{orderId}
+    </update>
+</mapper>

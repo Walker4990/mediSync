@@ -37,7 +37,10 @@ export default function PrescriptionInpatientPage() {
                 ...data,
                 patientId: selectedPatient.patientId,
                 recordId: selectedPatient.recordId,
-            };
+                drugName: data.type === "DRUG" ? data.itemName : null,
+                injectionName: data.type === "INJECTION" ? data.itemName : null,
+                testName: data.type === "TEST" ? data.itemName : null
+            }
             await axios.post("http://192.168.0.24:8080/api/prescriptions/add", payload);
             alert("💾 처방이 등록되었습니다.");
             setModalOpen(false);
