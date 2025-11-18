@@ -51,6 +51,8 @@ import TossCallback from "./component/TossCallback";
 import PaymentPage from "./component/PaymentPage";
 import ServiceListPage from "./pages/user/ServiceListPage";
 import ServiceDetailPage from "./pages/user/ServiceDetailPage";
+import DrugInspection from "./pages/admin/DrugInspection";
+
 const token = localStorage.getItem("token");
 if (token) {
   axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
@@ -69,9 +71,9 @@ function AppContent() {
 
       <ModalProvider>
         <Routes>
-            <Route path="/toss/callback" element={<TossCallback />} />
-            <Route path="/payment/success" element={<PaymentSuccess />} />
-            <Route path="/payment/fail" element={<PaymentFail />} />
+          <Route path="/toss/callback" element={<TossCallback />} />
+          <Route path="/payment/success" element={<PaymentSuccess />} />
+          <Route path="/payment/fail" element={<PaymentFail />} />
           {/*관리자 페이지*/}
           <Route path="/admin" element={<Home />} />
           <Route path="/admin/register" element={<AccountRegiForm />} />
@@ -84,6 +86,7 @@ function AppContent() {
           <Route path="/admin/history" element={<MediHistory />} />
           <Route path="/admin/medicalRecord" element={<MedicalRecordPage />} />
           <Route path="/admin/drug" element={<DrugPage />} />
+          <Route path="/admin/inspection" element={<DrugInspection />} />
           <Route
             path="/admin/test/reservation"
             element={<TestReservationPage />}
@@ -92,6 +95,7 @@ function AppContent() {
           <Route path="/admin/test/endoscope" element={<EndoscopeTestPage />} />
           <Route path="/admin/test/basic" element={<BasicTestPage />} />
           <Route path="/admin/test/other" element={<OtherTestPage />} />
+
           <Route
             path="/admin/operation/:operationId"
             element={<OperationDetailPage />}
@@ -104,6 +108,7 @@ function AppContent() {
           <Route path="/admin/finance" element={<FinanceTransactionPage />} />
           <Route path="/admin/finance/dashboard" element={<DashBoard />} />
           <Route path="/admin/insurance" element={<InsurerPage />} />
+
           {/*유저페이지*/}
           <Route element={<UserLayout />}>
             <Route path="/" element={<UserHome />} />/
@@ -121,10 +126,10 @@ function AppContent() {
               element={<PatientInsurancePage />}
             />
           </Route>
-            <Route path="/user/mypage/payment" element={<PaymentPage />} />
+          <Route path="/user/mypage/payment" element={<PaymentPage />} />
 
-            <Route path="/services" element={<ServiceListPage />} />
-            <Route path="/services/:id" element={<ServiceDetailPage />} />
+          <Route path="/services" element={<ServiceListPage />} />
+          <Route path="/services/:id" element={<ServiceDetailPage />} />
           {/*새창 열림*/}
           <Route
             path="/user/medicalDetail/:recordId"

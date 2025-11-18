@@ -36,7 +36,7 @@ public class PatientService {
         account.setUserId(dto.getUserId());
         account.setPassword(dto.getPassword());
         patientMapper.insertPatientAccount(account);
-        
+
         //알림설정 테이블에 기본 정보 등록
         notificationMapper.insertNotificationSetting(patient.getPatientId());
 

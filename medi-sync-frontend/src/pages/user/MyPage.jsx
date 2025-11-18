@@ -8,26 +8,29 @@ import timeGridPlugin from "@fullcalendar/timegrid";
 import "../../style/calendar.css";
 
 import {
-    User,
-    Lock,
-    Bell,
-    Search,
-    FileText,
-    Calendar,
-    Wallet,
-    MessageSquare,
-    Briefcase,
-    ChevronRight,
-    X, ShieldCheck,
+  User,
+  Lock,
+  Bell,
+  Search,
+  FileText,
+  Calendar,
+  Wallet,
+  MessageSquare,
+  Briefcase,
+  ChevronRight,
+  X,
+  ShieldCheck,
 } from "lucide-react";
 import SupportChatWidget from "./SupportChatPage";
 import PatientInsurancePage from "./PatientInsurancePage";
-import {jwtDecode} from "jwt-decode";
+import { jwtDecode } from "jwt-decode";
 import PaymentPage from "../../component/PaymentPage";
 
 const token = localStorage.getItem("token");
 const decoded = token ? jwtDecode(token) : null;
 const patientId = decoded?.userId || null;
+const API_BASE_URL = "http://192.168.0.24:8080/api/notification";
+const API_TEST_URL = "http://localhost:8080/api/notification";
 
 // 회원정보 수정 탭 - currentUser 데이터를 prop으로 받도록 수정
 const UserInfoEdit = ({ currentUser }) => {
@@ -206,7 +209,6 @@ const NotificationSettings = () => {
     marketing: false,
   });
 
-
   const toggleSetting = async (key) => {
     const newSettings = { ...settings, [key]: !settings[key] };
     setSettings(newSettings);
@@ -217,6 +219,7 @@ const NotificationSettings = () => {
         value: newSettings[key],
         setting: newSettings,
       });
+      console.log("알림 설정 완");
     } catch (error) {
       console.error("알림설정 업데이트 실패");
     }
@@ -370,11 +373,11 @@ const ViewReservation = ({ title, icon: Icon }) => {
   const [isCalendarModalOpen, setIsCalendarModalOpen] = useState(false);
 
   // 로그인 유저 임시 번호
-  const patient_id = 1;
+
   const fetchCalendarData = async () => {
     try {
       const res = await axios.get(
-        `http://localhost:8080/api/calendar?patient_id=${patient_id}`
+        `http://localhost:8080/api/calendar?patient_id=${patientId}`
       );
       console.log("받은 일정 데이터:", res.data);
       const formatted = res.data.map((item) => ({
@@ -704,14 +707,14 @@ const MyPage = () => {
             currentUser={currentUser}
           />
         );
-        case "patient-insurance":
-            return (
-                <PatientInsurancePage
-                    title="내 보험 조회"
-                    icon={ShieldCheck}
-                    patientId={patientId}
-                />
-            );
+      case "patient-insurance":
+        return (
+          <PatientInsurancePage
+            title="내 보험 조회"
+            icon={ShieldCheck}
+            patientId={patientId}
+          />
+        );
       default:
         return <div className="p-6 text-gray-500">선택된 메뉴가 없습니다.</div>;
     }
