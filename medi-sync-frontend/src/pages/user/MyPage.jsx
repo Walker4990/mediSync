@@ -22,6 +22,12 @@ import {
 } from "lucide-react";
 import SupportChatWidget from "./SupportChatPage";
 import PatientInsurancePage from "./PatientInsurancePage";
+import {jwtDecode} from "jwt-decode";
+import PaymentPage from "../../component/PaymentPage";
+
+const token = localStorage.getItem("token");
+const decoded = token ? jwtDecode(token) : null;
+const patientId = decoded?.userId || null;
 
 // 회원정보 수정 탭 - currentUser 데이터를 prop으로 받도록 수정
 const UserInfoEdit = ({ currentUser }) => {
@@ -200,7 +206,7 @@ const NotificationSettings = () => {
     marketing: false,
   });
 
-  let patientId = 1;
+
   const toggleSetting = async (key) => {
     const newSettings = { ...settings, [key]: !settings[key] };
     setSettings(newSettings);
@@ -281,7 +287,6 @@ const PatientRecords = ({ title, icon: Icon }) => {
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const pageSize = 5;
-  const patientId = 1;
 
   // 진료 기록 불러오기
   const fetchrecords = async (newPage = 0) => {
@@ -651,7 +656,7 @@ const MyPage = () => {
       },
       {
         id: "insurance_payment",
-        label: "보험/수납 관련",
+        label: "보험/수납 조회",
         icon: Wallet,
         group: "patient",
       },
@@ -693,7 +698,7 @@ const MyPage = () => {
         );
       case "insurance_payment":
         return (
-          <ViewReservation
+          <PaymentPage
             title="보험/수납 내역"
             icon={Wallet}
             currentUser={currentUser}
@@ -704,7 +709,7 @@ const MyPage = () => {
                 <PatientInsurancePage
                     title="내 보험 조회"
                     icon={ShieldCheck}
-                    patientId={1}
+                    patientId={patientId}
                 />
             );
       default:

@@ -11,14 +11,14 @@
         record_id, type, drug_name, dosage, duration,
         test_name, test_area, test_date,
         injection_name, injection_count, injection_area,
-        unit, unit_price, created_at
+        unit, unit_price, created_at, patient_id
         )
         VALUES (
         #{recordId}, #{type}, #{drugName}, #{dosage}, #{duration},
         #{testName}, #{testArea}, #{testDate},
         #{injectionName}, #{injectionCount}, #{injectionArea},
-        #{unit}, #{unitPrice}, NOW()
-        );
+        #{unit}, #{unitPrice}, NOW(), #{patientId}
+        )
     </insert>
 
     <!-- 처방 내역 전체 조회 -->

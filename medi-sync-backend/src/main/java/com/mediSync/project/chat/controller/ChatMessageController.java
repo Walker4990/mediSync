@@ -45,6 +45,7 @@ public class ChatMessageController {
 
         chatMessageService.insertMessage(chatMessage);
         messagingTemplate.convertAndSend("/topic/chat/" + receiverId, chatMessage);
+        messagingTemplate.convertAndSend("/topic/chat/admin", chatMessage);
     }
 
     @GetMapping("/unread/{senderId}/{receiverId}")

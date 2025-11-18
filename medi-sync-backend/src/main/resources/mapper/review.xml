@@ -109,5 +109,22 @@
 
     </select>
 
+    <select id="getRandomFiveStarReview" resultType="map">
+    SELECT
+    r.review_id AS reviewId,
+    r.rating AS rating,
+    r.memo AS memo,
+    r.created_at AS createdAt,
+    a.admin_id AS doctorId,
+    a.name AS name,
+    d.dept_name AS deptName
+    FROM admin_review r
+    JOIN admin_account a ON r.admin_id = a.admin_id
+    JOIN department d ON a.dept_id = d.dept_id
+    WHERE r.rating = 5
+    ORDER BY RAND()
+    LIMIT 1
+</select>
+
 
 </mapper>

@@ -7,6 +7,7 @@ import org.apache.ibatis.type.Alias;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Data
 @AllArgsConstructor
@@ -24,7 +25,7 @@ public class FinanceTransaction {
     private BigDecimal amount;
     private String description;
     private String status;
-    private LocalDate createdAt;
-    private LocalDate updatedAt;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 
 }

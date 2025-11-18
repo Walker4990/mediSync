@@ -26,7 +26,9 @@ public class Patient {
     private LocalDateTime dischargeDate;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-
+    private String email;
+    private Integer age;
+    private String gender;
     private String room_no;
     private String wardName;
     private String roomStatus;

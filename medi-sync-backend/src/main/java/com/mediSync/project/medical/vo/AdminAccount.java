@@ -28,4 +28,5 @@ public class AdminAccount {
     private LocalDate hiredDate;
     private LocalDateTime createdAt;
     private String deptName;
+    private int rating;
 }

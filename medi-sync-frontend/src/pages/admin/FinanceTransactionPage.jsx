@@ -166,14 +166,10 @@ export default function FinanceTransactionPage() {
                                         {tx.status}
                                     </td>
                                     <td className="p-3 text-gray-500">
-                                        {tx.createdAt
-                                            ? new Date(tx.createdAt).toLocaleString("ko-KR")
-                                            : "-"}
+                                        {tx.createdAt ?? "-"}
                                     </td>
                                     <td className="p-3 text-gray-500">
-                                        {tx.updatedAt
-                                            ? new Date(tx.updatedAt).toLocaleString("ko-KR")
-                                            : "-"}
+                                        {tx.updatedAt ?? "-"}
                                     </td>
                                 </tr>
                             ))

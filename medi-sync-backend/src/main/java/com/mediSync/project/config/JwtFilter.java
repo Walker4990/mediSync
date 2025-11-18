@@ -3,6 +3,7 @@ package com.mediSync.project.config;
 import java.io.IOException;
 import java.util.ArrayList;
 
+import com.mediSync.project.medical.mapper.AdminAccountMapper;
 import com.mediSync.project.medical.service.AdminAccountService;
 import com.mediSync.project.medical.service.UserAccountService;
 import com.mediSync.project.medical.vo.AdminAccount;
@@ -26,7 +27,8 @@ public class JwtFilter extends OncePerRequestFilter {
 
     @Autowired
     private UserAccountService userAccountService;
-    private AdminAccountService adminAccountService;
+    @Autowired
+    private AdminAccountMapper adminAccountMapper;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
@@ -63,10 +65,10 @@ public class JwtFilter extends OncePerRequestFilter {
                     System.out.println("[JwtFilter] USER 테이블 조회 실패. ADMIN 테이블 조회를 시도합니다.");
 
                     // ❗️ 6. 디버깅: AdminAccountService가 주입되었는지 확인 (가장 중요)
-                    if (adminAccountService == null) {
+                    if (adminAccountMapper == null) {
                         System.err.println("[JwtFilter] ❌ 치명적 오류: AdminAccountService가 null입니다. (Spring Bean 주입 실패)");
                     } else {
-                        AdminAccount admin = adminAccountService.selectAdminByEmpId(idFromToken);
+                        AdminAccount admin = adminAccountMapper.loginAdmin(idFromToken);
 
                         if (admin != null) {
                             // ❗️ 7. 디버깅: Admin 인증 성공 확인

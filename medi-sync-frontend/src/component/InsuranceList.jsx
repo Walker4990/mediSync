@@ -61,7 +61,7 @@ export default function InsuranceList({ insList }) {
                     <tbody>
                     {insList.map((it, idx) => (
                         <tr
-                            key={it.insuNum}
+                            key={idx}
                             className={`hover:bg-gray-50 transition ${
                                 idx % 2 === 0 ? "bg-white" : "bg-gray-50"
                             }`}

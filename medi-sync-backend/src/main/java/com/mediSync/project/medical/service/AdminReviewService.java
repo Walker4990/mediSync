@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -98,7 +99,10 @@ public class AdminReviewService {
     }
 
 
-
+    // 리뷰 랜덤 뽑기
+    public Map<String, Object> getRandomFiveStarReview(){
+        return adminReviewMapper.getRandomFiveStarReview();
+    }
 
 
 
