@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 
 // API 기본 URL
-const API_BASE_URL = "http://192.168.0.24:8080/api/admins/doctors";
+const API_BASE_URL = "http://localhost:8080/api/admins/doctors";
 const DEPT_API_URL = "http://192.168.0.24:8080/api/departments";
 
 // 알림 모달

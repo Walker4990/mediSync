@@ -6,6 +6,7 @@ import com.mediSync.project.medical.vo.UserAccount;
 import com.mediSync.project.patient.service.PatientService;
 import com.mediSync.project.patient.vo.Patient;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,6 +18,7 @@ public class UserAccountService {
 
     private final UserAccountMapper userAccountMapper;
     private final PatientService patientService;
+    private Object patient;
 
     public List<UserAccount> userSelectAll() {
         return userAccountMapper.selectAllUser();
@@ -56,26 +58,26 @@ public class UserAccountService {
     @Transactional
     public int userUpdate(UserAccount vo) {
         int userModify = userAccountMapper.updateUser(vo);
-
         if (userModify > 0) {
-            if (vo.getPatient() != null) {
-                Patient patient = vo.getPatient();
-                patient.setUserId(vo.getUserId());
-                patient.setName(vo.getName());
-                patient.setPhone(vo.getPhone());
-                patient.setEmail(vo.getEmail());
+            Patient patient = new Patient();
+            patient.setUserId(vo.getUserId());
+            // user_account 정보
+            patient.setName(vo.getUsername());
+            patient.setPhone(vo.getUserphone());
+            patient.setEmail(vo.getUseremail());
+            // patient 정보
+            patient.setAddress(vo.getAddress());
+            patient.setResidentNo(vo.getResidentNo());
+            patient.setConsentInsurance(vo.isConsentInsurance());
+            patient.setAge(vo.getAge());
+            patient.setGender(vo.getGender());
 
-                patient.setResidentNo(vo.getPatient().getResidentNo());
-                patient.setAddress(vo.getPatient().getAddress());
-                patient.setAge(vo.getPatient().getAge());
-                patient.setGender(vo.getPatient().getGender());
-                //patient.setConsentInsurance(vo.getPatient().isConsentInsurance());
+            // System.out.println(patient);
 
-                int patientModify = patientService.updatePatient(patient);
+            int patientModify = patientService.updatePatient(patient);
 
-                if (patientModify == 0) {
-                    throw new RuntimeException("Patient 테이블 업데이트 실패.");
-                }
+            if (patientModify == 0) {
+                throw new RuntimeException("Patient 테이블 업데이트 실패.");
             }
         }
         return userModify;

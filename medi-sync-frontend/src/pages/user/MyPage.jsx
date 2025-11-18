@@ -26,9 +26,9 @@ import {
   CheckCircle,
   LinkIcon,
   Home,
+  Eye,
+  EyeOff,
 } from "lucide-react";
-import SupportChatWidget from "./SupportChatPage";
-import PatientInsurancePage from "./PatientInsurancePage";
 import { jwtDecode } from "jwt-decode";
 import PaymentPage from "../../component/PaymentPage";
 
@@ -139,12 +139,52 @@ const calculateAgeAndGender = (residentNo) => {
 
   // 성별 판별: 1, 3: 남 / 2, 4: 여
   if (centuryCode === "1" || centuryCode === "3") {
-    genderStr = "남";
+    genderStr = "M";
   } else if (centuryCode === "2" || centuryCode === "4") {
-    genderStr = "여";
+    genderStr = "F";
   }
 
   return { age, gender: genderStr };
+};
+
+// 비밀번호 입력 필드 컴포넌트
+const PasswordInput = ({
+  name,
+  placeholder,
+  value,
+  onChange,
+  disabled,
+  showPasswordState,
+  toggleVisibilityHandler,
+}) => {
+  const field = name.replace("Password", "").toLowerCase(); // current, new, confirm 중 하나
+  const isVisible = showPasswordState[field];
+
+  return (
+    <div className="relative mb-5">
+      <input
+        type={isVisible ? "text" : "password"}
+        name={name}
+        placeholder={placeholder}
+        className="w-full p-3 border border-gray-300 rounded-lg pr-10 focus:ring-red-500"
+        value={value}
+        onChange={onChange}
+        disabled={disabled}
+      />
+      <button
+        type="button"
+        onClick={() => toggleVisibilityHandler(field)}
+        className="absolute right-0 flex items-center text-gray-300 hover:text-gray-500 h-full top-0 pr-3"
+        aria-label={isVisible ? "비밀번호 숨기기" : "비밀번호 보이기"}
+      >
+        {isVisible ? (
+          <Eye className="w-5 h-5" />
+        ) : (
+          <EyeOff className="w-5 h-5" />
+        )}
+      </button>
+    </div>
+  );
 };
 
 const UserInfoEdit = ({ currentUser, onUserUpdate }) => {
@@ -156,7 +196,9 @@ const UserInfoEdit = ({ currentUser, onUserUpdate }) => {
     residentNo2: "", // 주민번호 뒤 7자리
     age: "", // 자동 계산된 나이
     gender: "", // 자동 계산된 성별
-    consentInsurance: "N", // 보험청구 동의 여부
+    address: "",
+    social: "",
+    consentInsurance: 0, // 보험청구 동의 여부
     currentPassword: "",
     newPassword: "",
     confirmPassword: "",
@@ -172,14 +214,27 @@ const UserInfoEdit = ({ currentUser, onUserUpdate }) => {
     message: "",
     isConfirm: false,
     onConfirm: () => {},
+    onCloseCallback: null,
   });
+
+  const handleModalClose = () => {
+    if (modal.onCloseCallback) {
+      modal.onCloseCallback(); // 콜백 실행 (성공 시 onUserUpdate)
+    }
+    setModal({
+      ...modal,
+      isOpen: false,
+      onCloseCallback: null, // 실행 후 콜백 초기화
+    });
+  };
 
   const token = localStorage.getItem("token");
 
   // currentUser 정보가 업데이트될 때 폼 데이터를 초기화 (로그인 직후 데이터 반영)
   useEffect(() => {
     if (currentUser && typeof currentUser === "object") {
-      const fullResidentNo = currentUser.residentNo || "";
+      const patientData = currentUser.patient || {};
+      const fullResidentNo = patientData.residentNo || "";
       let res1 = "";
       let res2 = "";
 
@@ -188,17 +243,25 @@ const UserInfoEdit = ({ currentUser, onUserUpdate }) => {
         res2 = fullResidentNo.substring(6, 13);
       }
 
+      const initialConsent =
+        patientData.consentInsurance === "Y" ||
+        patientData.consentInsurance === true ||
+        patientData.consentInsurance === 1
+          ? 1
+          : 0;
+
       setEditData((prev) => ({
         ...prev,
         username: currentUser.username || "",
         userphone: currentUser.userphone || "",
         useremail: currentUser.useremail || "",
-        address: currentUser.address || "",
+        address: patientData.address || "",
         residentNo1: res1,
         residentNo2: res2,
-        age: currentUser.age,
-        gender: currentUser.gender,
-        consentInsurance: currentUser.consentInsurance || "N",
+        age: patientData.age,
+        gender: patientData.gender,
+        social: currentUser.social,
+        consentInsurance: initialConsent,
         patientLinkStatus: currentUser.patientLinkStatus || "N",
         patientName: currentUser.patientName || "",
         patientId: currentUser.patientId || null,
@@ -208,36 +271,53 @@ const UserInfoEdit = ({ currentUser, onUserUpdate }) => {
 
   // 주민번호 입력 시 나이/성별 자동 계산
   useEffect(() => {
-    if (editData.residentNo1.length === 6 && editData.residentNo2.length >= 1) {
-      const fullResidentNo = editData.residentNo1 + editData.residentNo2;
-      if (fullResidentNo.length >= 7) {
-        const { age, gender } = calculateAgeAndGender(fullResidentNo);
-        setEditData((prev) => ({ ...prev, age, gender }));
+    const RRN_DEBOUNCE_DELAY = 500; // 0.5초 지연 설정
+
+    const timer = setTimeout(() => {
+      if (
+        editData.residentNo1.length === 6 &&
+        editData.residentNo2.length >= 1
+      ) {
+        const fullResidentNo = editData.residentNo1 + editData.residentNo2;
+        if (fullResidentNo.length >= 7) {
+          const { age, gender } = calculateAgeAndGender(fullResidentNo);
+          setEditData((prev) => ({ ...prev, age, gender }));
+        }
+      } else {
+        // 주민번호가 유효하지 않으면 나이/성별 초기화
+        setEditData((prev) => ({ ...prev, age: "", gender: "" }));
       }
-    } else {
-      // 주민번호가 유효하지 않으면 나이/성별 초기화
-      setEditData((prev) => ({ ...prev, age: "", gender: "" }));
-    }
+    }, RRN_DEBOUNCE_DELAY);
+    return () => {
+      clearTimeout(timer); // 이전 타이머를 제거하여 입력 중간에는 실행되지 않도록 함
+    };
   }, [editData.residentNo1, editData.residentNo2]);
 
   // input 변경 핸들러
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    if (name === "residentNo1") {
-      // 숫자만 허용, 6자리 제한
-      if (value.length > 6 || !/^\d*$/.test(value)) return;
-    }
-    if (name === "residentNo2") {
-      // 숫자만 허용, 7자리 제한
-      if (value.length > 7 || !/^\d*$/.test(value)) return;
-    }
+  const handleChange = useCallback(
+    (e) => {
+      const { name, value } = e.target;
 
-    setEditData((prev) => ({ ...prev, [name]: value }));
-  };
+      // 유효성 검사를 수행
+      if (name === "residentNo1" || name === "residentNo2") {
+        const maxLength = name === "residentNo1" ? 6 : 7;
+
+        // 입력 값이 숫자 외 문자를 포함하거나 길이를 초과하면 상태 업데이트를 막습니다.
+        // if (value.length > maxLength || !/^\d*$/.test(value)) return;
+      }
+      // 그 외 필드(비밀번호 포함)는 바로 상태 업데이트 실행
+      setEditData((prev) => ({ ...prev, [name]: value }));
+    },
+    [setEditData]
+  );
 
   const handleRadioChange = (e) => {
     const { name, value } = e.target;
-    setEditData((prev) => ({ ...prev, [name]: value }));
+    let newValue = value; // consentInsurance 필드인 경우, 문자열 "1" 또는 "0"을 숫자 1 또는 0으로 변환
+    if (name === "consentInsurance") {
+      newValue = parseInt(value, 10);
+    }
+    setEditData((prev) => ({ ...prev, [name]: newValue }));
   };
 
   // 회원 정보 수정
@@ -249,6 +329,8 @@ const UserInfoEdit = ({ currentUser, onUserUpdate }) => {
       userphone,
       useremail,
       address,
+      age,
+      gender,
       residentNo1,
       residentNo2,
       consentInsurance,
@@ -265,7 +347,10 @@ const UserInfoEdit = ({ currentUser, onUserUpdate }) => {
     }
 
     // 주민등록번호 유효성 검사
-    if (residentNo1.length !== 6 || residentNo2.length !== 7) {
+    if (
+      (residentNo1.length > 0 || residentNo2.length > 0) &&
+      (residentNo1.length !== 6 || residentNo2.length !== 7)
+    ) {
       setModal({
         isOpen: true,
         title: "입력 오류",
@@ -283,12 +368,14 @@ const UserInfoEdit = ({ currentUser, onUserUpdate }) => {
         userphone,
         useremail,
         address,
+        age,
+        gender,
         residentNo: fullResidentNo,
         consentInsurance,
       };
 
-      const response = await axios.put(
-        `http://localhost:8080/api/users/${currentUser.userId}`,
+      const response = await axios.patch(
+        `http://localhost:8080/api/users/${currentUser.userId}/edit`,
         updatePayload,
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -301,10 +388,11 @@ const UserInfoEdit = ({ currentUser, onUserUpdate }) => {
       ) {
         setModal({
           isOpen: true,
-          title: "성공",
+          title: "저장 성공",
           message: "회원 정보가 성공적으로 업데이트되었습니다.",
+          isConfirm: false,
+          onCloseCallback: onUserUpdate,
         });
-        onUserUpdate();
       } else {
         setModal({
           isOpen: true,
@@ -315,7 +403,9 @@ const UserInfoEdit = ({ currentUser, onUserUpdate }) => {
     } catch (error) {
       console.error("정보 업데이트 오류:", error);
       const errorMessage =
-        error.response?.data || "서버 통신 중 오류가 발생했습니다.";
+        error.response?.data?.message || // 서버가 보낸 message 속성을 사용
+        error.response?.data ||
+        "서버 통신 중 오류가 발생했습니다.";
       setModal({
         isOpen: true,
         title: "서버 오류",
@@ -360,11 +450,20 @@ const UserInfoEdit = ({ currentUser, onUserUpdate }) => {
       return;
     }
 
+    if (currentPassword === newPassword) {
+      setModal({
+        isOpen: true,
+        title: "입력 오류",
+        message: "새 비밀번호는 현재 비밀번호와 다르게 설정해야 합니다.",
+      });
+      return;
+    }
+
     // 비밀번호 변경 확인 모달
     setModal({
       isOpen: true,
       title: "비밀번호 변경 확인",
-      message: "현재 비밀번호와 새 비밀번호로 변경하시겠습니까?",
+      message: "새 비밀번호로 변경하시겠습니까?",
       isConfirm: true,
       onConfirm: async () => {
         setModal({ isOpen: false }); // 모달 닫기
@@ -376,8 +475,8 @@ const UserInfoEdit = ({ currentUser, onUserUpdate }) => {
             currentPassword: currentPassword,
           };
 
-          const response = await axios.put(
-            `http://localhost:8080/api/users/${currentUser.userId}`, // 비밀번호 전용 엔드포인트 생성
+          const response = await axios.patch(
+            `http://localhost:8080/api/users/${currentUser.userId}/pass`, // 비밀번호 전용 엔드포인트
             passwordUpdatePayload,
             {
               headers: { Authorization: `Bearer ${token}` },
@@ -411,7 +510,9 @@ const UserInfoEdit = ({ currentUser, onUserUpdate }) => {
         } catch (error) {
           console.error("비밀번호 변경 오류:", error);
           const errorMessage =
-            error.response?.data || "서버 통신 중 오류가 발생했습니다.";
+            error.response?.data?.message || // 서버가 보낸 message 속성을 사용
+            error.response?.data ||
+            "서버 통신 중 오류가 발생했습니다.";
           setModal({
             isOpen: true,
             title: "서버 오류",
@@ -423,6 +524,20 @@ const UserInfoEdit = ({ currentUser, onUserUpdate }) => {
       },
     });
   };
+
+  // 비밀번호 표시
+  const [showPassword, setShowPassword] = useState({
+    current: false,
+    new: false,
+    confirm: false,
+  });
+
+  const togglePasswordVisibility = useCallback((field) => {
+    setShowPassword((prev) => ({
+      ...prev,
+      [field]: !prev[field],
+    }));
+  }, []);
 
   // 5. 환자 연동/연동 해제 핸들러
   const handlePatientLinkToggle = async () => {
@@ -506,7 +621,7 @@ const UserInfoEdit = ({ currentUser, onUserUpdate }) => {
     <div className="p-6">
       <AlertModal
         isOpen={modal.isOpen}
-        onClose={() => setModal({ ...modal, isOpen: false })}
+        onClose={handleModalClose}
         title={modal.title}
         message={modal.message}
         isConfirm={modal.isConfirm}
@@ -517,7 +632,7 @@ const UserInfoEdit = ({ currentUser, onUserUpdate }) => {
         {/* 왼쪽 컬럼: 기본 정보 수정 */}
         <div className="border w-[450px] p-6 rounded-xl shadow-md bg-white space-y-6 flex flex-col">
           <h4 className="text-xl font-bold text-gray-800 flex items-center">
-            <User className="w-5 h-5 mr-2 text-blue-600" /> 기본 정보 수정
+            <User className="w-5 h-5 mr-2 text-blue-600" /> 기본정보 수정
           </h4>
 
           {/* 폼 영역 */}
@@ -553,7 +668,7 @@ const UserInfoEdit = ({ currentUser, onUserUpdate }) => {
               />
             </div>
 
-            {/* 이메일 (가로 전체) */}
+            {/* 이메일 */}
             <div className="md:col-span-2">
               <span className="mb-1 text-sm font-medium text-gray-600">
                 이메일
@@ -569,7 +684,7 @@ const UserInfoEdit = ({ currentUser, onUserUpdate }) => {
               />
             </div>
 
-            {/* 주민등록번호 (가로 전체) */}
+            {/* 주민등록번호 */}
             <div className="md:col-span-2">
               <span className="mb-1 text-sm font-medium text-gray-600">
                 주민등록번호
@@ -588,7 +703,7 @@ const UserInfoEdit = ({ currentUser, onUserUpdate }) => {
                 />
                 <span className="text-gray-500 text-xl">-</span>
                 <input
-                  type="text"
+                  type="password"
                   inputMode="numeric"
                   name="residentNo2"
                   placeholder="뒤 7자리"
@@ -604,32 +719,38 @@ const UserInfoEdit = ({ currentUser, onUserUpdate }) => {
               </p>
             </div>
 
-            {/* 나이 (자동 계산) */}
+            {/* 나이 (자동) */}
             <div className="md:col-span-1">
               <span className="mb-1 text-sm font-medium text-gray-600">
-                만 나이
+                나이
               </span>
               <input
                 type="text"
-                value={editData.age ? `${editData.age} 세` : "-"}
+                value={editData.age ? `${editData.age} 세` : ""}
                 readOnly
                 className="p-3 border border-gray-300 rounded-lg w-full bg-gray-200 text-gray-700 font-bold text-center"
               />
             </div>
-            {/* 성별 (자동 계산) */}
+            {/* 성별 (자동) */}
             <div className="md:col-span-1">
               <span className="mb-1 text-sm font-medium text-gray-600">
                 성별
               </span>
               <input
                 type="text"
-                value={editData.gender || "-"}
+                value={
+                  editData.gender === "M"
+                    ? "남"
+                    : editData.gender === "F"
+                    ? "여"
+                    : ""
+                }
                 readOnly
                 className="p-3 border border-gray-300 rounded-lg w-full bg-gray-200 text-gray-700 font-bold text-center"
               />
             </div>
 
-            {/* 주소 (가로 전체) */}
+            {/* 주소 */}
             <div className="md:col-span-2">
               <span className="mb-1 text-sm font-medium text-gray-600">
                 주소
@@ -637,7 +758,7 @@ const UserInfoEdit = ({ currentUser, onUserUpdate }) => {
               <input
                 type="text"
                 name="address"
-                placeholder="주소"
+                placeholder="주소를 입력하세요"
                 className="p-3 border border-gray-300 rounded-lg w-full focus:ring-blue-500"
                 value={editData.address}
                 onChange={handleChange}
@@ -645,7 +766,7 @@ const UserInfoEdit = ({ currentUser, onUserUpdate }) => {
               />
             </div>
 
-            {/* 보험자동청구 동의 (가로 전체) */}
+            {/* 보험자동청구 동의 */}
             <div className="md:col-span-2">
               <span className="mb-1 text-sm font-medium text-gray-600">
                 보험자동청구 동의 여부
@@ -655,8 +776,8 @@ const UserInfoEdit = ({ currentUser, onUserUpdate }) => {
                   <input
                     type="radio"
                     name="consentInsurance"
-                    value="Y"
-                    checked={editData.consentInsurance === "Y"}
+                    value={1}
+                    checked={editData.consentInsurance === 1}
                     onChange={handleRadioChange}
                     className="w-4 h-4 text-blue-600 focus:ring-blue-500"
                     disabled={isUpdating}
@@ -669,8 +790,8 @@ const UserInfoEdit = ({ currentUser, onUserUpdate }) => {
                   <input
                     type="radio"
                     name="consentInsurance"
-                    value="N"
-                    checked={editData.consentInsurance === "N"}
+                    value={0}
+                    checked={editData.consentInsurance === 0}
                     onChange={handleRadioChange}
                     className="w-4 h-4 text-gray-600 focus:ring-gray-500"
                     disabled={isUpdating}
@@ -694,59 +815,69 @@ const UserInfoEdit = ({ currentUser, onUserUpdate }) => {
         {/* 오른쪽 컬럼: 비밀번호 변경 및 환자 연동 */}
         <div className="space-y-8 w-[360px]">
           {/* 비밀번호 변경 */}
-          <div className="border p-6 rounded-xl shadow-md bg-white">
-            <h4 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
-              <Lock className="w-5 h-5 mr-2 text-red-600" /> 비밀번호 변경
-            </h4>
-            <span className="mb-1 text-sm font-medium text-gray-600">
-              현재 비밀번호
-            </span>
-            <input
-              type="password"
-              name="currentPassword"
-              placeholder="현재 비밀번호를 입력하세요"
-              className="w-full p-3 border border-gray-300 rounded-lg mb-4 focus:ring-red-500"
-              value={editData.currentPassword}
-              onChange={handleChange}
-              disabled={isUpdating}
-            />
+          {currentUser &&
+            currentUser.social !== "NAVER" &&
+            currentUser.social !== "KAKAO" && (
+              <div className="border p-6 rounded-xl shadow-md bg-white">
+                <h4 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                  <Lock className="w-5 h-5 mr-2 text-red-600" /> 비밀번호 변경
+                </h4>
+                <span className="mb-1 text-sm font-medium text-gray-600">
+                  현재 비밀번호
+                </span>
+                <PasswordInput
+                  type="password"
+                  name="currentPassword"
+                  placeholder="현재 비밀번호를 입력하세요"
+                  className="w-full p-3 border border-gray-300 rounded-lg mb-4 focus:ring-red-500"
+                  value={editData.currentPassword}
+                  onChange={handleChange}
+                  disabled={isUpdating}
+                  showPasswordState={showPassword}
+                  toggleVisibilityHandler={togglePasswordVisibility}
+                />
 
-            <span className="mb-1 text-sm font-medium text-gray-600">
-              새 비밀번호
-            </span>
-            <input
-              type="password"
-              name="newPassword"
-              placeholder="새 비밀번호 (8자 이상)"
-              className="w-full p-3 border border-gray-300 rounded-lg mb-4 focus:ring-red-500"
-              value={editData.newPassword}
-              onChange={handleChange}
-              disabled={isUpdating}
-            />
+                <span className="mb-1 text-sm font-medium text-gray-600">
+                  새 비밀번호
+                </span>
+                <PasswordInput
+                  type="password"
+                  name="newPassword"
+                  placeholder="새 비밀번호 (4글자 이상)"
+                  className="w-full p-3 border border-gray-300 rounded-lg mb-4 focus:ring-red-500"
+                  value={editData.newPassword}
+                  onChange={handleChange}
+                  disabled={isUpdating}
+                  showPasswordState={showPassword}
+                  toggleVisibilityHandler={togglePasswordVisibility}
+                />
 
-            <span className="mb-1 text-sm font-medium text-gray-600">
-              새 비밀번호 확인
-            </span>
-            <input
-              type="password"
-              name="confirmPassword"
-              placeholder="새 비밀번호를 다시 입력하세요"
-              className="w-full p-3 border border-gray-300 rounded-lg mb-6 focus:ring-red-500"
-              value={editData.confirmPassword}
-              onChange={handleChange}
-              disabled={isUpdating}
-            />
-            <button
-              onClick={handleChangePassword}
-              className="w-full py-3 bg-red-600 text-white font-bold rounded-lg hover:bg-red-700 transition shadow-lg disabled:bg-gray-400"
-              disabled={isUpdating}
-            >
-              {isUpdating ? "변경 중..." : "비밀번호 변경"}
-            </button>
-          </div>
+                <span className="mb-1 text-sm font-medium text-gray-600">
+                  새 비밀번호 확인
+                </span>
+                <PasswordInput
+                  type="password"
+                  name="confirmPassword"
+                  placeholder="새 비밀번호를 다시 입력하세요"
+                  className="w-full p-3 border border-gray-300 rounded-lg mb-6 focus:ring-red-500"
+                  value={editData.confirmPassword}
+                  onChange={handleChange}
+                  disabled={isUpdating}
+                  showPasswordState={showPassword}
+                  toggleVisibilityHandler={togglePasswordVisibility}
+                />
+                <button
+                  onClick={handleChangePassword}
+                  className="w-full py-3 bg-red-600 text-white font-bold rounded-lg hover:bg-red-700 transition shadow-lg disabled:bg-gray-400"
+                  disabled={isUpdating}
+                >
+                  {isUpdating ? "변경 중..." : "비밀번호 변경"}
+                </button>
+              </div>
+            )}
 
           {/* 환자 연동 상태 */}
-          <div className="border p-6 rounded-xl shadow-md bg-white">
+          {/* <div className="border p-6 rounded-xl shadow-md bg-white">
             <h4 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
               <LinkIcon className="w-5 h-5 mr-2 text-green-600" /> 환자 연동
               상태
@@ -776,7 +907,6 @@ const UserInfoEdit = ({ currentUser, onUserUpdate }) => {
                 </p>
               )}
             </div>
-
             <button
               type="button"
               onClick={handlePatientLinkToggle}
@@ -796,10 +926,10 @@ const UserInfoEdit = ({ currentUser, onUserUpdate }) => {
                 : `${
                     editData.patientLinkStatus === "Y"
                       ? "환자 연동 해제"
-                      : "환자 정보 연동"
+                      : "새로고침"
                   }`}
             </button>
-          </div>
+          </div> */}
         </div>
       </div>
     </div>
@@ -1187,13 +1317,11 @@ const MyPage = () => {
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  // 데이터 로드 로직을 useCallback으로 추출
+  const fetchUserData = useCallback(() => {
     const token = localStorage.getItem("token");
-    // if (!token) {
-    //   alert("로그인이 필요합니다.");
-    //   window.location.href = "/";
-    //   return;
-    // }
+    setLoading(true); // 업데이트 시에도 로딩 표시
+
     axios
       .get("http://localhost:8080/api/users/mypage", {
         headers: { Authorization: `Bearer ${token}` },
@@ -1210,6 +1338,10 @@ const MyPage = () => {
         setLoading(false);
       });
   }, []);
+
+  useEffect(() => {
+    fetchUserData();
+  }, [fetchUserData]); // 의존성 배열에 fetchUserData 추가
 
   const formattedDate = useMemo(() => {
     if (!currentUser?.createdAt) return "";
@@ -1283,7 +1415,12 @@ const MyPage = () => {
 
     switch (activeTab) {
       case "info_edit":
-        return <UserInfoEdit currentUser={currentUser} />;
+        return (
+          <UserInfoEdit
+            currentUser={currentUser}
+            onUserUpdate={fetchUserData}
+          />
+        );
       case "notification_settings":
         return <NotificationSettings />;
       case "med_records":
@@ -1331,6 +1468,13 @@ const MyPage = () => {
 
   // 사용자 이름이 로딩 중일 때는 '...' 표시, 로딩 완료 후 값이 없으면 '사용자' 표시
   const userName = currentUser?.username || (loading ? "..." : "사용자");
+  const userId = currentUser?.userId || (loading ? "..." : "");
+
+  const socialType = useMemo(() => {
+    if (currentUser?.social === "NAVER") return "네이버";
+    if (currentUser?.social === "KAKAO") return "카카오";
+    return "일반";
+  }, [currentUser?.social]);
 
   return (
     <div className="font-pretendard">
@@ -1338,7 +1482,24 @@ const MyPage = () => {
       <section className="pt-12 pb-16 bg-gradient-to-l from-white to-sky-100 shadow-inner">
         <div className="max-w-6xl mx-auto px-4 md:px-8">
           <h1 className="text-3xl font-bold text-gray-800">
-            환영합니다, <span className="text-blue-600">{userName}</span> 님!
+            환영합니다,{" "}
+            <span className="text-blue-600">
+              {userName}({userId})
+            </span>{" "}
+            님!
+            {socialType && (
+              <span
+                className={`text-base font-medium ml-3 px-3 py-1 rounded-full ${
+                  socialType === "네이버"
+                    ? "bg-green-100 text-green-700"
+                    : socialType === "카카오"
+                    ? "bg-yellow-100 text-yellow-700"
+                    : "bg-blue-100 text-blue-700"
+                }`}
+              >
+                {socialType} 로그인
+              </span>
+            )}
           </h1>
           <p className="text-gray-500 mt-1">
             이곳에서 당신의 정보를 안전하게 관리하고 기록을 확인하세요.

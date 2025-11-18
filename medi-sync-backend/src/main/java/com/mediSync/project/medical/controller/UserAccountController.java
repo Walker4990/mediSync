@@ -455,9 +455,10 @@ public class UserAccountController {
     }
 
     // 수정
-    @PutMapping("/{userId}")
+    @PatchMapping("/{userId}/edit")
     public ResponseEntity<String> updateUser(@PathVariable Long userId, @RequestBody UserAccount vo) {
         vo.setUserId(userId);
+        UserAccount currentUser = userAccountService.userSelectOne(userId);
         int rowsAffected = userAccountService.userUpdate(vo);
         if (rowsAffected > 0) {
             return ResponseEntity.ok("User updated successfully.");
@@ -465,6 +466,32 @@ public class UserAccountController {
             return ResponseEntity.notFound().build();
         }
     }
+
+    // 비밀번호 변경 따로 분리
+    @PatchMapping("/{userId}/pass")
+    public ResponseEntity<String> updateUserPass(@PathVariable Long userId, @RequestBody UserAccount vo) {
+        vo.setUserId(userId);
+        UserAccount currentUser = userAccountService.userSelectOne(userId);
+        if (currentUser == null) {
+            return ResponseEntity.notFound().build();
+        }
+        // 현재 비밀번호와 일치할 경우
+        if (passwordEncoder.matches(vo.getCurrentPassword(), currentUser.getPassword())) {
+            String encodedNewPassword = passwordEncoder.encode(vo.getPassword());
+            vo.setPassword(encodedNewPassword); // vo 객체에 암호화된 새 비밀번호를 덮어씁니다.
+
+            int rowsAffected = userAccountService.userUpdate(vo);
+
+            if (rowsAffected > 0) {
+                return ResponseEntity.ok("User updated successfully.");
+            } else {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Update failed after password check.");
+            }
+        } else {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("현재 비밀번호가 일치하지 않습니다.");
+        }
+    }
+
 
     // 삭제
     @DeleteMapping("/{userId}")

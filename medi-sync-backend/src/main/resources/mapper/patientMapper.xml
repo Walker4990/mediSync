@@ -15,15 +15,33 @@
 
     <!-- 환자 정보 수정 -->
     <update id="updatePatient" parameterType="patient">
-        UPDATE patient SET
-        name = #{name},
-        phone = #{phone},
-        email = #{email},
-        resident_no = #{residentNo},
-        age = #{age},
-        gender = #{gender},
-        address = #{address},
-        consent_insurance = #{consentInsurance}
+        UPDATE patient
+        <set>
+            <if test="name != null and name != ''">
+                name = #{name},
+            </if>
+            <if test="phone != null and phone != ''">
+                phone = #{phone},
+            </if>
+            <if test="email != null and email != ''">
+                email = #{email},
+            </if>
+            <if test="residentNo != null and residentNo != ''">
+                resident_no = #{residentNo},
+            </if>
+            <if test="age != null">
+                age = #{age},
+            </if>
+            <if test="gender != null and gender != ''">
+                gender = #{gender},
+            </if>
+            <if test="address != null and address != ''">
+                address = #{address},
+            </if>
+            <if test="consentInsurance != null">
+                consent_insurance = #{consentInsurance},
+            </if>
+        </set>
         WHERE user_id = #{userId}
     </update>
 

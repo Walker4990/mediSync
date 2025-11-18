@@ -23,7 +23,7 @@ export default function LoginModal() {
   const [isSubmitting, setIsSubmitting] = useState(false); // 중복 요청 방지
   const navigate = useNavigate();
 
-  const API_URI = "http://192.168.0.24:8080/api/users/login";
+  const API_URI = "http://localhost:8080/api/users/login";
 
   // isOpen 상태가 변경될 때마다 실행되며 인풋값을 초기화
   useEffect(() => {
