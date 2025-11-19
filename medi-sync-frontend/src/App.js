@@ -51,6 +51,7 @@ import TossCallback from "./component/TossCallback";
 import PaymentPage from "./component/PaymentPage";
 import ServiceListPage from "./pages/user/ServiceListPage";
 import ServiceDetailPage from "./pages/user/ServiceDetailPage";
+import AdminRefundPage from "./pages/admin/AdminRefundPage";
 const token = localStorage.getItem("token");
 if (token) {
   axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
@@ -104,6 +105,7 @@ function AppContent() {
           <Route path="/admin/finance" element={<FinanceTransactionPage />} />
           <Route path="/admin/finance/dashboard" element={<DashBoard />} />
           <Route path="/admin/insurance" element={<InsurerPage />} />
+          <Route path="/admin/finance/refund" element={<AdminRefundPage /> } />
           {/*유저페이지*/}
           <Route element={<UserLayout />}>
             <Route path="/" element={<UserHome />} />/

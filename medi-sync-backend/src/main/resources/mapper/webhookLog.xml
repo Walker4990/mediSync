@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.mediSync.project.finance.mapper.WebhookLogMapper">
+    <select id="existsByPaymentKeyAndEventType" resultType="int">
+        SELECT COUNT(*) FROM webhook_log
+        WHERE payment_key = #{paymentKey}
+        AND event_type = #{eventType}
+    </select>
+
+    <insert id="insertLog">
+        INSERT INTO webhook_log (payment_key, event_type, raw_payload)
+        VALUES (#{paymentKey}, #{eventType}, #{rawPayload})
+    </insert>
+</mapper>

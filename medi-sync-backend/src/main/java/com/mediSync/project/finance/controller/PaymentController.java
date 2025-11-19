@@ -5,12 +5,14 @@ import com.mediSync.project.finance.mapper.PaymentMapper;
 import com.mediSync.project.finance.service.PaymentService;
 import com.mediSync.project.finance.vo.Payment;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 import java.util.Map;
 
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/payment")
@@ -36,8 +38,9 @@ public class PaymentController {
         return ResponseEntity.ok(checkoutInfo);
     }
 
-    @PostMapping("/toss/webhook")
+    @PostMapping({"/webhook", "/toss/webhook"})
     public ResponseEntity<?> webhook(@RequestBody Map<String, Object> payload){
+        log.info("📩 [Webhook] Controller 진입");
         paymentService.handleWebhook(payload);
         return ResponseEntity.ok().build();
     }

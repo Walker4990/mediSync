@@ -27,5 +27,8 @@ public class FinanceTransaction {
     private String status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private String orderId;
+    private String refundStatus;
+
 
 }

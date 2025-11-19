@@ -6,14 +6,41 @@
 <mapper namespace="com.mediSync.project.finance.mapper.PaymentMapper">
 
     <select id="findByPatientId" resultType="finance">
-        SELECT *
+        SELECT
+        ft.tx_id,
+        ft.ref_type,
+        ft.ref_id,
+        ft.patient_id,
+        ft.admin_id,
+        ft.type,
+        ft.category,
+        ft.amount,
+        ft.description,
+        ft.status,
+        ft.created_at,
+        ft.updated_at,
+        p.order_id,
+        p.payment_key,
+        p.status AS paymentStatus,
+        rr.status AS refund_status
+        FROM finance_transaction ft
+        JOIN (
+        SELECT ref_id, MAX(tx_id) AS max_tx_id
         FROM finance_transaction
         WHERE patient_id = #{patientId}
         AND status = 'COMPLETED'
-        AND TYPE = 'INCOME'
-        ORDER BY created_at DESC
+        AND type = 'INCOME'
+        GROUP BY ref_id
+        ) recent
+        ON ft.ref_id = recent.ref_id
+        AND ft.tx_id = recent.max_tx_id
+        LEFT JOIN payment p
+        ON ft.ref_id = p.payment_id
+        AND ft.ref_type = 'PAYMENT'
+        LEFT JOIN refund_request rr
+        ON p.order_id = rr.order_id
+        ORDER BY ft.created_at DESC
     </select>
-
     <select id="findUnpaidListByPatientId" resultType="finance">
         SELECT *
         FROM finance_transaction
@@ -45,7 +72,7 @@
         amount,
         order_id,
         payment_key,
-        method,
+        pg_provider,
         status,
         created_at,
         updated_at
@@ -58,8 +85,14 @@
         UPDATE payment
         SET status = 'SUCCESS',
         payment_key = #{paymentKey},
-        method = #{method},
+        pg_provider = #{pgProvider},
         updated_at = NOW()
+        WHERE order_id = #{orderId}
+    </update>
+
+    <update id="updatePaymentRefund">
+        UPDATE payment
+        SET status = 'REFUNDED', updated_at = NOW()
         WHERE order_id = #{orderId}
     </update>
 </mapper>

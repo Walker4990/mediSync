@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.mediSync.project.finance.mapper.RefundMapper">
+    <insert id="insertRefundRequest">
+      INSERT INTO refund_request ( order_id, patient_id, amount, reason )
+      VALUES (#{orderId}, #{patientId}, #{amount}, #{reason})
+    </insert>
+
+    <update id="updateStatus">
+        UPDATE refund_request
+        SET status = #{status}, approved_at = NOW()
+        WHERE order_id = #{orderId}
+    </update>
+
+    <select id="findByOrderId" resultType="refund">
+        SELECT * FROM refund_request
+        WHERE order_id = #{orderId}
+    </select>
+
+    <select id="findAll" resultType="refund">
+        SELECT * FROM refund_request ORDER BY created_at DESC
+    </select>
+
+    <select id="findByRefundId" resultType="refund">
+        SELECT * FROM refund_request WHERE refund_id = #{refundId}
+    </select>
+
+    <!-- 승인(PENDING → APPROVED) -->
+    <update id="approve">
+        UPDATE refund_request
+        SET status = 'APPROVED',
+        approved_at = NOW()
+        WHERE refund_id = #{refundId}
+        AND status = 'PENDING'
+    </update>
+
+    <!-- 거절(PENDING → REJECTED) -->
+    <update id="reject">
+        UPDATE refund_request
+        SET status = 'REJECTED'
+        WHERE refund_id = #{refundId}
+        AND status = 'PENDING'
+    </update>
+
+    <!-- 실제 환불 완료 -->
+    <update id="markCompleted">
+        UPDATE refund_request
+        SET status = 'COMPLETED'
+        WHERE refund_id = #{refundId}
+    </update>
+
+</mapper>
