@@ -4,7 +4,7 @@ import axios from "axios";
 import { header } from "framer-motion/client";
 
 const API_BASE_URL = "http://192.168.0.24:8080/api/doctors";
-const API_TEST_URL = "http://localhost:8080/api/doctors";
+const API_TEST_URL = "http://192.168.0.24:8080/api/doctors";
 // 가상의 진료 과목 목록 (테이블 참고)
 const departments = [
   { id: 0, name: "전체 과목" },

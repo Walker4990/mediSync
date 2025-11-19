@@ -39,8 +39,8 @@
     </select>
 
     <insert id="insertFinance" parameterType="finance">
-        INSERT INTO finance_transaction(ref_type, ref_id, patient_id, admin_id, type, category, amount, description, status, created_at, updated_at)
-        VALUES (#{refType}, #{refId}, #{patientId}, #{adminId}, #{type}, #{category}, #{amount}, #{description}, #{status}, now(), now())
+        INSERT INTO finance_transaction(ref_type, ref_id, patient_id, admin_id, type, category, amount, description, status, created_at, updated_at, order_id)
+        VALUES (#{refType}, #{refId}, #{patientId}, #{adminId}, #{type}, #{category}, #{amount}, #{description}, #{status}, now(), now(), #{orderId})
     </insert>
 
     <!-- 재무 기록 검색 -->
@@ -85,4 +85,28 @@
         GROUP BY status
         ORDER BY FIELD(status, 'COMPLETED', 'PENDING', 'REFUNDED')
     </select>
+
+    <update id="updateCompletedByOrderId">
+        UPDATE finance_transaction
+        SET status='COMPLETED'
+        WHERE ref_type='PAYMENT'
+        AND ref_id = (SELECT payment_id FROM payment WHERE order_id = #{orderId})
+    </update>
+
+    <update id="updateOldestPendingRecordByPatient">
+        UPDATE finance_transaction
+        SET status = 'COMPLETED'
+        WHERE tx_id = (
+        SELECT tx_id FROM (
+        SELECT tx_id
+        FROM finance_transaction
+        WHERE patient_id = #{patientId}
+        AND ref_type = 'RECORD'
+        AND status = 'PENDING'
+        AND type = 'INCOME'
+        ORDER BY created_at ASC
+        LIMIT 1
+        ) AS sub
+        )
+    </update>
 </mapper>

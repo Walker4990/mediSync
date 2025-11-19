@@ -5,6 +5,7 @@ import ModalProvider from "./component/ModalProvider";
 import AccountRegiForm from "./pages/admin/AccountRegiForm";
 import AccountList from "./pages/admin/AccountList";
 import AdminMyPage from "./pages/admin/AdminMyPage";
+import OAuthRedirectHandler from "./component/OAuthRedirectHandler";
 import DashBoard from "./pages/admin/DashBoard";
 import PatientList from "./pages/admin/PatientList";
 import StaffList from "./pages/admin/StaffList";
@@ -52,7 +53,7 @@ import PaymentPage from "./component/PaymentPage";
 import ServiceListPage from "./pages/user/ServiceListPage";
 import ServiceDetailPage from "./pages/user/ServiceDetailPage";
 import DrugInspection from "./pages/admin/DrugInspection";
-
+import AdminRefundPage from "./pages/admin/AdminRefundPage";
 const token = localStorage.getItem("token");
 if (token) {
   axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
@@ -109,11 +110,13 @@ function AppContent() {
           <Route path="/admin/finance/dashboard" element={<DashBoard />} />
           <Route path="/admin/insurance" element={<InsurerPage />} />
 
+          <Route path="/admin/finance/refund" element={<AdminRefundPage />} />
           {/*유저페이지*/}
           <Route element={<UserLayout />}>
             <Route path="/" element={<UserHome />} />/
             <Route path="/findAccount" element={<FindAccount />} />/
             <Route path="/auth/callback" element={<OAuthCallback />} />
+            <Route path="/oauth/redirect" element={<OAuthRedirectHandler />} />
             <Route path="/user/mypage" element={<MyPage />} />
             <Route path="/user/pre-form" element={<PreExamForm />} />
             <Route path="/user/consult" element={<MedicalConsult />} />

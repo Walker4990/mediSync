@@ -14,9 +14,13 @@ import java.time.LocalDateTime;
 @Alias("user")
 public class UserAccount {
     private Long userId;
-    private String name, phone, loginId, password, role, email, social;
+    private String name, phone, loginId, role, email, social;
     private LocalDateTime createdAt;
 
     private String username, userphone, useremail;
+    private String password, currentPassword, confirmPassword;
+    private String residentNo, gender, address;
+    private int age;
+    private boolean consentInsurance;
     private Patient patient;
 }

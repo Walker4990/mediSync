@@ -1,6 +1,7 @@
 package com.mediSync.project.medical.controller;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.mediSync.project.common.service.EmailService;
 import com.mediSync.project.config.JwtUtil;
 import com.mediSync.project.medical.service.UserAccountService;
@@ -39,16 +40,24 @@ public class UserAccountController {
 
     // application.properties에서 설정값 주입
     @Value("${spring.security.oauth2.client.registration.naver.client-id}")
-    private String clientId;
-
+    private String naverClientId;
     @Value("${spring.security.oauth2.client.registration.naver.client-secret}")
-    private String clientSecret;
-
+    private String naverClientSecret;
     @Value("${spring.security.oauth2.client.provider.naver.token-uri}")
-    private String tokenUri;
-
+    private String naverTokenUri;
     @Value("${spring.security.oauth2.client.provider.naver.user-info-uri}")
-    private String userInfoUri;
+    private String naverUserInfoUri;
+
+    @Value("${spring.security.oauth2.client.registration.kakao.client-id}")
+    private String kakaoClientId;
+    @Value("${spring.security.oauth2.client.registration.kakao.client-secret}")
+    private String kakaoClientSecret;
+    @Value("${spring.security.oauth2.client.provider.kakao.token-uri}")
+    private String kakaoTokenUri;
+    @Value("${spring.security.oauth2.client.provider.kakao.user-info-uri}")
+    private String kakaoUserInfoUri;
+    @Value("${spring.security.oauth2.client.registration.kakao.redirect-uri}")
+    private String kakaoRedirectUri;
 
     // 전체 리스트
     @GetMapping
@@ -57,7 +66,7 @@ public class UserAccountController {
     }
 
     // naver 로그인 테스트
-    @GetMapping("/test")
+    @GetMapping("/naver/callback")
     public ResponseEntity<?> handleNaverCallback(@RequestParam String code, @RequestParam String state) {
         // 1. 네이버 Access Token 발급
         String accessToken;
@@ -113,56 +122,6 @@ public class UserAccountController {
         return new ResponseEntity<>(headers, HttpStatus.FOUND);
     }
 
-
-    @GetMapping("/test2")
-    public void getTest(@RequestParam String code, @RequestParam String state) {
-        RestTemplate restTemplate = new RestTemplate();
-
-        // 1. 요청 헤더 설정
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-
-        // 2. 요청 파라미터(Body) 설정
-        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        params.add("grant_type", "authorization_code");
-        params.add("client_id", clientId);
-        params.add("client_secret", clientSecret);
-        params.add("code", code);
-        params.add("state", state);
-        // (참고: 네이버의 경우 redirect_uri는 토큰 요청 시 필수는 아님)
-
-        // 3. HttpEntity (헤더 + 바디) 생성
-        HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(params, headers);
-
-        // 2. 서비스 호출하여 Access Token 받기
-        String accessToken = getNaverAccessTokenTest(code, state);
-
-        NaverUserProfile result = getNaverUserProfile(accessToken);
-        System.out.println("========");
-        System.out.println(result.getResponse().getName());
-
-        /*
-            === 소셜 로그인 관련 TEST ===
-            access_token 발급 받아 로그인 처리 => token에 담긴 사용자 정보 추출해서 DB에 INSERT
-            id값 확인해서 강제로 login_id로 주입하고,
-            user_account에는 social 컬럼 추가해서 boolean (소셜 여부) 혹은 String (default=null, naver, kakao..)
-        */
-
-        // 4. POST 요청 보내기 (네이버 토큰 URI로)
-        ResponseEntity<NaverTokenResponse> response = restTemplate.postForEntity(
-                tokenUri,
-                request,
-                NaverTokenResponse.class // 응답을 매핑할 DTO 클래스
-        );
-
-        // 5. 응답에서 Access Token 꺼내기
-        //if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
-        //    return response.getBody().getAccess_token();
-        //} else {
-        //    throw new RuntimeException("네이버 토큰 발급에 실패했습니다. 응답: " + response);
-        //}
-    }
-
     public String getNaverAccessTokenTest(String code, String state) {
 
         // 1. RestTemplate 객체 생성
@@ -176,8 +135,8 @@ public class UserAccountController {
         // 3. HTTP 요청 바디(Body) 설정 (필수 파라미터)
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("grant_type", "authorization_code");
-        params.add("client_id", clientId);
-        params.add("client_secret", clientSecret);
+        params.add("client_id", naverClientId);
+        params.add("client_secret", naverClientSecret);
         params.add("code", code);
         params.add("state", state);
         // (참고: 네이버의 경우 redirect_uri는 토큰 요청 시 필수는 아님)
@@ -186,13 +145,13 @@ public class UserAccountController {
         HttpEntity<MultiValueMap<String, String>> naverTokenRequest =
                 new HttpEntity<>(params, headers);
 
-        System.out.println("네이버 토큰 요청 URI: " + tokenUri);
+        System.out.println("네이버 토큰 요청 URI: " + naverTokenUri);
         System.out.println("네이버 토큰 요청 파라미터: " + naverTokenRequest.getBody());
 
         // 5. POST 방식으로 네이버 토큰 발급 URI에 요청 보내기
         // (응답은 NaverTokenResponse DTO 객체로 자동 매핑됩니다)
         ResponseEntity<NaverTokenResponse> response = restTemplate.postForEntity(
-                tokenUri,
+                naverTokenUri,
                 naverTokenRequest,
                 NaverTokenResponse.class
         );
@@ -240,12 +199,12 @@ public class UserAccountController {
         // 3. 헤더를 담은 HttpEntity 객체 생성 (GET 요청이므로 바디는 없음)
         HttpEntity<String> entity = new HttpEntity<>(headers);
 
-        System.out.println("네이버 사용자 프로필 요청 URI: " + userInfoUri);
+        System.out.println("네이버 사용자 프로필 요청 URI: " + naverUserInfoUri);
 
         // 4. GET 방식으로 네이버 프로필 API에 요청 보내기
         // (응답은 NaverUserProfile DTO 객체로 자동 매핑됩니다)
         ResponseEntity<NaverUserProfile> response = restTemplate.exchange(
-                userInfoUri,
+                naverUserInfoUri,
                 HttpMethod.GET,
                 entity,
                 NaverUserProfile.class
@@ -269,10 +228,152 @@ public class UserAccountController {
         private String token_type;
         private int expires_in;
         // (error, error_description 필드도 추가할 수 있음)
-
         // token
     }
 
+    @GetMapping("/kakao/callback")
+    public ResponseEntity<?> handleKakaoCallback(@RequestParam String code, @RequestParam String state) {
+
+        // 1. 카카오 Access Token 발급
+        String accessToken;
+        try {
+            accessToken = getKakaoAccessToken(code, state);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("success", false, "message", "카카오 토큰 발급 실패: " + e.getMessage()));
+        }
+
+        // 2. 카카오 사용자 프로필 조회
+        KakaoUserProfile kakaoProfile = getKakaoUserProfile(accessToken);
+
+        // 💡 카카오 고유 ID
+        String socialLoginId = "KAKAO_" + kakaoProfile.getId();
+
+        // 3. 서비스 로그인/회원가입 처리
+        UserAccount user = userAccountService.selectUserByLoginId(socialLoginId);
+
+        if (user == null) {
+            // 소셜 회원가입 로직
+            UserAccount newUser = new UserAccount();
+            newUser.setLoginId(socialLoginId);
+            newUser.setPassword(passwordEncoder.encode(socialLoginId)); // 소셜 사용자는 임시/랜덤 비밀번호 저장
+            newUser.setName(kakaoProfile.getKakaoAccount().getProfile().getNickname());
+            newUser.setEmail(kakaoProfile.getKakaoAccount().getEmail());
+            newUser.setPhone("000-0000-0000"); // 필수 필드이므로 임시값 또는 추가 입력 필요
+            newUser.setSocial("KAKAO"); // 소셜 로그인 사용자임을 표시
+
+            try {
+                userAccountService.userInsert(newUser);
+                user = newUser; // 새로 가입된 사용자 객체 사용
+            } catch (DuplicateKeyException e) {
+                // 이메일 등이 중복될 수 있으나, 여기서는 ID 기반이므로 무시하거나 로그 남김
+            }
+        }
+
+        // 4. JWT 토큰 발급
+        String jwtToken = jwtUtil.generateToken(user.getLoginId(), user.getUserId());
+
+        // 5. 클라이언트(React)로 리다이렉트 및 토큰 전달
+        // **프론트엔드에서 토큰을 처리할 경로**를 설정해야 합니다. (예: /oauth/redirect)
+        // 이 리다이렉트는 브라우저를 클라이언트로 이동시키고, URL 파라미터를 통해 토큰을 전달합니다.
+        String frontendRedirectUrl = "http://localhost:3000/oauth/redirect?token=" + jwtToken + "&login=success";
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setLocation(URI.create(frontendRedirectUrl));
+
+        // HTTP 302 Found 응답으로 클라이언트 브라우저를 리다이렉트
+        return new ResponseEntity<>(headers, HttpStatus.FOUND);
+    }
+
+    public String getKakaoAccessToken(String code, String state) {
+        RestTemplate restTemplate = new RestTemplate();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+        headers.add("Accept", "application/json");
+
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("grant_type", "authorization_code");
+        params.add("client_id", kakaoClientId);
+        params.add("client_secret", kakaoClientSecret);
+        params.add("code", code);
+        params.add("redirect_uri", kakaoRedirectUri);
+
+        HttpEntity<MultiValueMap<String, String>> kakaoTokenRequest = new HttpEntity<>(params, headers);
+
+        ResponseEntity<KakaoTokenResponse> response = restTemplate.postForEntity(
+                kakaoTokenUri,
+                kakaoTokenRequest,
+                KakaoTokenResponse.class
+        );
+
+        if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
+            return response.getBody().getAccess_token();
+        } else {
+            throw new RuntimeException("카카오 Access Token 발급에 실패했습니다.");
+        }
+    }
+
+    public KakaoUserProfile getKakaoUserProfile(String accessToken) {
+        RestTemplate restTemplate = new RestTemplate();
+        restTemplate.getMessageConverters()
+                .add(0, new StringHttpMessageConverter(StandardCharsets.UTF_8));
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", "Bearer " + accessToken);
+        // 💡 카카오 프로필 요청 시 ContentType은 FormUrlEncoded가 표준입니다.
+        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+
+        // 💡 카카오는 이메일, 프로필 등 특정 정보 조회를 요청해야 함
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("property_keys", "[\"kakao_account.email\", \"kakao_account.profile\"]");
+
+        HttpEntity<MultiValueMap<String, String>> entity = new HttpEntity<>(params, headers);
+
+        ResponseEntity<KakaoUserProfile> response = restTemplate.exchange(
+                kakaoUserInfoUri,
+                HttpMethod.POST, // 💡 카카오는 POST 방식 사용
+                entity,
+                KakaoUserProfile.class
+        );
+
+        if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
+            return response.getBody();
+        } else {
+            throw new RuntimeException("카카오 사용자 프로필 조회에 실패했습니다.");
+        }
+    }
+
+    @Data
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private static class KakaoTokenResponse {
+        private String access_token;
+        private String refresh_token;
+        private String token_type;
+        private int expires_in;
+    }
+
+    @Data
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class KakaoUserProfile {
+        private Long id; // 💡 카카오 고유 ID
+        @JsonProperty("kakao_account")
+        private KakaoAccount kakaoAccount; // 💡 이메일, 프로필 정보가 담긴 객체
+    }
+
+    @Data
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class KakaoAccount {
+        private String email;
+        private Profile profile; // 💡 닉네임(이름)이 담긴 객체
+    }
+
+    @Data
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class Profile {
+        private String nickname; // 💡 우리가 'name'으로 사용할 필드
+    }
+
+    // 조회
     @GetMapping("/id/{userId}")
     public ResponseEntity<UserAccount> getUserById(@PathVariable Long userId) {
         UserAccount user = userAccountService.userSelectOne(userId);
@@ -354,9 +455,10 @@ public class UserAccountController {
     }
 
     // 수정
-    @PutMapping("/{userId}")
+    @PatchMapping("/{userId}/edit")
     public ResponseEntity<String> updateUser(@PathVariable Long userId, @RequestBody UserAccount vo) {
         vo.setUserId(userId);
+        UserAccount currentUser = userAccountService.userSelectOne(userId);
         int rowsAffected = userAccountService.userUpdate(vo);
         if (rowsAffected > 0) {
             return ResponseEntity.ok("User updated successfully.");
@@ -364,6 +466,32 @@ public class UserAccountController {
             return ResponseEntity.notFound().build();
         }
     }
+
+    // 비밀번호 변경 따로 분리
+    @PatchMapping("/{userId}/pass")
+    public ResponseEntity<String> updateUserPass(@PathVariable Long userId, @RequestBody UserAccount vo) {
+        vo.setUserId(userId);
+        UserAccount currentUser = userAccountService.userSelectOne(userId);
+        if (currentUser == null) {
+            return ResponseEntity.notFound().build();
+        }
+        // 현재 비밀번호와 일치할 경우
+        if (passwordEncoder.matches(vo.getCurrentPassword(), currentUser.getPassword())) {
+            String encodedNewPassword = passwordEncoder.encode(vo.getPassword());
+            vo.setPassword(encodedNewPassword); // vo 객체에 암호화된 새 비밀번호를 덮어씁니다.
+
+            int rowsAffected = userAccountService.userUpdate(vo);
+
+            if (rowsAffected > 0) {
+                return ResponseEntity.ok("User updated successfully.");
+            } else {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Update failed after password check.");
+            }
+        } else {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("현재 비밀번호가 일치하지 않습니다.");
+        }
+    }
+
 
     // 삭제
     @DeleteMapping("/{userId}")

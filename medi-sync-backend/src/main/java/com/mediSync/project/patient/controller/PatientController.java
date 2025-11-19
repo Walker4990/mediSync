@@ -27,9 +27,9 @@ public class PatientController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody PatientDTO dto) {
+    public ResponseEntity<?> register(@RequestBody Patient patient) {
         try {
-            patientService.register(dto);
+            patientService.register(patient);
             return ResponseEntity
                     .ok(Map.of("success", true, "message", "등록 완료"));
         } catch (DuplicateKeyException e) {

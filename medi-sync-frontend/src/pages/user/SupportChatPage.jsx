@@ -8,7 +8,6 @@ import { jwtDecode } from "jwt-decode";
 export default function SupportChatWidget() {
     const token = localStorage.getItem("token");
     const decoded = token ? jwtDecode(token) : null;
-
     const role = decoded?.role || "USER";
     const userId = decoded?.userId || null;
     const adminId = role === "ADMIN" ? decoded?.userId : 2; // ✅ 수정

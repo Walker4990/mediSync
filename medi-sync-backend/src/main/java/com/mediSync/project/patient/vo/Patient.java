@@ -13,22 +13,23 @@ import java.time.LocalDateTime;
 @Alias("patient")
 public class Patient {
     private Long patientId;
+    private Long userId;
     private String name;
     private String residentNo;
     private String phone;
     private String address;
+    private String email;
     private String insurerCode;
     private String status;
     private boolean consentInsurance;
+    private String gender;
+    private int age;
     private String admissionStatus;
     private String roomNo;
     private LocalDateTime admissionDate;
     private LocalDateTime dischargeDate;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-    private String email;
-    private Integer age;
-    private String gender;
     private String room_no;
     private String wardName;
     private String roomStatus;

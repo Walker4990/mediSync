@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+import axios from "axios";
+import { Camera, XCircle } from "lucide-react";
 
 // 직책(Position) 옵션
 const POSITION_OPTIONS = [
@@ -19,8 +21,128 @@ const STATUS_OPTIONS = [
 
 // 옵션 배열에서 value에 해당하는 label을 찾아주는 헬퍼 함수
 const getOptionLabel = (options, value) => {
-  const option = options.find((opt) => opt.value === value);
-  return option ? option.label : value; // 찾지 못하면 원본 value 반환
+  const option = options.find((opt) => String(opt.value) === String(value));
+  return option ? option.label : value;
+};
+
+// --- [비밀번호 변경 모달 컴포넌트] ---
+const PasswordChangeModal = ({ isOpen, onClose, adminId }) => {
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const API_URL = "http://localhost:8080/api/admins";
+
+  if (!isOpen) return null;
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+
+    if (!newPassword || !confirmPassword) {
+      setError("비밀번호와 확인 비밀번호를 모두 입력해주세요.");
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setError("입력한 두 비밀번호가 일치하지 않습니다.");
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      setError("비밀번호는 최소 6자 이상이어야 합니다.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      // 백엔드 비밀번호 변경 API 호출 (PUT /api/admins/{adminId}/password) 가정
+      const response = await axios.put(`${API_URL}/${adminId}/password`, {
+        password: newPassword, // 새 비밀번호
+      });
+
+      if (response.status === 200 || response.status === 204) {
+        alert("✅ 비밀번호가 성공적으로 변경되었습니다.");
+        onClose();
+      } else {
+        throw new Error(
+          response.data?.message || "비밀번호 변경에 실패했습니다."
+        );
+      }
+    } catch (err) {
+      console.error("비밀번호 변경 오류:", err);
+      setError("❌ 서버 오류: 다시 시도해 주세요.");
+    } finally {
+      setIsSubmitting(false);
+      setNewPassword("");
+      setConfirmPassword("");
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex justify-center items-center z-50">
+      <div className="bg-white rounded-lg shadow-2xl p-6 w-full max-w-md mx-4">
+        <h2 className="text-2xl font-bold text-gray-800 mb-4 border-b pb-2">
+          비밀번호 변경 (ID: {adminId})
+        </h2>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              새 비밀번호
+            </label>
+            <input
+              type="password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-blue-500 focus:border-blue-500"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              새 비밀번호 확인
+            </label>
+            <input
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-blue-500 focus:border-blue-500"
+              required
+            />
+          </div>
+
+          {error && (
+            <p className="text-sm text-red-600 bg-red-50 p-2 rounded-md">
+              {error}
+            </p>
+          )}
+
+          <div className="flex justify-end space-x-3 pt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={isSubmitting}
+              className="px-4 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400 transition"
+            >
+              취소
+            </button>
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className={`px-4 py-2 text-white rounded-md transition ${
+                isSubmitting
+                  ? "bg-blue-300 cursor-not-allowed"
+                  : "bg-blue-600 hover:bg-blue-700"
+              }`}
+            >
+              {isSubmitting ? "변경 중..." : "비밀번호 변경"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
 };
 
 const AdminDetail = ({ adminId, onBackToList }) => {
@@ -28,23 +150,31 @@ const AdminDetail = ({ adminId, onBackToList }) => {
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({});
+  const [departmentOptions, setDepartmentOptions] = useState([
+    { value: "", label: "부서 목록 로딩 중...", disabled: true },
+  ]);
+  const [isDeptLoading, setIsDeptLoading] = useState(true);
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
+  const [uploading, setUploading] = useState(false);
 
   const API_URL = "http://localhost:8080/api/admins";
   const BASE_URL = "http://localhost:8080";
-  // const DEPT_API_URL = "http://192.168.0.24:8080/api/departments";
+  const DEPT_API_URL = "http://localhost:8080/api/departments";
+  const UPLOAD_API_URL = "http://localhost:8080/api/uploads/profile";
 
   useEffect(() => {
     if (!adminId) {
       setLoading(false);
       return;
     }
-
     const fetchAdminData = async () => {
       setLoading(true);
       try {
         const response = await fetch(`${API_URL}/${adminId}`);
         if (!response.ok) {
-          // HTTP 상태 코드가 404 (Not Found)인 경우, 데이터를 찾을 수 없다고 처리
           if (response.status === 404) {
             setAdmin(null);
             setFormData({});
@@ -54,10 +184,10 @@ const AdminDetail = ({ adminId, onBackToList }) => {
         }
         const data = await response.json();
         setAdmin(data);
-        setFormData(data || {}); // 데이터가 없으면 빈 객체로 초기화
+        setFormData(data || {});
       } catch (error) {
         console.error("데이터 로드 오류:", error);
-        setAdmin(null); // 에러 발생 시 admin을 null로 설정하여 "찾을 수 없음" 메시지 표시
+        setAdmin(null);
         setFormData({});
       } finally {
         setLoading(false);
@@ -67,40 +197,124 @@ const AdminDetail = ({ adminId, onBackToList }) => {
     fetchAdminData();
   }, [adminId, API_URL]);
 
+  // ... (useEffect: load departments) ...
+  useEffect(() => {
+    let mounted = true;
+    const load = async () => {
+      try {
+        const res = await axios.get(DEPT_API_URL);
+        if (!mounted) return;
+        const opts = Array.isArray(res.data)
+          ? res.data.map((d) => ({
+              value: String(d.deptId),
+              label: String(d.deptName),
+            }))
+          : [];
+        setDepartmentOptions([
+          { value: "", label: "부서 선택", disabled: true },
+          ...opts,
+        ]);
+      } catch (err) {
+        console.warn("부서 로드 실패:", err);
+        setDepartmentOptions([
+          { value: "", label: "부서 로드 실패", disabled: true },
+        ]);
+      } finally {
+        setIsDeptLoading(false);
+      }
+    };
+    load();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSave = async () => {
-    // 💡 저장 API 호출 로직 구현
-    // try {
-    //   const response = await fetch(`${API_URL}/${adminId}`, {
-    //     method: 'PUT', // 또는 PATCH
-    //     headers: {
-    //       'Content-Type': 'application/json',
-    //     },
-    //     body: JSON.stringify(formData),
-    //   });
-    //   if (!response.ok) throw new Error('정보 저장에 실패했습니다.');
-    //   const updatedData = await response.json(); // 업데이트된 데이터 반환 받을 경우
-    //   setAdmin(updatedData);
-    //   setFormData(updatedData);
-    //   setIsEditing(false);
-    //   alert("직원 정보가 성공적으로 저장되었습니다.");
-    // } catch (error) {
-    //   console.error("저장 중 오류 발생:", error);
-    //   alert("정보 저장에 실패했습니다: " + error.message);
-    // }
+  // 💡 파일 선택 핸들러
+  const handleFileChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-    // 임시 저장 처리
-    setIsEditing(false);
-    setAdmin(formData);
-    alert("정보가 저장되었습니다. (API 연동 필요)");
+    // 기존 미리보기 URL 해제
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+
+    setSelectedFile(file);
+    setPreviewUrl(URL.createObjectURL(file));
+  };
+
+  // 💡 프로필 이미지 업로드 함수
+  const uploadProfileImage = async (file) => {
+    if (!file) return null;
+    setUploading(true);
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      // 서버에 파일 업로드 요청
+      const res = await axios.post(UPLOAD_API_URL, form, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      // 서버 응답에서 새 이미지 경로(URL) 반환
+      return res?.data?.url ? String(res.data.url) : null;
+    } catch (err) {
+      console.error("파일 업로드 실패:", err);
+      alert("❌ 프로필 이미지 업로드에 실패했습니다.");
+      return null;
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  // 💡 저장 핸들러 (이미지 업로드 로직 통합)
+  const handleSave = async () => {
+    if (uploading) return; // 업로드 중이면 저장 방지
+
+    let finalFormData = { ...formData };
+
+    // 1. 선택된 새 이미지가 있다면 업로드 후 경로 업데이트
+    if (selectedFile) {
+      const uploadedUrl = await uploadProfileImage(selectedFile);
+      if (!uploadedUrl) {
+        // 업로드 실패 시 저장 취소
+        return;
+      }
+      finalFormData.profileImgUrl = uploadedUrl;
+    }
+
+    // 2. 서버에 모든 정보 저장 (여기에는 이미지 URL도 포함됨)
+    try {
+      // API 호출 로직 (주석 처리된 임시 로직을 대체)
+      const response = await fetch(`${API_URL}/${adminId}`, {
+        method: "PUT", // 또는 PATCH
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(finalFormData),
+      });
+
+      if (!response.ok) throw new Error("정보 저장에 실패했습니다.");
+
+      const updatedData = await response.json();
+      setAdmin(updatedData);
+      setFormData(updatedData);
+
+      // 상태 초기화
+      setSelectedFile(null);
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+      setPreviewUrl(null);
+      setIsEditing(false);
+      alert("직원 정보가 성공적으로 저장되었습니다.");
+    } catch (error) {
+      console.error("저장 중 오류 발생:", error);
+      alert("정보 저장에 실패했습니다: " + error.message);
+    }
   };
 
   const handleCancel = () => {
-    setFormData(admin || {}); // 원래 데이터로 복원 (null일 경우 빈 객체)
+    setFormData(admin || {});
     setIsEditing(false);
   };
 
@@ -148,7 +362,7 @@ const AdminDetail = ({ adminId, onBackToList }) => {
         <p className="text-sm mt-2">
           DB 연결 상태 또는 해당 ID의 존재 여부를 확인해주세요.
         </p>
-        {onBackToList && ( // 목록으로 돌아가기 버튼 추가 (데이터 없을 때)
+        {onBackToList && (
           <button
             onClick={onBackToList}
             className="mt-6 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors shadow-md"
@@ -180,9 +394,10 @@ const AdminDetail = ({ adminId, onBackToList }) => {
     },
     {
       label: "부서명",
-      name: "deptName",
+      name: "deptId",
       readonly: !isEditing,
-      type: "text",
+      type: "select",
+      options: departmentOptions,
     },
     {
       label: "재직 상태",
@@ -206,7 +421,6 @@ const AdminDetail = ({ adminId, onBackToList }) => {
         : formData[field.name];
 
     if (field.readonly && field.name === "createdAt") {
-      // 계정 생성일은 날짜/시간 포맷팅
       return (
         <span className="p-2 w-full bg-gray-100 border border-gray-200 rounded-md text-gray-600">
           {value !== "-" ? new Date(value).toLocaleString() : "-"}
@@ -214,7 +428,6 @@ const AdminDetail = ({ adminId, onBackToList }) => {
       );
     }
     if (field.readonly && field.name === "hiredDate") {
-      // 입사일은 날짜 포맷팅
       return (
         <span className="p-2 w-full bg-gray-100 border border-gray-200 rounded-md text-gray-600">
           {value !== "-" ? new Date(value).toLocaleDateString() : "-"}
@@ -229,6 +442,10 @@ const AdminDetail = ({ adminId, onBackToList }) => {
         displayVal = getOptionLabel(POSITION_OPTIONS, value);
       if (field.name === "status")
         displayVal = getOptionLabel(STATUS_OPTIONS, value);
+
+      // deptId 일 때 부서명(Label)을 찾아 표시
+      if (field.name === "deptId")
+        displayVal = getOptionLabel(departmentOptions, value);
 
       return (
         <span className="p-2 w-full bg-gray-100 border border-gray-200 rounded-md text-gray-600">
@@ -297,6 +514,7 @@ const AdminDetail = ({ adminId, onBackToList }) => {
             (ID: {adminId})
           </span>
         </h1>
+        {/* ... (정보 수정 버튼 등) ... */}
         <button
           onClick={onBackToList}
           className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors shadow-md flex items-center mr-4"
@@ -307,6 +525,7 @@ const AdminDetail = ({ adminId, onBackToList }) => {
           <div className="flex space-x-3">
             <button
               onClick={handleSave}
+              disabled={uploading}
               className="px-5 py-2 text-white bg-blue-500 rounded-md hover:bg-blue-600 transition duration-200 shadow-md font-medium"
             >
               저장
@@ -339,43 +558,68 @@ const AdminDetail = ({ adminId, onBackToList }) => {
           <div className="flex flex-col items-center md:col-span-1 space-y-4">
             <div className="relative w-40 h-40">
               <img
+                // 💡 미리보기 URL이 있으면 그것을 사용하고, 없으면 기존 이미지 URL 사용
                 src={
-                  formData.profileImgUrl
+                  previewUrl
+                    ? previewUrl
+                    : formData.profileImgUrl
                     ? `${BASE_URL}${formData.profileImgUrl}`
                     : "/no_image.png"
                 }
                 className="w-40 h-40 rounded-full object-cover border-4 border-blue-100 shadow-md"
               />
+
               {isEditing && (
-                <button
-                  className="absolute bottom-0 right-0 p-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-colors"
-                  title="프로필 이미지 변경"
-                >
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    xmlns="http://www.w3.org/2000/svg"
+                <>
+                  {/* 💡 파일 인풋 (hidden) */}
+                  <input
+                    id="profile-file-input"
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleFileChange}
+                    onClick={(e) => {
+                      e.target.value = null;
+                    }} // 같은 파일 재선택 가능하게
+                  />
+
+                  {/* 💡 카메라 아이콘 (업로드 버튼) */}
+                  <button
+                    type="button"
+                    onClick={() =>
+                      document.getElementById("profile-file-input")?.click()
+                    }
+                    className="absolute bottom-0 right-0 p-2 bg-blue-500 text-white rounded-full
+                    hover:bg-blue-600 transition-colors shadow-md"
+                    title="프로필 이미지 변경"
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.218A2 2 0 0110.45 4h3.1a2 2 0 011.664.89l.812 1.218a2 2 0 001.664.89H19a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
-                    ></path>
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
-                    ></path>
-                  </svg>
-                </button>
+                    <Camera className="w-5 h-5" />
+                  </button>
+
+                  {/* 💡 이미지 취소 버튼 (새 이미지 선택했을 때만 표시) */}
+                  {selectedFile && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedFile(null);
+                        if (previewUrl) URL.revokeObjectURL(previewUrl);
+                        setPreviewUrl(null);
+                      }}
+                      className="absolute top-2 right-2 p-1 bg-white/80 text-red-600 rounded-full shadow-lg hover:bg-white"
+                      title="새 이미지 취소"
+                    >
+                      <XCircle className="w-5 h-5" />
+                    </button>
+                  )}
+                </>
               )}
             </div>
+            {/* 💡 비밀번호 변경 버튼: isEditing 모드일 때만 표시 */}
             {isEditing && (
-              <button className="text-sm text-red-500 hover:text-red-700">
+              <button
+                onClick={() => setIsPasswordModalOpen(true)}
+                className="text-sm text-red-500 hover:text-red-700 font-medium"
+              >
                 비밀번호 변경
               </button>
             )}
@@ -388,13 +632,7 @@ const AdminDetail = ({ adminId, onBackToList }) => {
                 <label className="text-sm font-medium text-gray-500">
                   {field.label}
                 </label>
-                {isEditing ? (
-                  renderInput(field)
-                ) : (
-                  <span className="p-2 w-full bg-gray-100 border border-gray-200 rounded-md text-gray-700">
-                    {displayValue(field.name)}
-                  </span>
-                )}
+                {renderInput(field)}
               </div>
             ))}
           </div>
@@ -412,40 +650,20 @@ const AdminDetail = ({ adminId, onBackToList }) => {
               <label className="text-sm font-medium text-gray-500">
                 {field.label}
               </label>
-              {isEditing ? (
-                renderInput(field)
-              ) : (
-                // 조회 모드일 때 라벨로 표시
-                <span className="p-2 w-full bg-gray-100 border border-gray-200 rounded-md text-gray-700">
-                  {field.name === "position" &&
-                    displayValue(field.name, POSITION_OPTIONS)}
-                  {field.name === "status" &&
-                    displayValue(field.name, STATUS_OPTIONS)}
-                  {field.name === "deptName" && displayValue(field.name)}
-                  {field.name === "hiredDate" &&
-                    (displayValue(field.name) !== "-"
-                      ? new Date(displayValue(field.name)).toLocaleDateString()
-                      : "-")}
-                  {field.name === "createdAt" &&
-                    (displayValue(field.name) !== "-"
-                      ? new Date(displayValue(field.name)).toLocaleString()
-                      : "-")}
-                </span>
-              )}
+              {renderInput(field)}
             </div>
           ))}
         </div>
       </div>
 
-      {/* 기타 기능 */}
-      <div className="bg-white p-6 shadow-xl rounded-lg border border-gray-100">
-        <h2 className="text-xl font-semibold text-gray-800 mb-6 border-b pb-3">
-          기타 옵션
-        </h2>
-        <div className="text-gray-500">
-          <p>여기에 추가 기능을 배치할 수 있습니다.</p>
-        </div>
-      </div>
+      {/* 💡 비밀번호 변경 모달 렌더링 (adminId가 있을 때만) */}
+      {adminId && (
+        <PasswordChangeModal
+          isOpen={isPasswordModalOpen}
+          onClose={() => setIsPasswordModalOpen(false)}
+          adminId={adminId}
+        />
+      )}
     </div>
   );
 };

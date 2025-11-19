@@ -20,26 +20,14 @@ public class PatientService {
     private final NotificationMapper notificationMapper;
 
     @Transactional
-    public void register(PatientDTO dto) {
-        // 1️⃣ patient 등록
-        Patient patient = new Patient();
-        patient.setName(dto.getName());
-        patient.setResidentNo(dto.getResidentNo());
-        patient.setPhone(dto.getPhone());
-        patient.setAddress(dto.getAddress());
-        patient.setConsentInsurance(dto.isConsentInsurance());
-        patientMapper.insertPatient(patient);
-
-        // 2️⃣ account 등록 (암호화 필수)
-        PatientAccount account = new PatientAccount();
-        account.setPatientId(patient.getPatientId());
-        account.setUserId(dto.getUserId());
-        account.setPassword(dto.getPassword());
-        patientMapper.insertPatientAccount(account);
-
+    public int register(Patient patient) {
+        int regiResult = patientMapper.insertPatient(patient);
         //알림설정 테이블에 기본 정보 등록
         notificationMapper.insertNotificationSetting(patient.getPatientId());
-
+        return regiResult;
+    }
+    public int updatePatient(Patient patient){
+        return patientMapper.updatePatient(patient);
     }
     public List<Patient> allPatients(){
         return patientMapper.allPatient();

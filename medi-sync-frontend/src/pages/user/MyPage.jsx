@@ -1,9 +1,11 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
 import axios from "axios";
 
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
+import SupportChatWidget from "./SupportChatPage";
+import PatientInsurancePage from "./PatientInsurancePage";
 
 import "../../style/calendar.css";
 
@@ -20,9 +22,13 @@ import {
   ChevronRight,
   X,
   ShieldCheck,
+  AlertTriangle,
+  CheckCircle,
+  LinkIcon,
+  Home,
+  Eye,
+  EyeOff,
 } from "lucide-react";
-import SupportChatWidget from "./SupportChatPage";
-import PatientInsurancePage from "./PatientInsurancePage";
 import { jwtDecode } from "jwt-decode";
 import PaymentPage from "../../component/PaymentPage";
 
@@ -32,168 +38,900 @@ const patientId = decoded?.userId || null;
 const API_BASE_URL = "http://192.168.0.24:8080/api/notification";
 const API_TEST_URL = "http://localhost:8080/api/notification";
 
-// 회원정보 수정 탭 - currentUser 데이터를 prop으로 받도록 수정
-const UserInfoEdit = ({ currentUser }) => {
-  // isStaff는 role 또는 별도의 플래그로 결정됩니다.
-  const [isStaff, setIsStaff] = useState(currentUser?.isStaff || false);
-  const [isChecking, setIsChecking] = useState(false);
-  const [empId, setEmpId] = useState("");
-  const [checkResult, setCheckResult] = useState(
-    isStaff ? "✅ 직원 사번이 확인되었습니다." : ""
-  );
+// ----------------------------------------------------
+// 커스텀 모달 컴포넌트 (Alert/Confirm 대체)
+// ----------------------------------------------------
+const AlertModal = ({
+  isOpen,
+  onClose,
+  title,
+  message,
+  isConfirm = false,
+  onConfirm,
+}) => {
+  if (!isOpen) return null;
 
-  // 폼 상태 (사용자 이름, 연락처, 이메일은 여기서 관리)
-  const [formData, setFormData] = useState({
-    username: currentUser?.username,
-    userphone: currentUser?.userphone,
-    useremail: currentUser?.useremail,
-    password: currentUser?.password,
+  return (
+    <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4">
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden transform transition-all scale-100 animate-fadeIn">
+        <header
+          className={`p-4 flex items-center ${
+            isConfirm ? "bg-red-500" : "bg-blue-500"
+          }`}
+        >
+          {isConfirm ? (
+            <AlertTriangle className="w-6 h-6 text-white mr-2" />
+          ) : (
+            <CheckCircle className="w-6 h-6 text-white mr-2" />
+          )}
+          <h3 className="text-lg font-bold text-white">{title}</h3>
+        </header>
+        <div className="p-6">
+          <p className="text-gray-700 whitespace-pre-line">{message}</p>
+        </div>
+        <footer className="p-4 bg-gray-50 flex justify-end space-x-3">
+          {isConfirm && (
+            <button
+              onClick={onConfirm}
+              className="px-4 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition"
+            >
+              확인
+            </button>
+          )}
+          <button
+            onClick={onClose}
+            className={`px-4 py-2 ${
+              isConfirm
+                ? "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                : "bg-blue-600 text-white hover:bg-blue-700"
+            } rounded-lg font-medium transition`}
+          >
+            {isConfirm ? "취소" : "닫기"}
+          </button>
+        </footer>
+      </div>
+    </div>
+  );
+};
+
+// ----------------------------------------------------
+// 주민등록번호로 나이와 성별을 계산하는 헬퍼 함수
+// ----------------------------------------------------
+const calculateAgeAndGender = (residentNo) => {
+  // 13자리 전체가 들어왔을 때만 정확히 계산
+  if (residentNo.length !== 13) {
+    if (!residentNo || residentNo.length < 7) {
+      return { age: "", gender: "" };
+    }
+  }
+
+  const centuryCode = residentNo.substring(6, 7);
+  let yearPrefix = "";
+  let genderStr = "";
+
+  // 1, 2: 1900년대 / 3, 4: 2000년대
+  if (centuryCode === "1" || centuryCode === "2") {
+    yearPrefix = "19";
+  } else if (centuryCode === "3" || centuryCode === "4") {
+    yearPrefix = "20";
+  } else {
+    return { age: "", gender: "" }; // 유효하지 않은 코드
+  }
+
+  const birthYear = parseInt(yearPrefix + residentNo.substring(0, 2), 10);
+  const birthMonth = parseInt(residentNo.substring(2, 4), 10);
+  const birthDay = parseInt(residentNo.substring(4, 6), 10);
+
+  if (isNaN(birthYear) || isNaN(birthMonth) || isNaN(birthDay)) {
+    return { age: "", gender: "" };
+  }
+
+  const today = new Date();
+  const currentYear = today.getFullYear();
+
+  let age = currentYear - birthYear;
+
+  // 생일이 지나지 않았으면 만 나이 계산
+  if (
+    today.getMonth() + 1 < birthMonth ||
+    (today.getMonth() + 1 === birthMonth && today.getDate() < birthDay)
+  ) {
+    age--;
+  }
+
+  // 성별 판별: 1, 3: 남 / 2, 4: 여
+  if (centuryCode === "1" || centuryCode === "3") {
+    genderStr = "M";
+  } else if (centuryCode === "2" || centuryCode === "4") {
+    genderStr = "F";
+  }
+
+  return { age, gender: genderStr };
+};
+
+// 비밀번호 입력 필드 컴포넌트
+const PasswordInput = ({
+  name,
+  placeholder,
+  value,
+  onChange,
+  disabled,
+  showPasswordState,
+  toggleVisibilityHandler,
+}) => {
+  const field = name.replace("Password", "").toLowerCase(); // current, new, confirm 중 하나
+  const isVisible = showPasswordState[field];
+
+  return (
+    <div className="relative mb-5">
+      <input
+        type={isVisible ? "text" : "password"}
+        name={name}
+        placeholder={placeholder}
+        className="w-full p-3 border border-gray-300 rounded-lg pr-10 focus:ring-red-500"
+        value={value}
+        onChange={onChange}
+        disabled={disabled}
+      />
+      <button
+        type="button"
+        onClick={() => toggleVisibilityHandler(field)}
+        className="absolute right-0 flex items-center text-gray-300 hover:text-gray-500 h-full top-0 pr-3"
+        aria-label={isVisible ? "비밀번호 숨기기" : "비밀번호 보이기"}
+      >
+        {isVisible ? (
+          <Eye className="w-5 h-5" />
+        ) : (
+          <EyeOff className="w-5 h-5" />
+        )}
+      </button>
+    </div>
+  );
+};
+
+const UserInfoEdit = ({ currentUser, onUserUpdate }) => {
+  const [editData, setEditData] = useState({
+    username: "",
+    userphone: "",
+    useremail: "",
+    residentNo1: "", // 주민번호 앞 6자리
+    residentNo2: "", // 주민번호 뒤 7자리
+    age: "", // 자동 계산된 나이
+    gender: "", // 자동 계산된 성별
+    address: "",
+    social: "",
+    consentInsurance: 0, // 보험청구 동의 여부
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+    patientLinkStatus: "N", // 환자 연동 상태 (Y/N)
+    patientName: "", // 연동된 환자 이름
+    patientId: null, // 연동된 환자 ID
   });
+
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [modal, setModal] = useState({
+    isOpen: false,
+    title: "",
+    message: "",
+    isConfirm: false,
+    onConfirm: () => {},
+    onCloseCallback: null,
+  });
+
+  const handleModalClose = () => {
+    if (modal.onCloseCallback) {
+      modal.onCloseCallback(); // 콜백 실행 (성공 시 onUserUpdate)
+    }
+    setModal({
+      ...modal,
+      isOpen: false,
+      onCloseCallback: null, // 실행 후 콜백 초기화
+    });
+  };
+
+  const token = localStorage.getItem("token");
 
   // currentUser 정보가 업데이트될 때 폼 데이터를 초기화 (로그인 직후 데이터 반영)
   useEffect(() => {
     if (currentUser && typeof currentUser === "object") {
-      setFormData({
+      const patientData = currentUser.patient || {};
+      const fullResidentNo = patientData.residentNo || "";
+      let res1 = "";
+      let res2 = "";
+
+      if (fullResidentNo.length === 13) {
+        res1 = fullResidentNo.substring(0, 6);
+        res2 = fullResidentNo.substring(6, 13);
+      }
+
+      const initialConsent =
+        patientData.consentInsurance === "Y" ||
+        patientData.consentInsurance === true ||
+        patientData.consentInsurance === 1
+          ? 1
+          : 0;
+
+      setEditData((prev) => ({
+        ...prev,
         username: currentUser.username || "",
         userphone: currentUser.userphone || "",
         useremail: currentUser.useremail || "",
-        password: currentUser.password || "",
-      });
-      // isStaff 정보도 여기서 업데이트
-      setIsStaff(currentUser.isStaff || false);
-      if (currentUser.isStaff) {
-        setCheckResult("✅ 직원 사번이 확인되었습니다.");
-      }
+        address: patientData.address || "",
+        residentNo1: res1,
+        residentNo2: res2,
+        age: patientData.age,
+        gender: patientData.gender,
+        social: currentUser.social,
+        consentInsurance: initialConsent,
+        patientLinkStatus: currentUser.patientLinkStatus || "N",
+        patientName: currentUser.patientName || "",
+        patientId: currentUser.patientId || null,
+      }));
     }
   }, [currentUser]);
 
-  // 사번 조회(직원 인증)
-  const handleStaffCheck = async () => {
-    if (!empId) {
-      setCheckResult("사번을 입력해주세요.");
-      return;
-    }
-    setIsChecking(true);
-    setCheckResult("");
+  // 주민번호 입력 시 나이/성별 자동 계산
+  useEffect(() => {
+    const RRN_DEBOUNCE_DELAY = 500; // 0.5초 지연 설정
 
-    // 사번 체크 API 호출 시뮬레이션
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setIsChecking(false);
-
-    // TEST
-    if (empId === "MS999") {
-      // Mock 성공
-      setIsStaff(true);
-      setCheckResult("✅ 직원 사번이 확인되었습니다.");
-    } else {
-      // Mock Failure
-      setIsStaff(false);
-      setCheckResult("❌ 유효하지 않은 사번입니다.");
-    }
-  };
+    const timer = setTimeout(() => {
+      if (
+        editData.residentNo1.length === 6 &&
+        editData.residentNo2.length >= 1
+      ) {
+        const fullResidentNo = editData.residentNo1 + editData.residentNo2;
+        if (fullResidentNo.length >= 7) {
+          const { age, gender } = calculateAgeAndGender(fullResidentNo);
+          setEditData((prev) => ({ ...prev, age, gender }));
+        }
+      } else {
+        // 주민번호가 유효하지 않으면 나이/성별 초기화
+        setEditData((prev) => ({ ...prev, age: "", gender: "" }));
+      }
+    }, RRN_DEBOUNCE_DELAY);
+    return () => {
+      clearTimeout(timer); // 이전 타이머를 제거하여 입력 중간에는 실행되지 않도록 함
+    };
+  }, [editData.residentNo1, editData.residentNo2]);
 
   // input 변경 핸들러
-  const handleChange = (e) => {
+  const handleChange = useCallback(
+    (e) => {
+      const { name, value } = e.target;
+
+      // 유효성 검사를 수행
+      if (name === "residentNo1" || name === "residentNo2") {
+        const maxLength = name === "residentNo1" ? 6 : 7;
+
+        // 입력 값이 숫자 외 문자를 포함하거나 길이를 초과하면 상태 업데이트를 막습니다.
+        // if (value.length > maxLength || !/^\d*$/.test(value)) return;
+      }
+      // 그 외 필드(비밀번호 포함)는 바로 상태 업데이트 실행
+      setEditData((prev) => ({ ...prev, [name]: value }));
+    },
+    [setEditData]
+  );
+
+  const handleRadioChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    let newValue = value; // consentInsurance 필드인 경우, 문자열 "1" 또는 "0"을 숫자 1 또는 0으로 변환
+    if (name === "consentInsurance") {
+      newValue = parseInt(value, 10);
+    }
+    setEditData((prev) => ({ ...prev, [name]: newValue }));
   };
 
-  //회원 정보 변경 클릭 시 화면 단
+  // 회원 정보 수정
+  const handleUpdateInfo = async () => {
+    if (isUpdating) return;
+
+    const {
+      username,
+      userphone,
+      useremail,
+      address,
+      age,
+      gender,
+      residentNo1,
+      residentNo2,
+      consentInsurance,
+    } = editData;
+
+    // 필수 필드 검증
+    if (!username || !userphone || !useremail) {
+      setModal({
+        isOpen: true,
+        title: "입력 오류",
+        message: "이름, 연락처, 이메일은 필수 입력 사항입니다.",
+      });
+      return;
+    }
+
+    // 주민등록번호 유효성 검사
+    if (
+      (residentNo1.length > 0 || residentNo2.length > 0) &&
+      (residentNo1.length !== 6 || residentNo2.length !== 7)
+    ) {
+      setModal({
+        isOpen: true,
+        title: "입력 오류",
+        message: "주민등록번호 13자리를 올바르게 입력해주세요.",
+      });
+      return;
+    }
+
+    const fullResidentNo = residentNo1 + residentNo2; // 주민번호 합치기
+    setIsUpdating(true);
+
+    try {
+      const updatePayload = {
+        username,
+        userphone,
+        useremail,
+        address,
+        age,
+        gender,
+        residentNo: fullResidentNo,
+        consentInsurance,
+      };
+
+      const response = await axios.patch(
+        `http://localhost:8080/api/users/${currentUser.userId}/edit`,
+        updatePayload,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      if (
+        response.status === 200 &&
+        response.data === "User updated successfully."
+      ) {
+        setModal({
+          isOpen: true,
+          title: "저장 성공",
+          message: "회원 정보가 성공적으로 업데이트되었습니다.",
+          isConfirm: false,
+          onCloseCallback: onUserUpdate,
+        });
+      } else {
+        setModal({
+          isOpen: true,
+          title: "업데이트 실패",
+          message: "정보 업데이트에 실패했습니다. (응답 오류)",
+        });
+      }
+    } catch (error) {
+      console.error("정보 업데이트 오류:", error);
+      const errorMessage =
+        error.response?.data?.message || // 서버가 보낸 message 속성을 사용
+        error.response?.data ||
+        "서버 통신 중 오류가 발생했습니다.";
+      setModal({
+        isOpen: true,
+        title: "서버 오류",
+        message: `정보 업데이트 중 오류가 발생했습니다: \n${errorMessage}`,
+      });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  // 비밀번호 변경
+  const handleChangePassword = async () => {
+    if (isUpdating) return;
+
+    const { currentPassword, newPassword, confirmPassword } = editData;
+
+    // 유효성 검사
+    if (!currentPassword) {
+      setModal({
+        isOpen: true,
+        title: "입력 오류",
+        message: "현재 비밀번호를 입력해주세요.",
+      });
+      return;
+    }
+
+    if (!newPassword || newPassword.length < 4) {
+      setModal({
+        isOpen: true,
+        title: "입력 오류",
+        message: "새 비밀번호는 4자 이상이어야 합니다.",
+      });
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setModal({
+        isOpen: true,
+        title: "입력 오류",
+        message: "새 비밀번호와 확인 비밀번호가 일치하지 않습니다.",
+      });
+      return;
+    }
+
+    if (currentPassword === newPassword) {
+      setModal({
+        isOpen: true,
+        title: "입력 오류",
+        message: "새 비밀번호는 현재 비밀번호와 다르게 설정해야 합니다.",
+      });
+      return;
+    }
+
+    // 비밀번호 변경 확인 모달
+    setModal({
+      isOpen: true,
+      title: "비밀번호 변경 확인",
+      message: "새 비밀번호로 변경하시겠습니까?",
+      isConfirm: true,
+      onConfirm: async () => {
+        setModal({ isOpen: false }); // 모달 닫기
+        setIsUpdating(true);
+
+        try {
+          const passwordUpdatePayload = {
+            password: newPassword,
+            currentPassword: currentPassword,
+          };
+
+          const response = await axios.patch(
+            `http://localhost:8080/api/users/${currentUser.userId}/pass`, // 비밀번호 전용 엔드포인트
+            passwordUpdatePayload,
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          );
+
+          if (
+            response.status === 200 &&
+            response.data === "User updated successfully."
+          ) {
+            setModal({
+              isOpen: true,
+              title: "성공",
+              message: "비밀번호가 성공적으로 변경되었습니다.",
+            });
+            // 폼 초기화 (비밀번호 필드만)
+            setEditData((prev) => ({
+              ...prev,
+              currentPassword: "",
+              newPassword: "",
+              confirmPassword: "",
+            }));
+          } else {
+            setModal({
+              isOpen: true,
+              title: "변경 실패",
+              message:
+                "비밀번호 변경에 실패했습니다. 현재 비밀번호를 확인해주세요.",
+            });
+          }
+        } catch (error) {
+          console.error("비밀번호 변경 오류:", error);
+          const errorMessage =
+            error.response?.data?.message || // 서버가 보낸 message 속성을 사용
+            error.response?.data ||
+            "서버 통신 중 오류가 발생했습니다.";
+          setModal({
+            isOpen: true,
+            title: "서버 오류",
+            message: `비밀번호 변경 중 오류가 발생했습니다: \n${errorMessage}`,
+          });
+        } finally {
+          setIsUpdating(false);
+        }
+      },
+    });
+  };
+
+  // 비밀번호 표시
+  const [showPassword, setShowPassword] = useState({
+    current: false,
+    new: false,
+    confirm: false,
+  });
+
+  const togglePasswordVisibility = useCallback((field) => {
+    setShowPassword((prev) => ({
+      ...prev,
+      [field]: !prev[field],
+    }));
+  }, []);
+
+  // 5. 환자 연동/연동 해제 핸들러
+  const handlePatientLinkToggle = async () => {
+    if (isUpdating) return;
+
+    const fullResidentNo = editData.residentNo1 + editData.residentNo2;
+    if (fullResidentNo.length !== 13) {
+      setModal({
+        isOpen: true,
+        title: "연동 오류",
+        message:
+          "환자 연동을 위해서는 올바른 주민등록번호 13자리가 필요합니다.",
+      });
+      return;
+    }
+
+    const isLinking = editData.patientLinkStatus === "N";
+    const endpoint = isLinking ? "/api/patients/link" : "/api/patients/unlink";
+    const actionMessage = isLinking ? "연동" : "연동 해제";
+
+    setModal({
+      isOpen: true,
+      title: `환자 정보 ${actionMessage} 확인`,
+      message: `환자 정보를 ${actionMessage}하시겠습니까? (이 작업은 주민등록번호 기반으로 처리됩니다.)`,
+      isConfirm: true,
+      onConfirm: async () => {
+        setModal({ isOpen: false });
+
+        try {
+          const response = await axios.post(
+            `http://localhost:8080${endpoint}`,
+            { residentNo: fullResidentNo, userId: currentUser.userId },
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+
+          if (response.status === 200) {
+            const newStatus = isLinking ? "Y" : "N";
+            const newPatientName = isLinking
+              ? response.data.patientName || "연동 환자"
+              : "";
+            const newPatientId = isLinking
+              ? response.data.patientId || "UNKNOWN"
+              : null;
+
+            setEditData((prev) => ({
+              ...prev,
+              patientLinkStatus: newStatus,
+              patientName: newPatientName,
+              patientId: newPatientId,
+            }));
+            setModal({
+              isOpen: true,
+              title: "성공",
+              message: `🔗 환자 정보 ${actionMessage}이 완료되었습니다.`,
+            });
+            onUserUpdate(); // 연동 상태 변경 반영
+          } else {
+            setModal({
+              isOpen: true,
+              title: `${actionMessage} 실패`,
+              message: `서버 응답 오류로 ${actionMessage}에 실패했습니다.`,
+            });
+          }
+        } catch (err) {
+          console.error(`환자 ${actionMessage} 오류:`, err);
+          const errMsg =
+            err.response?.data?.message || "서버 통신 오류가 발생했습니다.";
+          setModal({
+            isOpen: true,
+            title: `${actionMessage} 실패`,
+            message: `❌ 환자 ${actionMessage} 실패: ${errMsg}`,
+          });
+        } finally {
+          setIsUpdating(false);
+        }
+      },
+    });
+  };
+
   return (
-    <div className="p-6 space-y-6">
-      {/* 사번 조회 (직원 확인) 기능 */}
-      <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 space-y-3">
-        <p className="font-medium text-blue-800 flex items-center">
-          <Briefcase className="w-5 h-5 mr-2" /> 직원 인증 (선택 사항)
-        </p>
-        <div className="flex space-x-3 items-center">
-          <input
-            type="text"
-            placeholder="사번(직원 ID) 입력"
-            value={empId}
-            onChange={(e) => setEmpId(e.target.value)}
-            className="flex-grow p-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500"
-            disabled={isChecking}
-          />
+    <div className="p-6">
+      <AlertModal
+        isOpen={modal.isOpen}
+        onClose={handleModalClose}
+        title={modal.title}
+        message={modal.message}
+        isConfirm={modal.isConfirm}
+        onConfirm={modal.onConfirm}
+      />
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-20">
+        {/* 왼쪽 컬럼: 기본 정보 수정 */}
+        <div className="border w-[450px] p-6 rounded-xl shadow-md bg-white space-y-6 flex flex-col">
+          <h4 className="text-xl font-bold text-gray-800 flex items-center">
+            <User className="w-5 h-5 mr-2 text-blue-600" /> 기본정보 수정
+          </h4>
+
+          {/* 폼 영역 */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 flex-grow">
+            {/* 이름 */}
+            <div className="md:col-span-1">
+              <span className="mb-1 text-sm font-medium text-gray-600">
+                이름
+              </span>
+              <input
+                type="text"
+                name="username"
+                placeholder="이름"
+                className="p-3 border border-gray-300 rounded-lg w-full focus:ring-blue-500"
+                value={editData.username}
+                onChange={handleChange}
+                disabled={isUpdating}
+              />
+            </div>
+            {/* 연락처 */}
+            <div className="md:col-span-1">
+              <span className="mb-1 text-sm font-medium text-gray-600">
+                연락처
+              </span>
+              <input
+                type="tel"
+                name="userphone"
+                placeholder="연락처 (예: 010-1234-5678)"
+                className="p-3 border border-gray-300 rounded-lg w-full focus:ring-blue-500"
+                value={editData.userphone}
+                onChange={handleChange}
+                disabled={isUpdating}
+              />
+            </div>
+
+            {/* 이메일 */}
+            <div className="md:col-span-2">
+              <span className="mb-1 text-sm font-medium text-gray-600">
+                이메일
+              </span>
+              <input
+                type="email"
+                name="useremail"
+                placeholder="이메일"
+                className="p-3 border border-gray-300 rounded-lg w-full focus:ring-blue-500"
+                value={editData.useremail}
+                onChange={handleChange}
+                disabled={isUpdating}
+              />
+            </div>
+
+            {/* 주민등록번호 */}
+            <div className="md:col-span-2">
+              <span className="mb-1 text-sm font-medium text-gray-600">
+                주민등록번호
+              </span>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  name="residentNo1"
+                  placeholder="앞 6자리"
+                  className="p-3 border border-gray-300 rounded-lg w-full focus:ring-blue-500"
+                  value={editData.residentNo1}
+                  onChange={handleChange}
+                  disabled={isUpdating}
+                  maxLength="6"
+                />
+                <span className="text-gray-500 text-xl">-</span>
+                <input
+                  type="password"
+                  inputMode="numeric"
+                  name="residentNo2"
+                  placeholder="뒤 7자리"
+                  className="p-3 border border-gray-300 rounded-lg w-full focus:ring-blue-500"
+                  value={editData.residentNo2}
+                  onChange={handleChange}
+                  disabled={isUpdating}
+                  maxLength="7"
+                />
+              </div>
+              <p className="text-xs text-red-500 mt-1">
+                * 주민등록번호는 환자 연동 및 보험 청구에 사용됩니다.
+              </p>
+            </div>
+
+            {/* 나이 (자동) */}
+            <div className="md:col-span-1">
+              <span className="mb-1 text-sm font-medium text-gray-600">
+                나이
+              </span>
+              <input
+                type="text"
+                value={editData.age ? `${editData.age} 세` : ""}
+                readOnly
+                className="p-3 border border-gray-300 rounded-lg w-full bg-gray-200 text-gray-700 font-bold text-center"
+              />
+            </div>
+            {/* 성별 (자동) */}
+            <div className="md:col-span-1">
+              <span className="mb-1 text-sm font-medium text-gray-600">
+                성별
+              </span>
+              <input
+                type="text"
+                value={
+                  editData.gender === "M"
+                    ? "남"
+                    : editData.gender === "F"
+                    ? "여"
+                    : ""
+                }
+                readOnly
+                className="p-3 border border-gray-300 rounded-lg w-full bg-gray-200 text-gray-700 font-bold text-center"
+              />
+            </div>
+
+            {/* 주소 */}
+            <div className="md:col-span-2">
+              <span className="mb-1 text-sm font-medium text-gray-600">
+                주소
+              </span>
+              <input
+                type="text"
+                name="address"
+                placeholder="주소를 입력하세요"
+                className="p-3 border border-gray-300 rounded-lg w-full focus:ring-blue-500"
+                value={editData.address}
+                onChange={handleChange}
+                disabled={isUpdating}
+              />
+            </div>
+
+            {/* 보험자동청구 동의 */}
+            <div className="md:col-span-2">
+              <span className="mb-1 text-sm font-medium text-gray-600">
+                보험자동청구 동의 여부
+              </span>
+              <div className="flex flex-wrap space-x-4 p-3 border border-gray-300 rounded-lg bg-gray-50">
+                <label className="flex items-center cursor-pointer">
+                  <input
+                    type="radio"
+                    name="consentInsurance"
+                    value={1}
+                    checked={editData.consentInsurance === 1}
+                    onChange={handleRadioChange}
+                    className="w-4 h-4 text-blue-600 focus:ring-blue-500"
+                    disabled={isUpdating}
+                  />
+                  <span className="ml-2 text-gray-700 font-medium">
+                    동의 (Y)
+                  </span>
+                </label>
+                <label className="flex items-center cursor-pointer">
+                  <input
+                    type="radio"
+                    name="consentInsurance"
+                    value={0}
+                    checked={editData.consentInsurance === 0}
+                    onChange={handleRadioChange}
+                    className="w-4 h-4 text-gray-600 focus:ring-gray-500"
+                    disabled={isUpdating}
+                  />
+                  <span className="ml-2 text-gray-700">미동의 (N)</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          {/* 변경사항 저장 버튼 */}
           <button
-            onClick={handleStaffCheck}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 disabled:bg-blue-400"
-            disabled={isChecking}
+            onClick={handleUpdateInfo}
+            className="w-full py-3 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition shadow-lg disabled:bg-gray-400 mt-auto"
+            disabled={isUpdating}
           >
-            {isChecking ? "확인 중..." : "사번 조회"}
-          </button>
-        </div>
-        {checkResult && (
-          <p
-            className={`text-sm ${isStaff ? "text-green-600" : "text-red-600"}`}
-          >
-            {checkResult}
-          </p>
-        )}
-      </div>
-
-      {/* 기본 정보 입력 필드 - currentUser 정보 반영 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="flex flex-col">
-          <span className="mb-1 text-sm font-medium">이름</span>
-          <input
-            type="text"
-            name="username"
-            placeholder="이름"
-            className="p-3 border rounded-lg mb-4"
-            value={formData.username}
-            onChange={handleChange}
-          />
-
-          <span className="mb-1 text-sm font-medium">연락처</span>
-          <input
-            type="tel"
-            name="userphone"
-            placeholder="연락처"
-            className="p-3 border rounded-lg mb-4"
-            value={formData.userphone}
-            onChange={handleChange}
-          />
-
-          <span className="mb-1 text-sm font-medium">이메일</span>
-          <input
-            type="useremail"
-            name="useremail"
-            placeholder="이메일"
-            className="p-3 border rounded-lg mb-4"
-            value={formData.useremail}
-            onChange={handleChange}
-          />
-          <button className="w-full py-3 bg-blue-500 text-white font-bold rounded-lg hover:bg-blue-600 transition flex items-center justify-center">
-            변경사항 저장
+            {isUpdating ? "저장 중..." : "변경 사항 저장"}
           </button>
         </div>
 
-        <div className="flex flex-col">
-          <span className="mb-1 text-sm font-medium">현재 비밀번호</span>
-          <input
-            type="text"
-            name="password"
-            placeholder="현재 비밀번호"
-            className="w-full p-3 border rounded-lg mb-4"
-          />
+        {/* 오른쪽 컬럼: 비밀번호 변경 및 환자 연동 */}
+        <div className="space-y-8 w-[360px]">
+          {/* 비밀번호 변경 */}
+          {currentUser &&
+            currentUser.social !== "NAVER" &&
+            currentUser.social !== "KAKAO" && (
+              <div className="border p-6 rounded-xl shadow-md bg-white">
+                <h4 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                  <Lock className="w-5 h-5 mr-2 text-red-600" /> 비밀번호 변경
+                </h4>
+                <span className="mb-1 text-sm font-medium text-gray-600">
+                  현재 비밀번호
+                </span>
+                <PasswordInput
+                  type="password"
+                  name="currentPassword"
+                  placeholder="현재 비밀번호를 입력하세요"
+                  className="w-full p-3 border border-gray-300 rounded-lg mb-4 focus:ring-red-500"
+                  value={editData.currentPassword}
+                  onChange={handleChange}
+                  disabled={isUpdating}
+                  showPasswordState={showPassword}
+                  toggleVisibilityHandler={togglePasswordVisibility}
+                />
 
-          <span className="mb-1 text-sm font-medium">새 비밀번호</span>
-          <input
-            type="password"
-            placeholder="새 비밀번호 (8자 이상)"
-            className="w-full p-3 border rounded-lg mb-4"
-          />
+                <span className="mb-1 text-sm font-medium text-gray-600">
+                  새 비밀번호
+                </span>
+                <PasswordInput
+                  type="password"
+                  name="newPassword"
+                  placeholder="새 비밀번호 (4글자 이상)"
+                  className="w-full p-3 border border-gray-300 rounded-lg mb-4 focus:ring-red-500"
+                  value={editData.newPassword}
+                  onChange={handleChange}
+                  disabled={isUpdating}
+                  showPasswordState={showPassword}
+                  toggleVisibilityHandler={togglePasswordVisibility}
+                />
 
-          <span className="mb-1 text-sm font-medium">새 비밀번호 확인</span>
-          <input
-            type="password"
-            placeholder="새 비밀번호 확인"
-            className="w-full p-3 border rounded-lg mb-4"
-          />
-          <button className="w-full py-3 bg-red-500 text-white font-bold rounded-lg hover:bg-red-600 transition flex items-center justify-center">
-            <Lock className="w-5 h-5 mr-2" /> 비밀번호 변경
-          </button>
+                <span className="mb-1 text-sm font-medium text-gray-600">
+                  새 비밀번호 확인
+                </span>
+                <PasswordInput
+                  type="password"
+                  name="confirmPassword"
+                  placeholder="새 비밀번호를 다시 입력하세요"
+                  className="w-full p-3 border border-gray-300 rounded-lg mb-6 focus:ring-red-500"
+                  value={editData.confirmPassword}
+                  onChange={handleChange}
+                  disabled={isUpdating}
+                  showPasswordState={showPassword}
+                  toggleVisibilityHandler={togglePasswordVisibility}
+                />
+                <button
+                  onClick={handleChangePassword}
+                  className="w-full py-3 bg-red-600 text-white font-bold rounded-lg hover:bg-red-700 transition shadow-lg disabled:bg-gray-400"
+                  disabled={isUpdating}
+                >
+                  {isUpdating ? "변경 중..." : "비밀번호 변경"}
+                </button>
+              </div>
+            )}
+
+          {/* 환자 연동 상태 */}
+          {/* <div className="border p-6 rounded-xl shadow-md bg-white">
+            <h4 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
+              <LinkIcon className="w-5 h-5 mr-2 text-green-600" /> 환자 연동
+              상태
+            </h4>
+
+            <div className="patient-status-display flex-grow mb-4">
+              <span
+                className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                  editData.patientLinkStatus === "Y"
+                    ? "bg-green-100 text-green-700"
+                    : "bg-red-100 text-red-700"
+                }`}
+              >
+                {editData.patientLinkStatus === "Y"
+                  ? "🟢 연동 완료"
+                  : "🔴 미연동 상태"}
+              </span>
+              {editData.patientLinkStatus === "Y" ? (
+                <p className="mt-2 text-sm text-gray-700">
+                  환자명: <strong>{editData.patientName}</strong> <br />
+                  환자 ID:{" "}
+                  <span className="font-mono">{editData.patientId}</span>
+                </p>
+              ) : (
+                <p className="mt-2 text-sm text-gray-500">
+                  병원 시스템과의 기록 연동을 위해 연동이 필요합니다.
+                </p>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={handlePatientLinkToggle}
+              className={`w-full py-3 font-bold rounded-lg transition shadow-lg ${
+                editData.patientLinkStatus === "Y"
+                  ? "bg-red-500 text-white hover:bg-red-600"
+                  : "bg-green-600 text-white hover:bg-green-700"
+              } disabled:bg-gray-400`}
+              disabled={isUpdating}
+            >
+              {isUpdating
+                ? `${
+                    editData.patientLinkStatus === "Y"
+                      ? "해제 중..."
+                      : "연동 중..."
+                  }`
+                : `${
+                    editData.patientLinkStatus === "Y"
+                      ? "환자 연동 해제"
+                      : "새로고침"
+                  }`}
+            </button>
+          </div> */}
         </div>
       </div>
     </div>
@@ -238,7 +976,7 @@ const NotificationSettings = () => {
           email: res.data.emailEnabled,
           push: res.data.pushEnabled,
           marketing: res.data.marketingEnabled,
-          sms: false,
+          sms: res.data.smsEnabled,
         });
       } catch (error) {
         console.error("알림 설정 조회 실패 : ", error);
@@ -271,7 +1009,7 @@ const NotificationSettings = () => {
     <div className="p-6 space-y-4">
       <div className="bg-white rounded-lg shadow-md p-4 space-y-2">
         <SettingToggle label="이메일 알림 (진료/예약 관련)" keyName="email" />
-        <SettingToggle label="SMS 수신 동의 (긴습사항)" keyName="sms" />
+        <SettingToggle label="SMS 수신 동의 (긴급사항)" keyName="sms" />
         <SettingToggle label="푸시 알림 (앱 사용 시)" keyName="push" />
         <SettingToggle label="마케팅 정보 수신 (선택)" keyName="marketing" />
       </div>
@@ -582,13 +1320,11 @@ const MyPage = () => {
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  // 데이터 로드 로직을 useCallback으로 추출
+  const fetchUserData = useCallback(() => {
     const token = localStorage.getItem("token");
-    // if (!token) {
-    //   alert("로그인이 필요합니다.");
-    //   window.location.href = "/";
-    //   return;
-    // }
+    setLoading(true); // 업데이트 시에도 로딩 표시
+
     axios
       .get("http://localhost:8080/api/users/mypage", {
         headers: { Authorization: `Bearer ${token}` },
@@ -605,6 +1341,10 @@ const MyPage = () => {
         setLoading(false);
       });
   }, []);
+
+  useEffect(() => {
+    fetchUserData();
+  }, [fetchUserData]); // 의존성 배열에 fetchUserData 추가
 
   const formattedDate = useMemo(() => {
     if (!currentUser?.createdAt) return "";
@@ -678,7 +1418,12 @@ const MyPage = () => {
 
     switch (activeTab) {
       case "info_edit":
-        return <UserInfoEdit currentUser={currentUser} />;
+        return (
+          <UserInfoEdit
+            currentUser={currentUser}
+            onUserUpdate={fetchUserData}
+          />
+        );
       case "notification_settings":
         return <NotificationSettings />;
       case "med_records":
@@ -726,6 +1471,13 @@ const MyPage = () => {
 
   // 사용자 이름이 로딩 중일 때는 '...' 표시, 로딩 완료 후 값이 없으면 '사용자' 표시
   const userName = currentUser?.username || (loading ? "..." : "사용자");
+  const userId = currentUser?.userId || (loading ? "..." : "");
+
+  const socialType = useMemo(() => {
+    if (currentUser?.social === "NAVER") return "네이버";
+    if (currentUser?.social === "KAKAO") return "카카오";
+    return "일반";
+  }, [currentUser?.social]);
 
   return (
     <div className="font-pretendard">
@@ -733,7 +1485,24 @@ const MyPage = () => {
       <section className="pt-12 pb-16 bg-gradient-to-l from-white to-sky-100 shadow-inner">
         <div className="max-w-6xl mx-auto px-4 md:px-8">
           <h1 className="text-3xl font-bold text-gray-800">
-            환영합니다, <span className="text-blue-600">{userName}</span> 님!
+            환영합니다,{" "}
+            <span className="text-blue-600">
+              {userName}({userId})
+            </span>{" "}
+            님!
+            {socialType && (
+              <span
+                className={`text-base font-medium ml-3 px-3 py-1 rounded-full ${
+                  socialType === "네이버"
+                    ? "bg-green-100 text-green-700"
+                    : socialType === "카카오"
+                    ? "bg-yellow-100 text-yellow-700"
+                    : "bg-blue-100 text-blue-700"
+                }`}
+              >
+                {socialType} 로그인
+              </span>
+            )}
           </h1>
           <p className="text-gray-500 mt-1">
             이곳에서 당신의 정보를 안전하게 관리하고 기록을 확인하세요.
@@ -741,7 +1510,7 @@ const MyPage = () => {
         </div>
       </section>
       {/* 메인 콘텐츠 영역 (사이드바 + 내용) */}
-      <div className="max-w-6xl mx-auto flex flex-col md:flex-row mt-8 px-4 md:px-8">
+      <div className="mx-auto flex flex-col md:flex-row mt-8 ">
         {/* 사이드바 (메뉴 목록) */}
         <aside className="w-full md:w-64 mb-8 md:mb-0 md:mr-8 bg-white rounded-xl shadow-lg border border-gray-200 p-4">
           <nav className="space-y-2">

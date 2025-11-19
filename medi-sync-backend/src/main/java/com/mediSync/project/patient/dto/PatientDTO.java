@@ -8,6 +8,7 @@ public class PatientDTO {
     private String residentNo;
     private String phone;
     private String address;
+    private String email;
     private boolean consentInsurance;
 
     private String userId;     // 아이디
