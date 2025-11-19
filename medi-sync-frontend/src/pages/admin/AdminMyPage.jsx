@@ -26,7 +26,7 @@ const getOptionLabel = (options, value) => {
   return option ? option.label : value; // 찾지 못하면 원본 value 반환
 };
 
-const API_URL = "http://localhost:8080/api/admins/mypage";
+const API_URL = "http://192.168.0.24:8080/api/admins/mypage";
 const BASE_URL = "http://localhost:8080";
 
 const AdminMyPage = () => {

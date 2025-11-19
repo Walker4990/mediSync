@@ -12,7 +12,7 @@ public interface UserAccountMapper {
     UserAccount selectUserById(Long userId);
     int checkIdExists(@Param("loginId") String loginId);
     UserAccount selectUserByLoginId(@Param("loginId") String loginId);
-    void insertUser(UserAccount vo);
+    int insertUser(UserAccount vo);
     int updateUser(UserAccount vo);
     int deleteUser(Long userId);
 
