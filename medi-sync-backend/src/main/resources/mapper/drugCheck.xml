@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.mediSync.project.drug.mapper.DrugCheckMapper">
+
+    <select id="getDrugCheckDTONotChecked" resultType="drugcheckdto">
+        <![CDATA[
+        SELECT
+        d.drug_code AS drugCode,
+        d.drug_name AS drugName,
+        d.unit_price As unitPrice,
+        COALESCE(i.quantity, 0) AS totalQuantity,
+        COALESCE(i.location, '-') AS location,
+        i.expiry_date AS expirationDate,
+        i.supplier AS supplier,
+        i.item_id AS itemId,
+        i.min_stock AS minStock
+        FROM drug d
+        LEFT JOIN inventory_item i
+        ON TRIM(d.drug_name) = TRIM(i.item_name)
+
+        LEFT JOIN drug_check dc
+        ON dc.drug_code = d.drug_code
+        AND dc.check_date >= DATE_FORMAT(CURDATE(), '%Y-%m-01')
+        AND dc.check_date <= LAST_DAY(CURDATE())
+        WHERE dc.check_id IS NULL
+        ]]>
+    </select>
+    <select id="getTotalQuantityByDrugCode" parameterType="String" resultType="int">
+        SELECT total_quantity FROM drug WHERE drug_code = #{drugCode}
+    </select>
+
+
+</mapper>
