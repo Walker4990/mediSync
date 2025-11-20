@@ -44,6 +44,7 @@ import DoctorReview from "./pages/user/DoctorReview";
 import OAuthCallback from "./component/OAuthCallback";
 import InsurerPage from "./pages/admin/InsurerPage";
 import PatientInsurancePage from "./pages/user/PatientInsurancePage";
+import DrugDeadline from "./pages/admin/DrugDeadline";
 
 import axios from "axios";
 import PaymentFail from "./component/PaymentFail";
@@ -88,6 +89,7 @@ function AppContent() {
           <Route path="/admin/medicalRecord" element={<MedicalRecordPage />} />
           <Route path="/admin/drug" element={<DrugPage />} />
           <Route path="/admin/inspection" element={<DrugInspection />} />
+          <Route path="/admin/drug/deadline" element={<DrugDeadline />} />
           <Route
             path="/admin/test/reservation"
             element={<TestReservationPage />}

@@ -82,7 +82,7 @@ export default function AdminHeader() {
             items={[
               { name: "약품정보", href: "/admin/drug" },
               { name: "약품 정기 검사", href: "/admin/inspection" },
-              { name: "약품 폐기", href: "/admin/schedule" },
+              { name: "약품 폐기 관리", href: "/admin/drug/deadline" },
             ]}
           />
           <Link to="/admin/medicalRecord" className="hover:text-blue-200">
