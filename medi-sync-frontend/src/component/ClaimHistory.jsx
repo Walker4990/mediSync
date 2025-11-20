@@ -32,10 +32,10 @@ export default function ClaimHistory({ claims = [] }) {
                             <td className="py-2 px-3">{c.createdAt?.slice(0, 10) || "-"}</td>
                             <td className="py-2 px-3">{c.insurerName || c.insurerCode}</td>
                             <td className="py-2 px-3 font-medium">
-                                {c.claimAmount?.toLocaleString()} 원
+                                {Math.round(c.claimAmount)?.toLocaleString()} 원
                             </td>
                             <td className="py-2 px-3">
-                                {c.payoutAmount ? `${c.payoutAmount.toLocaleString()} 원` : "-"}
+                                {c.payoutAmount ? `${Math.round(c.payoutAmount).toLocaleString()} 원` : "-"}
                             </td>
                             <td className={`py-2 px-3 font-semibold ${statusColors[c.status] || "text-gray-500"}`}>
                                 {c.status ? c.status : "처리 중"}

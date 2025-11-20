@@ -112,9 +112,7 @@ export default function AdminHeader() {
               { name: "일정확인", href: "/admin/schedule" },
             ]}
           />
-          <Link to="/admin/insurance" className="hover:text-blue-200">
-            보험관리
-          </Link>
+
         </nav>
 
         {/* 우측 사용자 + 알림 */}

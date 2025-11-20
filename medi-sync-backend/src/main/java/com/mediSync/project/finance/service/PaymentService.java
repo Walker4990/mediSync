@@ -1,5 +1,6 @@
 package com.mediSync.project.finance.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.itextpdf.text.Document;
 import com.itextpdf.text.DocumentException;
 import com.itextpdf.text.Font;
@@ -28,6 +29,8 @@ import org.springframework.web.client.RestTemplate;
 
 import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -46,7 +49,7 @@ public class PaymentService {
     // toss API key
     private final String TOSS_SECRET = "test_sk_ma60RZblrqoaLvBo6j2R3wzYWBn1";
     private final ApplicationContext context;
-
+    private final ObjectMapper objectMapper = new ObjectMapper();
     public Map<String, Object> createCheckout(Long patientId, Double amount) {
 
         String orderId = "ORD-" + System.currentTimeMillis();
@@ -58,86 +61,105 @@ public class PaymentService {
 
         paymentMapper.insertPending(p);
 
-        return Map.of("orderId", orderId,
-                "amount", amount);
+        return Map.of(
+                "orderId", orderId,
+                "amount", amount
+        );
     }
+
+
+    // ----------------------------------------------------
+    // 📌 2. Toss Webhook 처리
+    // ----------------------------------------------------
     public void handleWebhook(Map<String, Object> payload) {
-        String eventType = String.valueOf(payload.get("eventType"));
-        log.info("📨 Webhook eventType = {}", eventType);
 
-        switch (eventType) {
-            case "PAYMENT_STATUS_CHANGED":
-            case "PAYMENT_CONFIRMED":
-            case "PAYMENT_SUCCESS":
-                processWebhook(payload);
-                break;
+        log.info("🔥 FULL WEBHOOK PAYLOAD = {}", payload);
 
-            case "PAYMENT_REFUNDED":
-                processRefundWebhook(payload);
-                break;
-
-            default:
-                log.warn("⚠️ 처리 대상 아님: eventType={}", eventType);
-                break;
-        }
-    }
-
-    @Transactional
-    public void processWebhook(Map<String, Object> payload) {
-        log.info("📩 Toss webhook payload = {}", payload);
-
-        // 1️⃣ 데이터 파싱 (Toss Webhook 구조 기준)
         Map<String, Object> data = (Map<String, Object>) payload.get("data");
         if (data == null) {
-            log.error("❌ payload.data is null");
+            log.error("❌ data 필드 없음 → Toss Webhook 아님");
             return;
         }
 
-        String paymentKey = String.valueOf(data.get("paymentKey"));
-        String eventType = String.valueOf(payload.get("eventType"));
-        String orderId = String.valueOf(data.get("orderId"));
         String status = String.valueOf(data.get("status"));
-        String method = "WEBHOOK";
+        log.info("📨 Webhook status = {}", status);
 
-        // 2️⃣ 중복 Webhook 방지
+        switch (status) {
+            case "DONE":
+            case "APPROVED":
+            case "CONFIRMED":
+            case "SUCCESS":
+                processWebhook(data);
+                break;
+
+            case "CANCELED":
+            case "PARTIAL_CANCELED":
+            case "REFUNDED":
+                processRefundWebhook(data);
+                break;
+
+            default:
+                log.warn("⚠️ 처리 대상 아님 status={}", status);
+        }
+    }
+
+
+    // ----------------------------------------------------
+    // 📌 3. 결제 성공 webhook (data만 전달)
+    // ----------------------------------------------------
+    @Transactional
+    public void processWebhook(Map<String, Object> data) {
+        log.info("📩 Toss webhook data = {}", data);
+
+        String paymentKey = String.valueOf(data.get("paymentKey"));
+        String eventType = String.valueOf(data.get("eventType"));
+        String orderId = String.valueOf(data.get("orderId"));
+        Double amount = Double.valueOf(String.valueOf(data.get("amount")));
+
+        String jsonPayload;
+        try {
+            jsonPayload = objectMapper.writeValueAsString(data);
+        } catch (Exception e) {
+            jsonPayload = "{}";
+        }
+
+        // 중복 Webhook 방지
         if (webhookLogMapper.existsByPaymentKeyAndEventType(paymentKey, eventType) > 0) {
             log.warn("⚠️ 중복 webhook 무시: paymentKey={}, eventType={}", paymentKey, eventType);
             return;
         }
 
-        // 3️⃣ 로그 기록 (항상 성공하도록 트랜잭션 안에서)
-        webhookLogMapper.insertLog(paymentKey, eventType, payload.toString());
+        webhookLogMapper.insertLog(paymentKey, eventType, jsonPayload);
 
-        // 4️⃣ 결제 정보 조회
+        // DB 결제 조회
         Payment payment = paymentMapper.findByOrderId(orderId);
         if (payment == null) {
-            log.error("❌ DB에서 결제 정보 없음: orderId={}", orderId);
+            log.error("❌ DB에 결제 정보 없음: orderId={}", orderId);
             return;
         }
 
-        // 5️⃣ 이미 처리된 결제면 무시
+        // 이미 SUCCESS면 무시
         if ("SUCCESS".equals(payment.getStatus())) {
             log.warn("⚠️ 이미 결제 완료된 주문: {}", orderId);
             return;
         }
 
-        Double amount = payment.getAmount();
         Long patientId = payment.getPatientId();
 
-        // 6️⃣ 결제 성공 처리
+        // 결제 성공 업데이트
         Payment updateVo = new Payment();
         updateVo.setOrderId(orderId);
         updateVo.setPaymentKey(paymentKey);
         updateVo.setAmount(amount);
-        updateVo.setPgProvider(method);
+        updateVo.setPgProvider("WEBHOOK");
         updateVo.setStatus("SUCCESS");
 
         paymentMapper.updatePaymentSuccess(updateVo);
 
-        // 7️⃣ 재무 거래 완료 처리
-        int updated = financeTransactionMapper.updateCompletedByOrderId(orderId);
-        log.info("💰 미납→완료 업데이트 결과: {}건", updated);
+        // 미납 → 완료 처리
+        financeTransactionMapper.updateCompletedByOrderId(orderId);
 
+        // 새 재무기록 생성
         FinanceTransaction ft = new FinanceTransaction();
         ft.setRefType("PAYMENT");
         ft.setRefId(payment.getPaymentId());
@@ -147,21 +169,22 @@ public class PaymentService {
         ft.setDescription("수납");
         ft.setStatus("COMPLETED");
         ft.setOrderId(orderId);
+
         financeTransactionMapper.insertFinance(ft);
 
-        // 8️⃣ 미납 처리 업데이트
+        // 남은 미납 처리
         long unpaid = paymentMapper.findTotalUnpaidByPatientId(patientId);
-        log.info("💰 결제 완료: {} / 남은 미납금 {}", orderId, unpaid);
+        log.info("💰 남은 미납금: {}", unpaid);
 
-        int cleared = financeTransactionMapper.updateOldestPendingRecordByPatient(patientId);
-        log.info("🧾 미납(RECORD) 처리 결과: {}건 완료", cleared);
+        financeTransactionMapper.updateOldestPendingRecordByPatient(patientId);
     }
 
-    @Transactional
-    public void processRefundWebhook(Map<String, Object> payload) {
 
-        Map<String, Object> data = (Map<String, Object>) payload.get("data");
-        if (data == null) return;
+    // ----------------------------------------------------
+    // 📌 4. 환불 webhook
+    // ----------------------------------------------------
+    @Transactional
+    public void processRefundWebhook(Map<String, Object> data) {
 
         String orderId = String.valueOf(data.get("orderId"));
         String paymentKey = String.valueOf(data.get("paymentKey"));
@@ -169,26 +192,36 @@ public class PaymentService {
         String reason = String.valueOf(data.get("refundReason"));
         String eventType = String.valueOf(data.get("eventType"));
         Long refundId = Long.valueOf(String.valueOf(data.get("refundId")));
-        // 중복 웹훅 방지
-        if (webhookLogMapper.existsByPaymentKeyAndEventType(paymentKey, eventType) > 0) return;
-        webhookLogMapper.insertLog(paymentKey, eventType, payload.toString());
+
+        String jsonPayload;
+        try {
+            jsonPayload = objectMapper.writeValueAsString(data);
+        } catch (Exception e) {
+            jsonPayload = "{}";
+        }
+
+        // 중복 방지
+        if (webhookLogMapper.existsByPaymentKeyAndEventType(paymentKey, eventType) > 0)
+            return;
+
+        webhookLogMapper.insertLog(paymentKey, eventType, jsonPayload);
 
         Payment payment = paymentMapper.findByOrderId(orderId);
         if (payment == null) return;
 
-        // 결제 상태 REFUNDED 처리
+        // 결제 REFUNDED 처리
         paymentMapper.updatePaymentRefund(orderId);
 
-        // refund_request COMPLETED 처리 (중요)
+        // refund_request COMPLETED 처리
         refundMapper.markCompleted(refundId);
 
-        // 재무 기록 추가
+        // 재무 기록 생성
         FinanceTransaction tx = new FinanceTransaction();
         tx.setRefType("REFUND");
         tx.setRefId(payment.getPaymentId());
         tx.setPatientId(payment.getPatientId());
         tx.setAmount(new BigDecimal(cancelAmount));
-        tx.setType("EXPENSE");   // ← 통일
+        tx.setType("EXPENSE");
         tx.setCategory("REFUND");
         tx.setDescription("결제 환불 - " + reason);
         tx.setStatus("COMPLETED");
@@ -197,37 +230,44 @@ public class PaymentService {
         financeTransactionMapper.insertFinance(tx);
     }
 
-    public void apporveRefund(String orderId) {
-        Payment payment = paymentMapper.findByOrderId(orderId);
-        if(payment == null) throw new IllegalStateException("결제 없음");
 
-        tossRefund(
-                payment.getPaymentKey(),
-                payment.getAmount(),
-                "관리자 승인 환불"
-        );
-
+    // ----------------------------------------------------
+    // 📌 5. 환불 승인 (관리자)
+    // ----------------------------------------------------
+    public void approveRefund(String paymentKey, double amount, String reason) {
+        log.info("✅ approveRefund: paymentKey={}, amount={}, reason={}", paymentKey, amount, reason);
+        tossRefund(paymentKey, amount, reason);
     }
 
 
+    // ----------------------------------------------------
+    // 📌 6. Toss 환불 API
+    // ----------------------------------------------------
     public void tossRefund(String paymentKey, double amount, String reason) {
+
         String url = "https://api.tosspayments.com/v1/payments/" + paymentKey + "/cancel";
 
+        String key = TOSS_SECRET + ":";
+        String base64Key = Base64.getEncoder().encodeToString(key.getBytes(StandardCharsets.UTF_8));
+
         HttpHeaders headers = new HttpHeaders();
-        headers.setBasicAuth(TOSS_SECRET);   // 중요
+        headers.add("Authorization", "Basic " + base64Key);
         headers.setContentType(MediaType.APPLICATION_JSON);
 
         Map<String, Object> payload = new HashMap<>();
-        payload.put("cancelAmount", amount);
+        payload.put("cancelAmount", amount);   // FIX: 오타 수정
         payload.put("cancelReason", reason);
 
-        RestTemplate rest = new RestTemplate();
-        rest.postForEntity(url, new HttpEntity<>(payload, headers), String.class);
+        RestTemplate restTemplate = new RestTemplate();
+        restTemplate.postForEntity(url, new HttpEntity<>(payload, headers), String.class);
+
+        log.info("✅ Toss 환불 API 호출 완료");
     }
 
 
-
-
+    // ----------------------------------------------------
+    // 📌 7. 결제 이력 조회
+    // ----------------------------------------------------
     public Map<String, Object> getPaymentHistory(Long patientId) {
         Map<String, Object> result = new HashMap<>();
 
@@ -236,8 +276,10 @@ public class PaymentService {
 
         Long unpaidTotal = paymentMapper.findTotalUnpaidByPatientId(patientId);
         result.put("unpaid", unpaidTotal);
+
         List<FinanceTransaction> unpaidList = paymentMapper.findUnpaidListByPatientId(patientId);
         result.put("unpaidList", unpaidList);
+
         return result;
     }
 

@@ -18,7 +18,7 @@ public interface PatientMapper {
     Patient getPatientDetail(Long patientId);
     List<Patient> selectInpatient();
     List<Prescription> findByPatientId(Long patientId);
-    int updatePatientAdmissionStatus(Long patientId, String admissionStatus);
-
+    void updatePatientAdmissionStatus(Long patientId, String admissionStatus);
+    void updatePatientRoom(Long patientId, Long roomId);
 
 }

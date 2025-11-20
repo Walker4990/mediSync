@@ -26,7 +26,7 @@
     </update>
 
     <select id="selectAllRooms" resultType="room">
-        SELECT * FROM room
+        SELECT * FROM room ORDER BY room_no ASC
     </select>
 
     <select id="findCostByRoomId" resultType="room">

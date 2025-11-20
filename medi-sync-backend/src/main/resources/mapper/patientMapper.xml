@@ -151,5 +151,9 @@
         SET admission_status = #{admissionStatus}
         WHERE patient_id = #{patientId}
     </update>
-
+    <update id="updatePatientRoom" parameterType="int">
+        UPDATE patient
+        SET room_id = #{roomId}
+        WHERE patient_id = #{patientId}
+    </update>
 </mapper>

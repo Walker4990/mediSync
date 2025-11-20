@@ -28,10 +28,9 @@ public class RefundController {
     }
     // 관리자가 환불 승인
     @PostMapping("/approve/{refundId}")
-    public ResponseEntity<?> approveRefund(@RequestBody Map<String, String> body) {
-        String orderId = body.get("orderId");
-        paymentService.apporveRefund(orderId);
-        return ResponseEntity.ok("환불 완료");
+    public ResponseEntity<?> approveRefund(@PathVariable Long refundId) {
+        refundService.approve(refundId);
+        return ResponseEntity.ok("환불 승인 처리되었습니다.");
     }
     @GetMapping("/list")
     public List<RefundRequest> findAll(){

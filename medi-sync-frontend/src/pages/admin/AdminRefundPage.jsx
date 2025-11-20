@@ -3,6 +3,7 @@ import AdminHeader from "../../component/AdminHeader";
 import axios from "axios";
 import {Eye} from "lucide-react";
 import RefundRequestDetailModal from "../../component/RefundRequestDetailModal";
+import FinanceHeader from "../../component/FinanceHeader";
 
 export default function AdminRefundPage(){
     const [refunds, setRefunds] = React.useState([]);
@@ -79,7 +80,7 @@ export default function AdminRefundPage(){
 
     return (
         <div className="min-h-screen bg-gray-50">
-            <AdminHeader />
+            <FinanceHeader />
 
             <div className="max-w-6xl mx-auto px-4 py-6">
                 <div className="flex justify-between items-center mb-4">
