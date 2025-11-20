@@ -77,9 +77,14 @@ export default function AdminHeader() {
 
         {/* 네비게이션 */}
         <nav className="flex gap-6 text-sm">
-          <Link to="/admin/drug" className="hover:text-blue-200">
-            약품관리
-          </Link>
+          <DropdownMenu
+            title="약품관리"
+            items={[
+              { name: "약품정보", href: "/admin/drug" },
+              { name: "약품 정기 검사", href: "/admin/inspection" },
+              { name: "약품 폐기", href: "/admin/schedule" },
+            ]}
+          />
           <Link to="/admin/medicalRecord" className="hover:text-blue-200">
             진료관리
           </Link>
