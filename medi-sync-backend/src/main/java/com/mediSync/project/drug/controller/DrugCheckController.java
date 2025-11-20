@@ -30,7 +30,7 @@ public class DrugCheckController {
             System.out.println("상태 : "+ d.getStatus()+ "수량 : "+ d.getQuantity() + "비고 : "+ d.getNote());
         }
 
-        //int res = drugCheckService.registerInspection(dto);
+        int res = drugCheckService.registerInspection(dto);
 
         return ResponseEntity.ok("등록 성공!");
     }

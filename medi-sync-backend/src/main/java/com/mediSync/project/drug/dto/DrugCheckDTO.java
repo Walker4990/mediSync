@@ -15,11 +15,13 @@ import java.util.List;
 @Alias("drugcheckdto")
 public class DrugCheckDTO {
     //조회용
-
+    private long checkId;
     //check
     private LocalDate date;
-    private String isChecked;
+
     private String checkedBy;
+    private Boolean isChecked;
+
 
     //drug
     private String drugName;
