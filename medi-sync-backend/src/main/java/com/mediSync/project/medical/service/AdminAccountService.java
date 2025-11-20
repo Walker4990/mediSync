@@ -37,14 +37,22 @@ public class AdminAccountService {
         return adminAccountMapper.checkIdExists(empId) > 0;
     }
 
+    // 일반 정보 수정 (비밀번호 제외)
     public int adminUpdate(AdminAccount vo){
-        if (vo.getPassword() != null && !vo.getPassword().trim().isEmpty()) {
-            vo.setPassword(passwordEncoder.encode(vo.getPassword())); // 변경할 때만 암호화
-        } else {
-            vo.setPassword(null); // Mapper에서 update 시 password 필드 제외하도록 처리
-        }
+        // 명시적으로 null 처리하여 Mapper에서 무시
+        vo.setPassword(null);
         return adminAccountMapper.updateAdmin(vo);
     }
+
+    // 비밀번호 변경 전용 메서드
+    public int updatePassword(Long adminId, String newPassword) {
+        AdminAccount vo = new AdminAccount();
+        vo.setAdminId(adminId);
+        // 새 비밀번호를 암호화하여 VO에 설정
+        vo.setPassword(passwordEncoder.encode(newPassword));
+        return adminAccountMapper.updateAdmin(vo);
+    }
+
     public int adminDelete(Long adminId) {
         return adminAccountMapper.deleteAdmin(adminId);
     }

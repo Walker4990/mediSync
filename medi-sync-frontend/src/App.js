@@ -3,7 +3,6 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import UserLayout from "./component/UserLayout";
 import ModalProvider from "./component/ModalProvider";
 import AccountRegiForm from "./pages/admin/AccountRegiForm";
-import AccountList from "./pages/admin/AccountList";
 import AdminMyPage from "./pages/admin/AdminMyPage";
 import OAuthRedirectHandler from "./component/OAuthRedirectHandler";
 import DashBoard from "./pages/admin/DashBoard";
@@ -70,13 +69,12 @@ function AppContent() {
 
       <ModalProvider>
         <Routes>
-            <Route path="/toss/callback" element={<TossCallback />} />
-            <Route path="/payment/success" element={<PaymentSuccess />} />
-            <Route path="/payment/fail" element={<PaymentFail />} />
+          <Route path="/toss/callback" element={<TossCallback />} />
+          <Route path="/payment/success" element={<PaymentSuccess />} />
+          <Route path="/payment/fail" element={<PaymentFail />} />
           {/*관리자 페이지*/}
           <Route path="/admin" element={<Home />} />
           <Route path="/admin/register" element={<AccountRegiForm />} />
-          <Route path="/admin/acclist" element={<AccountList />} />
           <Route path="/admin/mypage" element={<AdminMyPage />} />
 
           <Route path="/admin/patients" element={<PatientList />} />
@@ -123,10 +121,10 @@ function AppContent() {
               element={<PatientInsurancePage />}
             />
           </Route>
-            <Route path="/user/mypage/payment" element={<PaymentPage />} />
+          <Route path="/user/mypage/payment" element={<PaymentPage />} />
 
-            <Route path="/services" element={<ServiceListPage />} />
-            <Route path="/services/:id" element={<ServiceDetailPage />} />
+          <Route path="/services" element={<ServiceListPage />} />
+          <Route path="/services/:id" element={<ServiceDetailPage />} />
           {/*새창 열림*/}
           <Route
             path="/user/medicalDetail/:recordId"

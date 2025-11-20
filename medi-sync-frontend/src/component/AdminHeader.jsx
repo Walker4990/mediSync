@@ -10,6 +10,7 @@ export default function AdminHeader() {
   const [open, setOpen] = useState(false);
   const [shake, setShake] = useState(false);
   const [adminName, setAdminName] = useState("관리자");
+  const [adminId, setAdminId] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -30,6 +31,7 @@ export default function AdminHeader() {
         // localStorage에 데이터가 있으면 API 호출 없이 바로 사용
         const admin = JSON.parse(storedData);
         setAdminName(admin.name || "관리자");
+        setAdminId(admin.adminId);
       } else {
         // localStorage에 데이터가 없으면 (토큰은 있을 수 있음) API 호출 시도
         try {
@@ -37,6 +39,7 @@ export default function AdminHeader() {
           const response = await axios.get("/api/admins/mypage");
           if (response.data && response.data.name) {
             setAdminName(response.data.name);
+            setAdminId(response.data.adminId);
             // API로 가져온 정보를 localStorage에 저장
             localStorage.setItem("admin_data", JSON.stringify(response.data));
           }
@@ -65,6 +68,24 @@ export default function AdminHeader() {
     localStorage.removeItem("admin_data");
     delete axios.defaults.headers.common["Authorization"];
     navigate("/admin");
+  };
+
+  // Bold 스타일이 적용된 JSX 요소를 title로 구성
+  const styledAdminTitle = (
+    <span className="flex items-center space-x-1 text-sm">
+      <span className="font-semibold text-white text-base">{adminName}</span>
+      <span className="text-blue-200">님</span>
+    </span>
+  );
+
+  // 마이페이지
+  const handleMyPageClick = () => {
+    if (adminId) {
+      // 내 adminId를 가지고 상세 페이지로 이동 (라우트 경로에 맞게 수정 필요)
+      navigate(`/admin/mypage`);
+    } else {
+      alert("관리자 정보를 찾을 수 없습니다.");
+    }
   };
 
   return (
@@ -167,14 +188,14 @@ export default function AdminHeader() {
             </div>
           )}
           <DropdownMenu
-            title={adminName}
+            title={styledAdminTitle}
             items={[
               { name: "사원등록", href: "/admin/register" },
-              { name: "마이페이지", href: "/admin/mypage" },
+              { name: "마이페이지", onClick: handleMyPageClick },
             ]}
           />
           <button
-            className="bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded-md text-sm"
+            className="bg-blue-500 hover:bg-blue-700 text-white px-2 py-1 rounded-md text-sm"
             onClick={handleLogout}
           >
                 로그아웃     

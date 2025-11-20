@@ -3,17 +3,14 @@ package com.mediSync.project.medical.controller;
 import com.mediSync.project.config.JwtUtil;
 import com.mediSync.project.medical.service.AdminAccountService;
 import com.mediSync.project.medical.vo.AdminAccount;
-import com.mediSync.project.medical.vo.UserAccount;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -69,7 +66,8 @@ public class AdminAccountController {
         return ResponseEntity.ok(adminAccountService.getStaffList());
     }
 
-    // 정보 수정
+    // 정보 수정 (관리자용)
+    // 이 엔드포인트도 이제 동적 SQL을 통해 VO의 모든 필드를 보낼 필요 없이 필요한 필드만 보낼 수 있습니다.
     @PutMapping({"/doctors/{adminId}", "/staffs/{adminId}"})
     public ResponseEntity<String> updateDoctor(@PathVariable Long adminId, @RequestBody AdminAccount vo) {
         vo.setAdminId(adminId);
@@ -101,17 +99,14 @@ public class AdminAccountController {
         AdminAccount admin = adminAccountService.selectAdminByEmpId(empId);
 
         if (admin != null && passwordEncoder.matches(password, admin.getPassword())) {
+            // 토큰 생성 시 password는 null 처리하여 반환 객체에서 제외
             String token = jwtUtil.generateToken(admin.getEmpId(), admin.getAdminId());
-
-//            String token = jwtUtil.generateToken(
-//                    admin.getEmpId(),    // 1. Subject (empId)
-//                    admin.getAdminId(),  // 2. id (adminId)
-//                    "ADMIN"              // 3. Role ("ADMIN")
-//            );
+            admin.setPassword(null);
 
             return ResponseEntity.ok(Map.of(
                     "success", true,
                     "token", token,
+                    "admin", admin,
                     "message", "로그인 성공"
             ));
         } else {
@@ -120,20 +115,75 @@ public class AdminAccountController {
         }
     }
 
-    // 마이페이지
+    // 마이페이지 조회
     @GetMapping("/mypage")
     public ResponseEntity<?> getAdminMyPage() {
-        // 💡 SecurityContextHolder에서 인증된 객체 가져오기
         Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
         if (principal instanceof AdminAccount) {
             AdminAccount admin = (AdminAccount) principal;
-            // 💡 비밀번호 필드를 제외하고 사용자 정보를 반환하는 DTO를 사용하는 것이 더 안전합니다.
+            // 보안을 위해 비밀번호 필드를 제외하고 반환
+            admin.setPassword(null);
             return ResponseEntity.ok(admin);
         } else {
-            // 인증 필터 (JwtFilter)가 실패하면 여기까지 오지 않겠지만, 안전 장치
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of("message", "인증된 사용자 정보를 찾을 수 없습니다."));
+        }
+    }
+
+    // 마이페이지 정보 수정 (개인 정보 업데이트)
+    @PutMapping("/mypage")
+    public ResponseEntity<?> updateMyPage(@RequestBody AdminAccount vo) {
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        if (principal instanceof AdminAccount) {
+            AdminAccount currentAdmin = (AdminAccount) principal;
+            // 현재 로그인된 사용자의 adminId를 VO에 설정 (본인 확인)
+            vo.setAdminId(currentAdmin.getAdminId());
+
+            // adminUpdate 서비스 호출 (Mapper의 동적 SQL이 null이 아닌 필드만 업데이트 처리)
+            int rowsAffected = adminAccountService.adminUpdate(vo);
+
+            if (rowsAffected > 0) {
+                // 업데이트 후 최신 정보를 DB에서 다시 조회하여 반환
+                AdminAccount updatedAdmin = adminAccountService.getMember(currentAdmin.getAdminId());
+                updatedAdmin.setPassword(null); // 비밀번호 제외
+                return ResponseEntity.ok(updatedAdmin);
+            } else {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("정보 수정 실패");
+            }
+        } else {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인이 필요합니다.");
+        }
+    }
+
+    // 마이페이지 비밀번호 변경 (전용 엔드포인트)
+    @PutMapping("/{adminId}/password")
+    public ResponseEntity<?> updatePassword(@PathVariable Long adminId, @RequestBody Map<String, String> request) {
+        String newPassword = request.get("password");
+
+        if (newPassword == null || newPassword.isEmpty()) {
+            return ResponseEntity.badRequest().body("새 비밀번호를 입력해야 합니다.");
+        }
+
+        // 1. 현재 로그인된 사용자가 요청된 ID의 본인이 맞는지 확인 (보안)
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (!(principal instanceof AdminAccount)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("인증 실패.");
+        }
+        AdminAccount currentAdmin = (AdminAccount) principal;
+        if (!currentAdmin.getAdminId().equals(adminId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("본인의 비밀번호만 변경할 수 있습니다.");
+        }
+
+        // 2. 비밀번호 업데이트 서비스 호출 (updatePassword 전용 메서드 사용)
+        int rowsAffected = adminAccountService.updatePassword(adminId, newPassword);
+
+        if (rowsAffected > 0) {
+            return ResponseEntity.ok("비밀번호가 성공적으로 변경되었습니다.");
+        } else {
+            // 이 오류는 주로 adminId가 DB에 없거나 DB 연결 문제일 경우 발생합니다.
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("비밀번호 변경 중 오류 발생. 대상 ID를 찾을 수 없거나 DB 오류.");
         }
     }
 

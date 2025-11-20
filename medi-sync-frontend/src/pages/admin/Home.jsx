@@ -161,12 +161,15 @@ export default function Home() {
   }, []);
 
   const handleLoginSuccess = (loginData) => {
-    const { token } = loginData;
+    const { token, admin } = loginData;
 
     if (token) {
       // 1. 토큰을 localStorage에 저장
       localStorage.setItem("admin_token", token);
 
+      if (admin) {
+        localStorage.setItem("admin_data", JSON.stringify(admin));
+      }
       // 2. Axios 헤더 설정
       axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
 
