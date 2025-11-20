@@ -1,5 +1,5 @@
 import axios from "axios";
-
+import { motion } from "framer-motion";
 import { useNavigate, useParams } from "react-router-dom";
 import React, { useEffect, useState, useMemo } from "react";
 import AdminHeader from "../../component/AdminHeader";
@@ -9,6 +9,19 @@ export default function DrugDeadline() {
   const [drugList, setDrugList] = useState([]);
   const [inspectionList, setInspectionList] = useState([]);
 
+  const fetchDrugList = async () => {
+    try {
+      const res = await axios.get("http://localhost:8080/api/drug");
+      setDrugList(res.data);
+      console.log("약품 전체 조회 : ", res.data);
+    } catch (err) {
+      console.error("약품 전체조회 실패", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchDrugList();
+  }, []);
   return (
     <div className="bg-gray-50 min-h-screen font-pretendard">
       <AdminHeader />
@@ -69,11 +82,44 @@ export default function DrugDeadline() {
                 {drugList.map((drug) => (
                   <li
                     key={drug.drugCode}
-                    className="p-3 hover:bg-blue-50 transition rounded cursor-pointer"
+                    className="p-4 border rounded-xl shadow-sm bg-white hover:shadow-md hover:bg-blue-50 transition cursor-pointer"
                   >
-                    <div className="font-medium">{drug.drugName}</div>
-                    <div className="text-sm text-gray-500">
-                      코드 : {drug.drugCode}
+                    {/* 상단 약품 정보 */}
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <p className="text-lg font-semibold text-gray-800">
+                          {drug.drugName}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          코드: {drug.drugCode}
+                        </p>
+                      </div>
+
+                      <span className="text-sm bg-blue-100 text-blue-600 px-2 py-1 rounded-md">
+                        {drug.quantity}개
+                      </span>
+                    </div>
+
+                    {/* 하단 상세 정보 */}
+                    <div className="mt-3 grid grid-cols-2 gap-2 text-sm text-gray-600">
+                      <p>
+                        <span className="font-medium">가격:</span>{" "}
+                        {drug.unitPrice.toLocaleString()}원
+                      </p>
+                      <p>
+                        <span className="font-medium">위치:</span>{" "}
+                        {drug.location}
+                      </p>
+
+                      <p className="col-span-2">
+                        <span className="font-medium">보험사:</span>{" "}
+                        {drug.insurerName || "-"}
+                      </p>
+
+                      <p className="col-span-2 text-xs text-gray-400 mt-1">
+                        마지막 수정:{" "}
+                        {new Date(drug.updatedAt).toLocaleDateString()}
+                      </p>
                     </div>
                   </li>
                 ))}
