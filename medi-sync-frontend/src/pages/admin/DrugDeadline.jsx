@@ -18,10 +18,39 @@ export default function DrugDeadline() {
       console.error("약품 전체조회 실패", err);
     }
   };
+  //검사 리스트 가져오기
+  const fetchInspectionList = async () => {
+    try {
+      const res = await axios.get("http://localhost:8080/api/inspection/month");
 
+      console.log("이번달 검사 리스트 조회 : ", res.data);
+    } catch (err) {
+      console.error("이번달 검사 리스트 조회 실패", err);
+    }
+  };
+  //폐기 기록 가져오기
+  const fetchDisposedList = async () => {
+    try {
+      const res = await axios.get("http://localhost:8080/api/disponse");
+      console.log("폐기 기록 조회 : ", res.data);
+    } catch (err) {
+      console.error("폐기 기록 조회 실패", err);
+    }
+  };
+
+  //탭 바뀔때 데이터 가져오기
   useEffect(() => {
     fetchDrugList();
   }, []);
+  useEffect(() => {
+    if (filter === "all") {
+      fetchDrugList();
+    } else if (filter === "inspected") {
+      fetchInspectionList();
+    } else if (filter === "disposed") {
+      fetchDisposedList();
+    }
+  }, [filter]);
   return (
     <div className="bg-gray-50 min-h-screen font-pretendard">
       <AdminHeader />
