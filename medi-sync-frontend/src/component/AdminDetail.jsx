@@ -197,7 +197,7 @@ const AdminDetail = ({ adminId, onBackToList }) => {
     fetchAdminData();
   }, [adminId, API_URL]);
 
-  // ... (useEffect: load departments) ...
+  // 부서 정보
   useEffect(() => {
     let mounted = true;
     const load = async () => {
@@ -248,68 +248,43 @@ const AdminDetail = ({ adminId, onBackToList }) => {
 
   // 💡 프로필 이미지 업로드 함수
   const uploadProfileImage = async (file) => {
-    if (!file) return null;
-    setUploading(true);
-    try {
-      const form = new FormData();
-      form.append("file", file);
-      // 서버에 파일 업로드 요청
-      const res = await axios.post(UPLOAD_API_URL, form, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-      // 서버 응답에서 새 이미지 경로(URL) 반환
-      return res?.data?.url ? String(res.data.url) : null;
-    } catch (err) {
-      console.error("파일 업로드 실패:", err);
-      alert("❌ 프로필 이미지 업로드에 실패했습니다.");
-      return null;
-    } finally {
-      setUploading(false);
-    }
+    const form = new FormData();
+    form.append("file", file);
+    // 서버에 파일 업로드 요청
+    const res = await axios.post(UPLOAD_API_URL, form, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    // 서버 응답에서 새 이미지 경로(URL) 반환
+    return res.data.url;
   };
 
   // 💡 저장 핸들러 (이미지 업로드 로직 통합)
   const handleSave = async () => {
-    if (uploading) return; // 업로드 중이면 저장 방지
-
-    let finalFormData = { ...formData };
-
-    // 1. 선택된 새 이미지가 있다면 업로드 후 경로 업데이트
-    if (selectedFile) {
-      const uploadedUrl = await uploadProfileImage(selectedFile);
-      if (!uploadedUrl) {
-        // 업로드 실패 시 저장 취소
-        return;
-      }
-      finalFormData.profileImgUrl = uploadedUrl;
-    }
-
-    // 2. 서버에 모든 정보 저장 (여기에는 이미지 URL도 포함됨)
+    if (uploading) return;
+    setUploading(true);
     try {
-      // API 호출 로직 (주석 처리된 임시 로직을 대체)
-      const response = await fetch(`${API_URL}/${adminId}`, {
-        method: "PUT", // 또는 PATCH
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(finalFormData),
-      });
+      let finalFormData = { ...formData };
 
-      if (!response.ok) throw new Error("정보 저장에 실패했습니다.");
+      if (selectedFile) {
+        const form = new FormData();
+        form.append("file", selectedFile);
+        const uploadRes = await axios.post(UPLOAD_API_URL, form, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+        finalFormData.profileImgUrl = uploadRes.data.url;
+      }
 
-      const updatedData = await response.json();
-      setAdmin(updatedData);
-      setFormData(updatedData);
-
-      // 상태 초기화
-      setSelectedFile(null);
-      if (previewUrl) URL.revokeObjectURL(previewUrl);
-      setPreviewUrl(null);
+      const res = await axios.put(`${API_URL}/${adminId}`, finalFormData);
+      setAdmin(res.data);
+      setFormData(res.data);
       setIsEditing(false);
-      alert("직원 정보가 성공적으로 저장되었습니다.");
-    } catch (error) {
-      console.error("저장 중 오류 발생:", error);
-      alert("정보 저장에 실패했습니다: " + error.message);
+      setSelectedFile(null);
+      setPreviewUrl(null);
+      alert("저장 완료");
+    } catch (err) {
+      alert("저장 실패");
+    } finally {
+      setUploading(false);
     }
   };
 

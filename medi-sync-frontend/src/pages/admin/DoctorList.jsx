@@ -11,11 +11,13 @@ import {
   Search,
   PlusCircle,
   Loader2,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 
 // API 기본 URL
 const API_BASE_URL = "http://localhost:8080/api/admins/doctors";
-const DEPT_API_URL = "http://192.168.0.24:8080/api/departments";
+const DEPT_API_URL = "http://localhost:8080/api/departments";
 
 // 알림 모달
 const InfoModal = ({ message, onClose, title = "알림" }) => (
@@ -355,6 +357,10 @@ const DoctorList = () => {
   const [uniqueDepartments, setUniqueDepartments] = useState([]);
   const [message, setMessage] = useState(null); // InfoModal용 메시지
 
+  // [페이징 관련 상태 추가]
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
   // API 호출: 의사 목록 조회 (GET)
   const fetchAdmins = async () => {
     setApiError(false);
@@ -372,6 +378,11 @@ const DoctorList = () => {
   useEffect(() => {
     fetchAdmins();
   }, []);
+
+  // 검색어가 변경되면 페이지를 1로 리셋
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search]);
 
   // 날짜 포맷 함수
   const formatDate = (dateString) => {
@@ -451,6 +462,17 @@ const DoctorList = () => {
       (a.empId || "").toLowerCase().includes(search.toLowerCase())
   );
 
+  // [페이징 계산 로직 추가]
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = filtered.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filtered.length / itemsPerPage);
+
+  // 페이지 변경 핸들러
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+  };
+
   // 뷰 모드에 따라 렌더링할 내용 상이
   if (viewMode === "add" || viewMode === "edit") {
     return (
@@ -492,26 +514,13 @@ const DoctorList = () => {
       <AdminHeader />
 
       {/* 컨텐츠 영역 */}
-      <main className="max-w-7xl mx-auto pt-24 px-4 sm:px-8">
+      <main className="max-w-7xl mx-auto pt-24 px-4 sm:px-8 mb-12">
         <h1 className="text-3xl font-bold text-blue-600 mb-8">
           의사 정보 목록
           <span className="font-normal text-xl ml-2">
             (총 {admins.length}명)
           </span>
         </h1>
-        {/* API 연결 오류 경고 메시지 */}
-        {apiError && (
-          <div
-            className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-6 shadow-md"
-            role="alert"
-          >
-            <strong className="font-bold">API 연결 오류 발생:</strong>
-            <span className="block sm:inline">
-              백엔드 서버(`{API_BASE_URL}`)에 연결할 수 없어 **모의 데이터**를
-              표시합니다.
-            </span>
-          </div>
-        )}
         {/* 검색창 + 버튼 그룹 */}
         <div className="mb-6 flex flex-wrap justify-between items-center gap-4">
           <div className="relative w-full sm:w-1/3 min-w-[250px] flex-grow">
@@ -553,7 +562,8 @@ const DoctorList = () => {
             </thead>
 
             <tbody>
-              {filtered.map((a) => (
+              {/* filtered 대신 currentItems 사용 */}
+              {currentItems.map((a) => (
                 <tr
                   key={a.adminId}
                   className="border-b border-gray-100 hover:bg-gray-50 text-gray-700 transition-colors"
@@ -625,6 +635,54 @@ const DoctorList = () => {
             </tbody>
           </table>
         </div>
+
+        {/* 페이지네이션 UI */}
+        {filtered.length > 0 && (
+          <div className="flex justify-center items-center space-x-2 mt-6">
+            {/* 이전 버튼 */}
+            <button
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+              className={`p-2 rounded-md border border-gray-300 ${
+                currentPage === 1
+                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                  : "bg-white text-gray-700 hover:bg-gray-50"
+              }`}
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+
+            {/* 페이지 번호 생성 */}
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+              (number) => (
+                <button
+                  key={number}
+                  onClick={() => handlePageChange(number)}
+                  className={`px-4 py-2 rounded-md border text-sm font-medium transition-colors ${
+                    currentPage === number
+                      ? "bg-blue-600 text-white border-blue-600"
+                      : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+                  }`}
+                >
+                  {number}
+                </button>
+              )
+            )}
+
+            {/* 다음 버튼 */}
+            <button
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className={`p-2 rounded-md border border-gray-300 ${
+                currentPage === totalPages
+                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                  : "bg-white text-gray-700 hover:bg-gray-50"
+              }`}
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
+          </div>
+        )}
       </main>
 
       {/* 삭제 확인 모달 렌더링 */}

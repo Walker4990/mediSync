@@ -62,7 +62,7 @@
     <!-- 의사 조회 -->
     <select id="selectAllDoctor" resultMap="adminAccount">
         SELECT a.*, d.dept_name
-        FROM admin_account a JOIN department d ON a.dept_id = d.dept_id
+        FROM admin_account a left JOIN department d ON a.dept_id = d.dept_id
         WHERE position = 'DOCTOR'
         ORDER BY a.admin_id DESC
     </select>
@@ -70,7 +70,7 @@
     <!-- 의료진 조회 -->
     <select id="selectAllStaff" resultMap="adminAccount">
         SELECT a.*, d.dept_name
-        FROM admin_account a JOIN department d ON a.dept_id = d.dept_id
+        FROM admin_account a left JOIN department d ON a.dept_id = d.dept_id
         WHERE position IN ('NURSE', 'RADIOLOGIST', 'LAB_TECH', 'ASSISTANT', 'ADMIN')
         ORDER BY a.admin_id DESC
     </select>

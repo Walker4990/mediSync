@@ -260,7 +260,7 @@ const AdminMyPage = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // 파일 선택
+  // 이미지 파일 선택
   const handleFileChange = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -273,76 +273,56 @@ const AdminMyPage = () => {
 
   // 프로필 이미지 업로드
   const uploadProfileImage = async (file) => {
-    if (!file) return null;
-    setUploading(true);
-    try {
-      const form = new FormData();
-      form.append("file", file);
-      const res = await axios.post(UPLOAD_API_URL, form, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-      return res?.data?.url ? String(res.data.url) : null;
-    } catch (err) {
-      console.error("파일 업로드 실패:", err);
-      customAlert("❌ 프로필 이미지 업로드에 실패했습니다.");
-      return null;
-    } finally {
-      setUploading(false);
-    }
+    const form = new FormData();
+    form.append("file", file);
+    const res = await axios.post(UPLOAD_API_URL, form, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return res.data.url;
   };
 
   // 이미지 및 정보 저장
   const handleSave = async () => {
     if (uploading) return;
+    setUploading(true);
 
-    let finalFormData = { ...formData };
-
-    if (finalFormData.deptId === "" || finalFormData.deptId === null) {
-      delete finalFormData.deptId;
-      delete finalFormData.deptName;
-    } else if (finalFormData.deptId) {
-      // 부서 ID가 있다면, 부서명도 찾아서 업데이트
-      const selectedDept = departmentOptions.find(
-        (opt) => opt.value === finalFormData.deptId
-      );
-      if (selectedDept) {
-        finalFormData.deptName = selectedDept.label; // Label 사용
-      } else {
-        // 부서 ID는 있으나 목록에 없는 경우, 서버에 의존
-      }
-    }
-
-    // 선택된 새 이미지가 있다면 업로드 후 경로 업데이트
-    if (selectedFile) {
-      const uploadedUrl = await uploadProfileImage(selectedFile);
-      if (!uploadedUrl) {
-        return;
-      }
-      finalFormData.profileImgUrl = uploadedUrl;
-    }
     try {
-      const response = await axios.put(API_URL, finalFormData);
-      const updatedData = response.data;
+      let finalFormData = { ...formData };
 
-      setAdmin(updatedData);
-      setFormData(updatedData);
+      // 1. 선택된 파일이 있다면 업로드 먼저 수행
+      if (selectedFile) {
+        const uploadedUrl = await uploadProfileImage(selectedFile);
+        finalFormData.profileImgUrl = uploadedUrl; // 업로드된 URL로 교체
+      }
 
-      // 로컬 스토리지 갱신
-      localStorage.setItem("admin_data", JSON.stringify(updatedData));
+      // 2. 부서명 처리
+      if (finalFormData.deptId) {
+        const dept = departmentOptions.find(
+          (d) => d.value === String(finalFormData.deptId)
+        );
+        if (dept) finalFormData.deptName = dept.label;
+      } else {
+        delete finalFormData.deptId;
+      }
+
+      // 3. 최종 정보 DB 업데이트
+      const res = await axios.put(API_URL, finalFormData);
+
+      setAdmin(res.data);
+      setFormData(res.data);
+      setIsEditing(false);
 
       // 상태 초기화
       setSelectedFile(null);
       if (previewUrl) URL.revokeObjectURL(previewUrl);
       setPreviewUrl(null);
 
-      setIsEditing(false);
-      customAlert("정보가 성공적으로 수정되었습니다.");
-    } catch (error) {
-      console.error("저장 중 오류 발생:", error);
-      customAlert(
-        "정보 저장에 실패했습니다: " +
-          (error.response?.data?.message || error.message)
-      );
+      alert("✅ 정보가 수정되었습니다.");
+    } catch (err) {
+      console.error("저장 실패:", err);
+      alert("저장 중 오류가 발생했습니다.");
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -561,7 +541,7 @@ const AdminMyPage = () => {
                     <button
                       type="button"
                       onClick={() =>
-                        document.getElementById("profile-file-input")?.click()
+                        document.getElementById("profile-file-input").click()
                       }
                       className="absolute bottom-0 right-0 p-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors shadow-lg"
                       title="프로필 이미지 변경"
