@@ -15,12 +15,17 @@ export default function AdminChatPage() {
     const clientRef = useRef(null);
     const messagesRef = useRef(null);
 
-    // 하드코딩된 테스트 사용자(필요하면 추가)
     useEffect(() => {
-        setUsers([
-            { userId: 101, name: "테스트유저101" },
-            { userId: 102, name: "테스트유저102" },
-        ]);
+        const fetchUsers = async () => {
+            try {
+                const res= await axios.get(`http://192.168.0.24:8080/api/chat/partners/${adminId}`);
+                setUsers(res.data);
+            } catch (error) {
+                console.log("❌ 사용자 목록 불러오기 실패:", error);
+            }
+
+        }
+        fetchUsers();
     }, []);
 
     // WebSocket 1회 연결 (관리자용 구독)
@@ -76,10 +81,12 @@ export default function AdminChatPage() {
     useEffect(() => {
         const fetchUnreadCounts = async () => {
             const updated = await Promise.all(
-                users.map(async (u) => {
-                    const res = await axios.get(`http://192.168.0.24:8080/api/chat/unread/${u.userId}/${adminId}`);
-                    return { ...u, unread: res.data };
-                })
+                users
+                    .filter(u => u && u.userId)       // 여기도 null 제거
+                    .map(async (u) => {
+                        const res = await axios.get(`http://192.168.0.24:8080/api/chat/unread/${u.userId}/${adminId}`);
+                        return { ...u, unread: res.data };
+                    })
             );
             setUsers(updated);
         };
@@ -165,7 +172,9 @@ export default function AdminChatPage() {
                             {users.length === 0 ? (
                                 <p className="text-gray-400 text-center mt-6">현재 대화중인 사용자가 없습니다.</p>
                             ) : (
-                                users.map((u) => (
+                                users
+                                    .filter(u => u && u.userId)   // ← null 제거 필수!!
+                                    .map((u) => (
                                     <div
                                         key={u.userId}
                                         onClick={() => loadChat(u.userId)}

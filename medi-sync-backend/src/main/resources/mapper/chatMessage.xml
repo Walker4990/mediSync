@@ -37,4 +37,12 @@
         AND sender_id = #{senderId}
         AND read_status = false
     </update>
+
+    <select id="findChatPartners" resultType="map">
+        SELECT DISTINCT
+        sender_id AS userId
+        FROM chat_message
+        WHERE receiver_id = #{adminId}
+        ORDER BY userId
+    </select>
 </mapper>

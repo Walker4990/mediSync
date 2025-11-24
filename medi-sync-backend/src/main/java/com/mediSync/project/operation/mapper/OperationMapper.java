@@ -1,10 +1,7 @@
 package com.mediSync.project.operation.mapper;
 
 import com.mediSync.project.medical.vo.AdminAccount;
-import com.mediSync.project.operation.vo.Operation;
-import com.mediSync.project.operation.vo.OperationLog;
-import com.mediSync.project.operation.vo.OperationRoom;
-import com.mediSync.project.operation.vo.OperationStaff;
+import com.mediSync.project.operation.vo.*;
 import com.mediSync.project.patient.dto.ReservationDTO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -64,4 +61,7 @@ public interface OperationMapper {
 
     int canceledOperation(long id);
 
+    int getBaseCost(String operationName);
+
+    List<OperationCost> getOperationCostList();
 }

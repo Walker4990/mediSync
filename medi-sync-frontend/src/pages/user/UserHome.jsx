@@ -7,9 +7,12 @@ import "swiper/css/pagination";
 import "swiper/css/navigation";
 import "swiper/css/effect-fade";
 import axios from "axios";
+import UnpaidAlert from "../../component/UnpaidAlert";
 
 export default function UserHome() {
     const [doctor, setDoctor] = useState([]);
+
+
 
     useEffect(()=>{
         axios.get("http://192.168.0.24:8080/api/admins/recommanded")
@@ -26,7 +29,7 @@ export default function UserHome() {
     const navigate = useNavigate();
     return (
         <div className="font-pretendard bg-gray-50">
-
+            <UnpaidAlert />
             {/* ================= HERO SECTION ================= */}
             <section className="relative max-w-6xl mx-auto px-6 md:px-10 py-20">   {/* 💙 폭 통일 */}
                 <div className="absolute inset-0 bg-gradient-to-br from-blue-400 via-sky-300 to-purple-300 opacity-30 blur-3xl rounded-3xl -z-10"></div>

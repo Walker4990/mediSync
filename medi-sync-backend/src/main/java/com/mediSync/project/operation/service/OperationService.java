@@ -28,6 +28,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.ByteArrayOutputStream;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -48,6 +49,30 @@ public class OperationService {
     private final AdmissionMapper admissionMapper;
     private final AdmissionHistoryMapper admissionHistoryMapper;
     private final SimpMessagingTemplate messagingTemplate;
+
+    public int calculateOperationCost(Operation op){
+
+        if (op.getOperationName() == null || op.getOperationName().trim().isEmpty()) {
+            throw new IllegalArgumentException("수술 명이 없습니다.");
+        }
+
+        int baseCost = operationMapper.getBaseCost(op.getOperationName());
+        if (baseCost <= 0) baseCost = 100000;
+
+        int anesthesiaCost = switch (op.getAnesthesiaType()){
+            case "GENERAL" -> 80000;
+            case "SEDATION" -> 50000;
+            case "LOCAL" -> 20000;
+            default -> 0;
+        };
+        int supplyCost = 50000;
+        return baseCost + anesthesiaCost + supplyCost;
+    }
+
+
+
+
+
     @Transactional
     public boolean reserveOperation(Operation operation) {
         //  날짜, 시간 필수값 확인
@@ -77,6 +102,9 @@ public class OperationService {
         if (conflict > 0) {
             throw new IllegalStateException("이미 예약된 시간입니다.");
         }
+        BigDecimal cost = BigDecimal.valueOf(calculateOperationCost(operation));
+        operation.setCost(cost);
+
 
         //  수술 예약 등록 (당일 진행 아님)
         int inserted = operationMapper.insertOperation(operation);
@@ -116,8 +144,8 @@ public class OperationService {
         messagingTemplate.convertAndSend("/topic/admission/update", payload);
 
         return true;
-    }
 
+    }
 
 
     public List<Operation> selectOperationList() {
@@ -127,6 +155,7 @@ public class OperationService {
     public Operation getOperationById(Long operationId) {
         return operationMapper.getOperationById(operationId);
     }
+
     public int updateOperationStatus(Long operationId, String status) {
         return operationMapper.updateOperationStatus(operationId, status);
     }

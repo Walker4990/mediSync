@@ -51,7 +51,8 @@
         o.patient_id,
         p.name AS patientName,
         o.admin_id,
-        a.name AS adminName,
+        o.anesthesia_type AS anesthesiaType,
+        a.name AS doctorName,
         o.operation_name AS operationName,
         o.cost,
         o.status,
@@ -229,5 +230,19 @@
         set type = "CANCELED"
         WHERE operation_id = #{id}
     </update>
+
+    <select id="getBaseCost" parameterType="string" resultType="int">
+        SELECT base_cost AS baseCost FROM operation_cost WHERE operation_name = #{operationName}
+    </select>
+
+    <update id="updateOperationCost">
+        UPDATE operation
+        SET cost = #{cost}
+        WHERE operation_id = #{operationId}
+    </update>
+
+    <select id="getOperationCostList" resultType="cost">
+        SELECT * FROM operation_cost ORDER BY operation_name
+    </select>
 
 </mapper>

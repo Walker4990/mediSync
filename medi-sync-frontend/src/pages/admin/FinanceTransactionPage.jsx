@@ -95,9 +95,7 @@ export default function FinanceTransactionPage() {
                             <th className="p-3 border whitespace-nowrap">참조 구분</th>
                             <th className="p-3 border whitespace-nowrap">참조 ID</th>
                             <th className="p-3 border whitespace-nowrap">환자 ID</th>
-                            <th className="p-3 border whitespace-nowrap">담당자 ID</th>
                             <th className="p-3 border whitespace-nowrap">유형</th>
-                            <th className="p-3 border whitespace-nowrap">분류</th>
                             <th className="p-3 border whitespace-nowrap">금액</th>
                             <th className="p-3 border whitespace-nowrap">설명</th>
                             <th className="p-3 border whitespace-nowrap">상태</th>
@@ -128,7 +126,6 @@ export default function FinanceTransactionPage() {
                                     <td className="p-3 text-gray-600">{tx.refType}</td>
                                     <td className="p-3 text-gray-600">{tx.refId || "-"}</td>
                                     <td className="p-3 text-gray-600">{tx.patientId || "-"}</td>
-                                    <td className="p-3 text-gray-600">{tx.adminId || "-"}</td>
                                     <td
                                         className={`p-3 font-semibold ${
                                             tx.type === "INCOME"
@@ -144,7 +141,6 @@ export default function FinanceTransactionPage() {
                                                 ? "지출"
                                                 : "보험청구"}
                                     </td>
-                                    <td className="p-3">{tx.category || "-"}</td>
                                     <td className="p-3 text-right pr-6 font-semibold">
                                         {new Intl.NumberFormat("ko-KR", {
                                             maximumFractionDigits: 0,

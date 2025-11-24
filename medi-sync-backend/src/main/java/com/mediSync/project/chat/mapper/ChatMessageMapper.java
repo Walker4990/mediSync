@@ -10,7 +10,7 @@ import java.util.List;
 public interface ChatMessageMapper {
     int insertMessage(ChatMessage chatMessage);
     List<ChatMessage> getMessagesBetween(@Param("receiverId") Long receiverId, @Param("senderId") Long senderId);
-
+    List<ChatMessage> findChatPartners(@Param("adminId") Long adminId);
     int getUnreadCount(@Param("senderId") Long senderId, @Param("receiverId") Long receiverId);
     int markMessagesAsRead(@Param("senderId") Long senderId, @Param("receiverId") Long receiverId);
 }

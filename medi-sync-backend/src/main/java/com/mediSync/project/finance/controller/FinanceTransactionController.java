@@ -1,13 +1,11 @@
 package com.mediSync.project.finance.controller;
 
+import com.mediSync.project.finance.mapper.FinanceTransactionMapper;
 import com.mediSync.project.finance.service.FinanceTransactionService;
 import com.mediSync.project.finance.vo.FinanceTransaction;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 import java.util.List;
@@ -18,6 +16,7 @@ import java.util.Map;
 @RequestMapping("/api/finance")
 public class FinanceTransactionController {
     private final FinanceTransactionService financeTransactionService;
+    private final FinanceTransactionMapper  financeTransactionMapper;
 
     @GetMapping("/list")
     public List<FinanceTransaction> selectAll( @RequestParam(required = false) String type,
@@ -40,5 +39,33 @@ public class FinanceTransactionController {
     @GetMapping("/summary")
     public ResponseEntity<?> getFinanceSummary(){
         return ResponseEntity.ok(financeTransactionService.getDashboardSummary());
+    }
+
+    @GetMapping("/dept-income")
+    public List<Map<String, Object>> getDeptIncomeSummary() {
+        return financeTransactionService.getDeptIncomeSummary();
+    }
+
+    // 📌 부서별 순이익 집계
+    @GetMapping("/dept-net-profit")
+    public List<Map<String, Object>> getDeptNetProfit() {
+        return financeTransactionService.getDeptNetProfit();
+    }
+    @GetMapping("/unpaid/list")
+    public List<FinanceTransaction> getUnpaidPatientsList() {
+        return financeTransactionMapper.getUnpaidPatients();
+    }
+    @GetMapping("/unpaid/{patientId}")
+    public List<FinanceTransaction> getUnpaidPatient(@PathVariable Long patientId) {
+        return financeTransactionMapper.getUnpaidDetails(patientId);
+    }
+    @GetMapping("/unpaid/alert/{patientId}")
+    public Map<String, Object> getUnpaid(@PathVariable Long patientId) {
+        return financeTransactionService.getUnpaidInfo(patientId);
+    }
+    @PostMapping("/unpaid/notify/{patientId}")
+    public ResponseEntity<?> notifyUnpaid(@PathVariable Long patientId) {
+        financeTransactionService.sendUnpaidEmail(patientId);
+        return ResponseEntity.ok("Email sent");
     }
 }

@@ -36,4 +36,5 @@ public class Operation {
     private String patientName;
     private String doctorName;
     private String roomName;
+    private String adminName;
 }

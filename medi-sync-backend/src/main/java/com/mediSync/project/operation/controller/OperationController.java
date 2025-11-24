@@ -1,10 +1,8 @@
 package com.mediSync.project.operation.controller;
 
 import com.mediSync.project.medical.vo.AdminAccount;
-import com.mediSync.project.operation.vo.Operation;
-import com.mediSync.project.operation.vo.OperationLog;
-import com.mediSync.project.operation.vo.OperationRoom;
-import com.mediSync.project.operation.vo.OperationStaff;
+import com.mediSync.project.operation.mapper.OperationMapper;
+import com.mediSync.project.operation.vo.*;
 import com.mediSync.project.operation.service.OperationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
@@ -25,7 +23,7 @@ import java.util.Map;
 @RequestMapping("/api/operation")
 public class OperationController {
     private final OperationService operationService;
-
+    private final OperationMapper operationMapper;
     @PostMapping("/reserve")
     public ResponseEntity<?> reserve(@RequestBody Operation operation) {
         try {
@@ -156,4 +154,8 @@ public class OperationController {
         return operationService.selectByDate(scheduledDate);
     }
 
+    @GetMapping("/cost/list")
+    public List<OperationCost> operationCostList() {
+        return operationMapper.getOperationCostList();
+    }
 }

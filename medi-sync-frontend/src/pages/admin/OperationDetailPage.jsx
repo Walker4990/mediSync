@@ -208,18 +208,11 @@ export default function OperationDetailPage() {
                         {/* 마취 유형 */}
                         <div>
                             <label className="text-sm text-gray-600">마취 유형</label>
-                            <select
+                            <input
                                 className="border w-full rounded-md p-2 mt-1"
                                 value={operation.anesthesiaType || ""}
-                                onChange={(e) =>
-                                    setOperation({ ...operation, anesthesiaType: e.target.value })
-                                }
-                            >
-                                <option value="">선택</option>
-                                <option value="LOCAL">국소 마취</option>
-                                <option value="GENERAL">전신 마취</option>
-                                <option value="SEDATION">수면 마취</option>
-                            </select>
+                                readOnly
+                           />
                         </div>
 
                         {/* 수술 일자 */}
@@ -267,10 +260,7 @@ export default function OperationDetailPage() {
                             <input
                                 className="border w-full rounded-md p-2 mt-1"
                                 value={operation.doctorName || ""}
-                                onChange={(e) =>
-                                    setOperation({ ...operation, doctorName: e.target.value })
-                                }
-                                placeholder="예: 김의사"
+                                readOnly
                             />
                         </div>
 
@@ -302,6 +292,19 @@ export default function OperationDetailPage() {
                             />
                         </div>
                     </div>
+
+
+                    <div>
+                        <label className="text-sm text-gray-600">예상 소요시간 (분)</label>
+                        <input
+                            type="number"
+                            className="border w-full rounded-md p-2 mt-1"
+                            value={operation.duration}
+                            onChange={(e)=>setOperation({...operation, duration:e.target.value})}
+                            placeholder="예: 120"
+                        />
+                    </div>
+
 
                     <div className="flex justify-end">
                         <button

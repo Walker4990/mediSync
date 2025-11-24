@@ -12,12 +12,14 @@ export default function DrugList() {
     const [modalOpen, setModalOpen] = useState(false);
     const [editData, setEditData] = useState(null);
     const [searchTerm, setSearchTerm] = useState("");
-
+    const [page, setPage] = useState(1);
+    const [size] = useState(10);
+    const [totalPages, setTotalPages] = useState(1);
 
     // 데이터 로드
     const fetchData = async () => {
         try {
-            const res = await getDrugs();
+            const res = await getDrugs(page, size);
             setDrugs(res.data);
             setFilteredDrugs(res.data);
         } catch (error) {
@@ -27,7 +29,7 @@ export default function DrugList() {
 
     useEffect(() => {
         fetchData();
-    }, []);
+    }, [page]);
 
     // 저장 (등록/수정)
     const handleSave = async (data) => {
@@ -117,6 +119,28 @@ export default function DrugList() {
                         </div>
                     )}
                 </section>
+                <div className="flex justify-center mt-6 gap-2">
+                    <button
+                        disabled={page === 1}
+                        onClick={() => setPage(page - 1)}
+                        className="px-3 py-1 bg-gray-200 rounded disabled:opacity-40"
+                    >
+                        이전
+                    </button>
+
+                    <span className="px-3 py-1 bg-blue-600 text-white rounded">
+                        {page} / {totalPages}
+                    </span>
+
+                    <button
+                        disabled={page === totalPages}
+                        onClick={() => setPage(page + 1)}
+                        className="px-3 py-1 bg-gray-200 rounded disabled:opacity-40"
+                    >
+                        다음
+                    </button>
+                </div>
+
             </main>
 
             {/* 등록 / 수정 모달 */}

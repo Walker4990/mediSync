@@ -86,6 +86,34 @@
         ORDER BY FIELD(status, 'COMPLETED', 'PENDING', 'REFUNDED')
     </select>
 
+    <!-- 부서별 수익 집계 -->
+    <select id="getDeptIncomeSummary" resultType="map">
+        SELECT
+            d.dept_name AS deptName,
+            SUM(f.amount) income
+        FROM finance_transaction f
+        JOIN admin_account a ON a.admin_id = f.admin_id
+        JOIN department d ON a.dept_id = d.dept_id
+        WHERE f.type = 'INCOME'
+        GROUP BY d.dept_id
+        ORDER BY income DESC
+    </select>
+
+    <!-- 부서별 순이익 집계 -->
+    <select id="getDeptNetProfit" resultType="map">
+        SELECT
+            d.dept_name AS deptName,
+        SUM( CASE WHEN f.type = 'INCOME' THEN f.amount ELSE 0 END)
+        -
+        SUM(CASE WHEN f.type = 'EXPENSE' THEN f.amount ELSE 0 END)
+        AS netProfit
+        FROM finance_transaction f
+        JOIN admin_account a ON f.admin_id = a.admin_id
+        JOIN department d ON a.dept_id = d.dept_id
+        GROUP BY d.dept_id
+        ORDER BY netProfit DESC
+    </select>
+
     <update id="updateCompletedByOrderId">
         UPDATE finance_transaction
         SET status='COMPLETED'
@@ -109,4 +137,57 @@
         ) AS sub
         )
     </update>
+
+    <select id="getUnpaidPatients" resultType="map">
+        SELECT
+        p.patient_id AS patientId,
+        p.name AS patientName,
+        SUM(f.amount) AS unpaidTotal,
+        count(tx_id) AS countTx
+        FROM finance_transaction f
+        JOIN patient p ON p.patient_id = f.patient_id
+        WHERE f.status = 'PENDING'
+        AND f.type != 'CLAIM'
+        GROUP BY p.patient_id
+        HAVING unpaidTotal > 0
+        ORDER BY unpaidTotal DESC
+    </select>
+    
+    <select id="getUnpaidSummary" resultType="map">
+        SELECT
+        p.patient_id AS patientId,
+        p.name AS patientName,
+        SUM(f.amount) AS unpaidTotal,
+        count(tx_id) AS countTx
+        FROM finance_transaction f
+        JOIN patient p ON p.patient_id = f.patient_id
+        WHERE f.patient_id = #{patientId}
+        AND f.status = 'PENDING'
+        AND f.type != 'CLAIM'
+        GROUP BY p.patient_id
+        HAVING unpaidTotal > 0
+        ORDER BY unpaidTotal DESC
+    </select>
+
+    <select id="getUnpaidDetails" resultType="map">
+        SELECT
+        f.tx_id AS txId,
+        f.description AS description,
+        f.amount AS amount,
+        f.created_at AS createdAt,
+        f.status AS status
+        FROM finance_transaction f
+        WHERE f.patient_id = #{patientId}
+        AND f.status = 'PENDING'
+        AND f.type != 'CLAIM'
+        ORDER BY f.created_at DESC
+    </select>
+    <select id="getUnpaidTotal" resultType="int">
+        SELECT COALESCE(SUM(amount), 0)
+        FROM finance_transaction
+        WHERE patient_id = #{patientId}
+        AND status = 'PENDING'
+        AND type != 'CLAIM'
+    </select>
+
 </mapper>

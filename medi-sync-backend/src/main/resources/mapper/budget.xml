@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.mediSync.project.finance.mapper.BudgetMapper">
+
+    <!-- 1) 예산 편성 -->
+    <insert id="insertBudgetPlan" parameterType="budget">
+        INSERT INTO budget_plan ( dept_id, year, month, amount )
+        VALUES (#{deptId}, #{year}, #{month}, #{amount})
+    </insert>
+
+    <!-- 2) 특정 부서의 특정 월 예산 조회 -->
+    <select id="findBudgetPlan" parameterType="map" resultType="budget">
+        SELECT * FROM budget_plan
+        WHERE dept_id = #{deptId}
+        AND year = #{year}
+        AND month = #{month}
+    </select>
+
+    <!-- 3) 예산 집행 로그 -->
+    <insert id="insertExecutionLog" parameterType="budgetLog">
+        INSERT INTO budget_execution_log
+        ( budget_id, dept_id, record_type, record_id, amount, created_at )
+        VALUES ( #{budgetId}, #{deptId}, #{recordType}, #{recordId}, #{amount}, #{createdAt})
+    </insert>
+
+    <!-- 4) 예산 사용 총합 -->
+    <select id="sumExecutedAmount" parameterType="long" resultType="decimal">
+        SELECT COALESCE(SUM(amount),0)
+        FROM budget_execution_log
+        WHERE budget_id = #{budgetId}
+    </select>
+</mapper>

@@ -53,6 +53,8 @@ import PaymentPage from "./component/PaymentPage";
 import ServiceListPage from "./pages/user/ServiceListPage";
 import ServiceDetailPage from "./pages/user/ServiceDetailPage";
 import AdminRefundPage from "./pages/admin/AdminRefundPage";
+import UnpaidManagePage from "./pages/admin/UnPaidManagePage";
+import UnpaidAlert from "./component/UnpaidAlert";
 const token = localStorage.getItem("token");
 if (token) {
   axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
@@ -107,6 +109,7 @@ function AppContent() {
           <Route path="/admin/finance/dashboard" element={<DashBoard />} />
           <Route path="/admin/insurance" element={<InsurerPage />} />
           <Route path="/admin/finance/refund" element={<AdminRefundPage /> } />
+          <Route path="/admin/finance/unpaid" element={<UnpaidManagePage />} />
           {/*유저페이지*/}
           <Route element={<UserLayout />}>
             <Route path="/" element={<UserHome />} />/
@@ -125,6 +128,7 @@ function AppContent() {
               element={<PatientInsurancePage />}
             />
           </Route>
+            <Route path="/unpaid-alert" element={<UnpaidAlert />} />
             <Route path="/user/mypage/payment" element={<PaymentPage />} />
 
             <Route path="/services" element={<ServiceListPage />} />

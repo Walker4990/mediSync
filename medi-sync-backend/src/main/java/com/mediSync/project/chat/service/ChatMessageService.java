@@ -33,4 +33,7 @@ public class ChatMessageService {
     public void markMessagesAsRead(Long senderId, Long receiverId) {
         chatMessageMapper.markMessagesAsRead(senderId, receiverId);
     }
+    public List<ChatMessage> getChatPartners(Long adminId) {
+        return chatMessageMapper.findChatPartners(adminId);
+    }
 }
