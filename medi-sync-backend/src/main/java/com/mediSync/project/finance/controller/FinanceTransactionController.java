@@ -19,12 +19,15 @@ public class FinanceTransactionController {
     private final FinanceTransactionMapper  financeTransactionMapper;
 
     @GetMapping("/list")
-    public List<FinanceTransaction> selectAll( @RequestParam(required = false) String type,
+    public Map<String, Object> selectAll( @RequestParam(required = false) String type,
                                                @RequestParam(required = false) String category,
                                                @RequestParam(required = false) String status,
                                                @RequestParam(required = false) String startDate,
                                                @RequestParam(required = false) String endDate,
-                                               @RequestParam(defaultValue = "desc") String sort){
+                                               @RequestParam(defaultValue = "desc") String sort,
+                                               @RequestParam(defaultValue = "1") int page,
+                                               @RequestParam(defaultValue = "20") int size
+    ){
 
         Map<String, Object> filters = new HashMap<>();
         filters.put("type", type);
@@ -33,7 +36,7 @@ public class FinanceTransactionController {
         filters.put("startDate", startDate);
         filters.put("endDate", endDate);
         filters.put("sort", sort);
-        return financeTransactionService.selectAll(filters);
+        return financeTransactionService.selectAll(filters, page, size);
     }
 
     @GetMapping("/summary")

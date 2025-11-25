@@ -24,6 +24,8 @@ import java.util.Map;
 public class OperationController {
     private final OperationService operationService;
     private final OperationMapper operationMapper;
+
+
     @PostMapping("/reserve")
     public ResponseEntity<?> reserve(@RequestBody Operation operation) {
         try {
@@ -37,8 +39,11 @@ public class OperationController {
     }
 
     @GetMapping("/list")
-    public List<Operation> list() {
-        return operationService.selectOperationList();
+    public Map<String, Object> list(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        return operationService.selectOperationList(page, size);
     }
 
     @PutMapping("/{operationId}/status")

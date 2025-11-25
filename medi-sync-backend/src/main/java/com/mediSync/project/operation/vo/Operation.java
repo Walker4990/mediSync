@@ -32,7 +32,7 @@ public class Operation {
     private Long roomId; // 수술방
     private String diagnosis; // 진단명
     private LocalTime scheduledTime; // 수술 예정 시간
-
+    private int duration;
     private String patientName;
     private String doctorName;
     private String roomName;

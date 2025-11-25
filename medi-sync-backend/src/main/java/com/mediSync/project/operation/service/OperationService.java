@@ -22,6 +22,7 @@ import com.mediSync.project.room.mapper.AdmissionMapper;
 import com.mediSync.project.room.mapper.RoomMapper;
 import com.mediSync.project.room.vo.Admission;
 import com.mediSync.project.room.vo.Room;
+import com.mediSync.project.test.mapper.TestReservationMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
@@ -49,6 +50,7 @@ public class OperationService {
     private final AdmissionMapper admissionMapper;
     private final AdmissionHistoryMapper admissionHistoryMapper;
     private final SimpMessagingTemplate messagingTemplate;
+    private final TestReservationMapper testReservationMapper;
 
     public int calculateOperationCost(Operation op){
 
@@ -148,8 +150,17 @@ public class OperationService {
     }
 
 
-    public List<Operation> selectOperationList() {
-        return operationMapper.selectOperationList();
+    public Map<String, Object> selectOperationList(int page, int size) {
+        int offset = (page - 1) * size;
+        List<Operation> list = operationMapper.selectOperationList(offset, size);
+        int totalCount = testReservationMapper.countAll();
+
+        int totalPages = (int) Math.ceil((double) totalCount / size);
+
+        return Map.of(
+                "items", list,
+                "totalPages", totalPages
+        );
     }
 
     public Operation getOperationById(Long operationId) {

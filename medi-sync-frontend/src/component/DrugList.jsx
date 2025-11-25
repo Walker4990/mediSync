@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { addDrug, deleteDrug, getDrugs, updateDrug } from "../api/drugApi";
+import {addDrug, deleteDrug, getDrugs, getDrugsPaged, updateDrug} from "../api/drugApi";
 import DrugTable from "./DrugTable";
 import DrugModal from "./DrugModal";
 import AdminHeader from "./AdminHeader";
@@ -19,9 +19,12 @@ export default function DrugList() {
     // 데이터 로드
     const fetchData = async () => {
         try {
-            const res = await getDrugs(page, size);
-            setDrugs(res.data);
-            setFilteredDrugs(res.data);
+            const res = await getDrugsPaged(page, size);
+
+            setDrugs(res.data.items);
+            setFilteredDrugs(res.data.items);
+            setTotalPages(res.data.totalPages);
+
         } catch (error) {
             console.error("❌ 약품 목록 불러오기 실패:", error);
         }
@@ -120,6 +123,8 @@ export default function DrugList() {
                     )}
                 </section>
                 <div className="flex justify-center mt-6 gap-2">
+
+                    {/* 이전 버튼 */}
                     <button
                         disabled={page === 1}
                         onClick={() => setPage(page - 1)}
@@ -128,10 +133,27 @@ export default function DrugList() {
                         이전
                     </button>
 
-                    <span className="px-3 py-1 bg-blue-600 text-white rounded">
-                        {page} / {totalPages}
-                    </span>
+                    {/* 페이지 번호 버튼 */}
+                    {[...Array(totalPages)].map((_, i) => {
+                        const pageNum = i + 1;
+                        return (
+                            <button
+                                key={pageNum}
+                                onClick={() => setPage(pageNum)}
+                                className={`
+                    px-3 py-1 rounded 
+                    ${page === pageNum
+                                    ? "bg-blue-600 text-white"
+                                    : "bg-gray-200 hover:bg-gray-300"
+                                }
+                `}
+                            >
+                                {pageNum}
+                            </button>
+                        );
+                    })}
 
+                    {/* 다음 버튼 */}
                     <button
                         disabled={page === totalPages}
                         onClick={() => setPage(page + 1)}
@@ -139,8 +161,8 @@ export default function DrugList() {
                     >
                         다음
                     </button>
-                </div>
 
+                </div>
             </main>
 
             {/* 등록 / 수정 모달 */}

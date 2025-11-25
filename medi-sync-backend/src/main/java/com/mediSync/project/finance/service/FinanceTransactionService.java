@@ -25,8 +25,19 @@ public class FinanceTransactionService {
     private final PatientMapper patientMapper;
     private final FinanceTransactionMapper financeTransactionMapper;
 
-    public List<FinanceTransaction> selectAll(Map<String, Object> filters){
-        return financeTransactionMapper.selectAll(filters);
+    public Map<String, Object> selectAll(Map<String, Object> filters, int page, int size){
+
+        int offset =  (page - 1) * size;
+        List<FinanceTransaction> items = financeTransactionMapper.selectAll(filters, offset, size);
+
+        int totalCount = financeTransactionMapper.countAll(filters);
+        int totalPages = (int) Math.ceil((double)totalCount / size);
+
+        return Map.of(
+                "items", items,
+                "totalCount", totalCount,
+                "totalPages", totalPages
+        );
     }
     public Map<String, Object> getDashboardSummary(){
         Map<String, Object> result = new HashMap<>();

@@ -99,7 +99,6 @@ export default function AdminHeader() {
             title="고객관리"
             items={[
               { name: "환자정보", href: "/admin/patients" },
-              { name: "진료내역", href: "/admin/history" },
               { name: "입원관리", href: "/admin/admission" },
               { name: "실시간 상담", href: "/admin/chat" },
             ]}

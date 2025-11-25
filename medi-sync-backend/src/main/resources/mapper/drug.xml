@@ -101,4 +101,29 @@
         LIMIT 20
     </select>
 
+    <select id="selectPaged" resultType="drug">
+        SELECT
+        d.drug_code,
+        d.drug_name,
+        d.unit_price,
+        COALESCE(i.quantity, 0) AS quantity,
+        COALESCE(i.location, '-') AS location,
+        i.expiry_date AS expiration_date,
+        i.supplier AS supplier,
+        i.updated_at AS updated_at,
+        COALESCE(ins.insurer_code, '-') AS insurer_code,
+        COALESCE(ins.insurer_name, '-') AS insurer_name,
+        d.created_at
+        FROM drug d
+        LEFT JOIN inventory_item i
+        ON TRIM(d.drug_name) = TRIM(i.item_name)
+        LEFT JOIN insurer ins
+        ON d.insurance_code = ins.insurer_code
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="countAll" resultType="int">
+        SELECT COUNT(*) FROM drug
+    </select>
+
 </mapper>

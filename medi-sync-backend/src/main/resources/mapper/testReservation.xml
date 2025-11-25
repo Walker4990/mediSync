@@ -6,7 +6,7 @@
 <mapper namespace="com.mediSync.project.test.mapper.TestReservationMapper">
 
     <!-- 검사 예약 조회 -->
-    <select id="selectTestReservation" resultType="com.mediSync.project.test.vo.TestReservation">
+    <select id="selectPaged" resultType="com.mediSync.project.test.vo.TestReservation">
         SELECT
         r.reservation_id AS reservationId,
         r.schedule_id AS scheduleId,
@@ -21,6 +21,11 @@
         FROM test_reservation r
         LEFT JOIN patient p ON r.patient_id = p.patient_id
         LEFT JOIN test_schedule ts ON r.schedule_id = ts.schedule_id
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="countAll" resultType="int">
+        SELECT COUNT(*) FROM test_reservation
     </select>
 
     <select id="selectById" parameterType="long" resultType="testReservation">
@@ -51,7 +56,7 @@
     </delete>
 
     <!-- 검사별 조회 -->
-    <select id="selectByGroup" resultType="testReservation">
+    <select id="selectPagedByGroup" resultType="testReservation">
         SELECT
         r.reservation_id AS reservationId,
         ts.schedule_id AS scheduleId,
@@ -67,7 +72,17 @@
         JOIN patient p ON r.patient_id = p.patient_id
         WHERE UPPER(TRIM(f.test_group)) = UPPER(TRIM(#{group}))
         ORDER BY ts.test_date DESC, ts.test_time ASC
+        LIMIT #{size} OFFSET #{offset}
     </select>
+
+    <select id="countByGroup" resultType="int">
+        SELECT COUNT(*)
+        FROM test_reservation r
+        JOIN test_schedule ts ON r.schedule_id = ts.schedule_id
+        JOIN test_fee f ON ts.test_code = f.test_code
+        WHERE UPPER(TRIM(f.test_group)) = UPPER(TRIM(#{group}))
+    </select>
+
 
     <!-- 검사 관리 검색 기능 -->
     <select id="searchByGroupAndKeyword" resultType="testReservation">

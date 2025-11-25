@@ -14,18 +14,27 @@ export default function FinanceTransactionPage() {
         endDate: "",
         sort: "desc",
     });
-
+    const [size] = useState(20);
+    const [page, setPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
     useEffect(() => {
         fetchTransactions();
-    }, [filters]);
+    }, [page, size, filters]);
 
     const fetchTransactions = async () => {
         setLoading(true);
         try {
             const res = await axios.get("http://192.168.0.24:8080/api/finance/list", {
-                params: filters,
+                params: {page, size,
+                    type: filters.type,
+                    category: filters.category,
+                    status: filters.status,
+                    startDate: filters.startDate,
+                    endDate: filters.endDate,
+                    sort: filters.sort},
             });
-            setList(res.data);
+            setList(res.data.items || []);
+            setTotalPages(res.data.totalPages || 1);
         } catch (err) {
             toast.error("❌ 거래내역 조회 실패");
         } finally {
@@ -172,6 +181,43 @@ export default function FinanceTransactionPage() {
                         )}
                         </tbody>
                     </table>
+
+
+                </div>
+                {/* 페이징 */}
+                <div className="flex justify-center mt-6 gap-2">
+                    <button
+                        disabled={page === 1}
+                        onClick={() => setPage(page - 1)}
+                        className="px-3 py-1 bg-gray-200 rounded disabled:opacity-40"
+                    >
+                        이전
+                    </button>
+
+                    {[...Array(totalPages)].map((_, i) => {
+                        const pageNum = i + 1;
+                        return (
+                            <button
+                                key={pageNum}
+                                onClick={() => setPage(pageNum)}
+                                className={`px-3 py-1 rounded ${
+                                    page === pageNum
+                                        ? "bg-emerald-500 text-white"
+                                        : "bg-gray-200 hover:bg-gray-300"
+                                }`}
+                            >
+                                {pageNum}
+                            </button>
+                        );
+                    })}
+
+                    <button
+                        disabled={page === totalPages}
+                        onClick={() => setPage(page + 1)}
+                        className="px-3 py-1 bg-gray-200 rounded disabled:opacity-40"
+                    >
+                        다음
+                    </button>
                 </div>
             </div>
         </div>
