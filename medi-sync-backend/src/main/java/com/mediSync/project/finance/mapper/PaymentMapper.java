@@ -19,4 +19,5 @@ public interface PaymentMapper {
     Long findTotalUnpaidByPatientId(Long patientId);
 
     List<FinanceTransaction> findUnpaidListByPatientId(Long patientId);
+    void updatePaymentRefund(@Param("orderId") String orderId);
 }

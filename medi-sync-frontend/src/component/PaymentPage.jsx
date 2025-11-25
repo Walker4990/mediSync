@@ -3,6 +3,8 @@ import axios from "axios";
 import { jwtDecode } from "jwt-decode";
 import PaymentSuccess from "./PaymentSuccess";
 import PaymentFail from "./PaymentFail";
+import {Receipt} from "lucide-react";
+import RefundModal from "./RefundModal";
 
 export default function PaymentPage() {
     const [payments, setPayments] = React.useState([]);
@@ -14,7 +16,9 @@ export default function PaymentPage() {
 
     const [showSuccess, setShowSuccess] = React.useState(null);
     const [showFail, setShowFail] = React.useState(null);
-
+    const [refundModal, setRefundModal] = React.useState({
+        visible: false, orderId: null, amount: 0, reason: ""
+    });
     const fetchPayments = async () => {
         const res = await axios.get(
             `http://192.168.0.24:8080/api/payment/history/${patientId}`
@@ -27,6 +31,7 @@ export default function PaymentPage() {
     useEffect(() => {
         fetchPayments();
     }, [patientId]);
+
 
     const handlePay = async () => {
         try {
@@ -58,6 +63,30 @@ export default function PaymentPage() {
             setShowFail({ message: "결제 실행 중 오류" });
         }
     };
+
+    const submitRefund = async () => {
+        try{
+            await axios.post("http://192.168.0.24:8080/api/refund/request", {
+                orderId: refundModal.orderId,
+                amount: refundModal.amount,
+                reason: refundModal.reason,
+                patientId: patientId,
+            })
+            alert("환불 요청이 접수되었습니다.")
+
+            setRefundModal({
+                visible: false,
+                orderId: null,
+                amount: 0,
+                reason: ""
+            });
+
+            fetchPayments();
+        } catch (e) {
+            alert("오류 발생")
+            console.log(e)
+        }
+    }
 
     return (
         <div className="p-6">
@@ -100,41 +129,79 @@ export default function PaymentPage() {
 
             <h4 className="text-lg font-semibold mb-2">내 결제 내역</h4>
             <div className="bg-white rounded-lg shadow">
-                <table className="w-full text-left">
-                    <thead className="border-b">
+                <table className="w-full text-center border-collapse">
+                    <thead className="border-b bg-gray-50">
                     <tr>
-                        <th className="p-3">일시</th>
-                        <th className="p-3">금액</th>
-                        <th className="p-3">상태</th>
-                        <th className="p-3">영수증</th>
+                        <th className="p-3 font-semibold text-gray-700">번호</th>
+                        <th className="p-3 font-semibold text-gray-700">일시</th>
+                        <th className="p-3 font-semibold text-gray-700">금액</th>
+                        <th className="p-3 font-semibold text-gray-700">상태</th>
+                        <th className="p-3 font-semibold text-gray-700">기타</th>
                     </tr>
                     </thead>
                     <tbody>
-                    {payments.map((p) => (
-                        <tr key={p.txId} className="border-b">
-                            <td className="p-3">{p.createdAt}</td>
-                            <td className="p-3">
-                                {Math.floor(Number(p.amount)).toLocaleString("ko-KR")}원
-                            </td>
-                            <td className="p-3">{p.status}</td>
-                            <td className="p-3">
-                                {p.status === "COMPLETED" && (
-                                    <button
-                                        onClick={() =>
-                                            window.location.href =
-                                                `http://192.168.0.24:8080/api/receipt/payment/${p.orderId}`
-                                        }
-                                        className="px-3 py-1 bg-green-600 text-white rounded"
-                                    >
-                                        영수증
-                                    </button>
-                                )}
-                            </td>
-                        </tr>
-                    ))}
+                    {payments.map((p) => {
+
+                        return (
+                            <tr
+                                key={p.txId}
+                                className="border-b hover:bg-gray-50 transition-colors"
+                            >
+                                <td className="p-3 align-middle">{p.txId}</td>
+                                <td className="p-3 align-middle">{p.createdAt}</td>
+                                <td className="p-3 align-middle">
+                                    {Math.floor(Number(p.amount)).toLocaleString("ko-KR")}원
+                                </td>
+                                <td className="p-3 align-middle">{p.status}</td>
+                                <td className="p-3 align-middle">
+                                    <div className="flex items-center justify-center gap-3">
+
+                                        {/* 영수증 */}
+                                        {p.status === "COMPLETED" ? (
+                                            <Receipt
+                                                onClick={() =>
+                                                    (window.location.href =
+                                                        `http://192.168.0.24:8080/api/payment/receipt/${p.orderId}`)
+                                                }
+                                                className="cursor-pointer text-green-600 hover:text-green-700"
+                                                size={22}
+                                            />
+                                        ) : (
+                                            <span className="text-gray-400">-</span>
+                                        )}
+
+                                        {/* 🔥 환불 상태에 따라 UI 변경 */}
+                                        {p.status === "COMPLETED" && (
+                                            p.refundStatus === "PENDING" ? (
+                                                <span className="text-xs text-gray-500 font-semibold">
+                환불 신청 완료
+            </span>
+                                            ) : (
+                                                <button
+                                                    onClick={() =>
+                                                        setRefundModal({
+                                                            visible: true,
+                                                            orderId: p.orderId,
+                                                            amount: p.amount,
+                                                            reason: ""
+                                                        })
+                                                    }
+                                                    className="text-xs bg-red-500 text-white px-2 py-1 rounded"
+                                                >
+                                                    환불
+                                                </button>
+                                            )
+                                        )}
+
+                                    </div>
+                                </td>
+                            </tr>
+                        );
+                    })}
                     </tbody>
                 </table>
             </div>
+
 
             {showSuccess && (
                 <PaymentSuccess
@@ -149,6 +216,23 @@ export default function PaymentPage() {
                     onClose={() => setShowFail(null)}
                 />
             )}
+
+            <RefundModal
+                orderId={refundModal.orderId}
+                visible={refundModal.visible}
+                amount={refundModal.amount}
+                reason={refundModal.reason}
+                setReason={(val) => setRefundModal({ ...refundModal, reason: val })}
+                onCancel={() =>
+                    setRefundModal({
+                        visible: false,
+                        orderId: null,
+                        amount: 0,
+                        reason: ""
+                    })
+                }
+                onSubmit={submitRefund}
+            />
         </div>
     );
 }
