@@ -155,7 +155,7 @@ export default function AdminHeader() {
               { name: "의사정보", href: "/admin/doctor" },
               { name: "의료진정보", href: "/admin/staff" },
               { name: "일정확인", href: "/admin/schedule" },
-              { name: "대시보드", href: "/admin/dashboard/hr" },
+              { name: "대시보드 (관리자전용)", href: "/admin/dashboard/hr" },
             ]}
           />
           <Link to="/admin/insurance" className="hover:text-blue-200">
