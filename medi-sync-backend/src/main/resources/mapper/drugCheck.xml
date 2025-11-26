@@ -10,18 +10,18 @@
             d.drug_code AS drugCode,
             d.drug_name AS drugName,
             d.unit_price As unitPrice,
-            COALESCE(i.quantity, 0) AS totalQuantity,
-            COALESCE(i.location, '-') AS location,
-            i.expiry_date AS expirationDate,
-            i.supplier AS supplier,
-            i.item_id AS itemId,
-            i.min_stock AS minStock
+            COALESCE(d.quantity, 0) AS totalQuantity,
+            COALESCE(d.location, '-') AS location,
+            d.expiration_date AS expirationDate,
+            d.supplier AS supplier,
+            d.min_stock AS minStock,
+            dc.is_checked AS isChecked
         FROM drug d
-        LEFT JOIN inventory_item i
-        ON TRIM(d.drug_name) = TRIM(i.item_name)
+        LEFT join drug_check dc on d.drug_code = dc.drug_code
+
     </select>
     <select id="getTotalQuantityByDrugCode" parameterType="String" resultType="int">
-        SELECT total_quantity FROM drug WHERE drug_code = #{drugCode}
+        SELECT quantity FROM drug WHERE drug_code = #{drugCode}
     </select>
 
     <select id="getDrugCodeByDrugCheck" resultType="String">
@@ -42,5 +42,62 @@
         values(#{checkId},#{status},#{quantity},#{note})
     </insert>
 
+    <select id="getCheckedDrug" parameterType="long" resultType="drugcheckdto">
+        SELECT
+        dcd.detail_id,
+        dcd.check_id,
+        dcd.status,
+        dcd.quantity,
+        dcd.note,
+        dcd.is_checked,
+        d.drug_name,
+        d.expiration_date,
+        d.location
+        FROM drug_check_detail dcd
+        join drug_check dc on dcd.check_id = dc.check_id
+        join drug d on d.drug_code = dc.drug_code
+        WHERE dcd.check_id = #{checkId}
+        ORDER BY FIELD(dcd.status, 'PASS', 'WARNING', 'DISPOSE')
+    </select>
 
+    <select id="getAllCheckedDrug" resultType="drugcheckdto">
+        select
+        d.drug_name,
+        d.unit,
+        d.unit_price,
+        dc.check_id,
+        d.supplier,
+        d.quantity as totalQuantity,
+        d.location
+        from drug_check dc
+        join drug d on dc.drug_code = d.drug_code
+    </select>
+
+    <select id="getDetailInfoByDetailId" parameterType="long">
+        select * from drug_check_detail
+        where detail_id = #{detailId}
+    </select>
+
+    <update id="updateDetailCheck" parameterType="long">
+       update drug_check_detail
+        set is_checked = 'CHECK'
+        where detail_id = #{detailId}
+    </update>
+    <select id="getDrugCodeByDetailId" parameterType="long" resultType="String">
+        select dc.drug_code from drug_check dc
+        join drug_check_detail dcd on dc.check_id = dcd.check_id
+        where dcd.detail_id = #{detailId};
+    </select>
+
+
+    <update id="updateDrugDispose">
+        update drug
+        set quantity = quantity -  #{quantity}
+        where drug_code = #{drugCode}
+    </update>
+
+    <insert id="insertDrugLog" parameterType="druglog">
+    insert into drug_log(drug_code, type, quantity, before_stock,after_stock, memo)
+        values(#{drugCode},#{type},#{quantity},#{beforeStock},#{afterStock},#{memo})
+    </insert>
 </mapper>

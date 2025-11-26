@@ -15,25 +15,33 @@ import java.util.List;
 @Alias("drugcheckdto")
 public class DrugCheckDTO {
     //조회용
+    private long detailId;
     private long checkId;
     //check
     private LocalDate date;
 
     private String checkedBy;
-    private Boolean isChecked;
+    private String isChecked;
 
 
     //drug
     private String drugName;
+    private String unit;
     private BigDecimal unitPrice;
     private int totalQuantity;
     private LocalDate expirationDate;
     private String supplier; //제약사
     private Long itemId;//개수 상세 기록
-    
+
+
+    //검수 여부
+
     //inventoryItem
     private String location;
     private int minStock;
+    private String status;
+    private int quantity;
+    private String note;
 
     //등록용
     private String drugCode;
@@ -46,5 +54,6 @@ public class DrugCheckDTO {
         private int quantity;
         private String note;
     }
+
 
 }

@@ -2,7 +2,9 @@ package com.mediSync.project.drug.controller;
 
 import com.mediSync.project.drug.dto.DrugCheckDTO;
 import com.mediSync.project.drug.service.DrugCheckService;
+import com.mediSync.project.drug.vo.DrugCheckDetail;
 import lombok.RequiredArgsConstructor;
+import org.apache.ibatis.annotations.Param;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
@@ -34,4 +36,24 @@ public class DrugCheckController {
 
         return ResponseEntity.ok("등록 성공!");
     }
+    @GetMapping("/month")
+    public List<DrugCheckDTO>getAllCheckedDrug(){
+        return drugCheckService.getAllCheckedDrug();
+    }
+    @GetMapping("/month/detail/{checkId}")
+    public List<DrugCheckDTO>getCheckedDrugByCheckId(@PathVariable long checkId){
+        return drugCheckService.getCheckedDrug(checkId);
+    }
+
+    @PutMapping("/dispose/{detailId}/{quantity}")
+    public int updateDrugDispose(@PathVariable long detailId,@PathVariable int quantity){
+        drugCheckService.updateDrugDispose(detailId,quantity);
+        return 0;
+    }
+    @PutMapping("/check/{detailId}")
+    public int updateCheck(@PathVariable int detailId){
+    drugCheckService.updateCheck(detailId);
+        return 0;
+    }
+
 }

@@ -33,7 +33,7 @@ export default function DrugInspection() {
   };
 
   const filteredDrugInfo =
-    filter === "all" ? drugInfo : drugInfo.filter((d) => d.isChecked === false);
+    filter === "all" ? drugInfo : drugInfo.filter((d) => d.isChecked === null);
 
   //약품 정보 리스트로 가져오기(dto)
   const fetchDrugInsection = async () => {
