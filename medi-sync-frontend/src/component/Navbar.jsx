@@ -1,7 +1,8 @@
-import React, { useContext } from "react";
+import React, { useContext, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { LogOut, LogIn } from "lucide-react";
 import useModal from "./ModalContext";
+import axios from "axios";
 
 export default function Navbar() {
   const {
@@ -12,6 +13,40 @@ export default function Navbar() {
     setRedirectPath,
   } = useModal();
   const navigate = useNavigate();
+
+  // 전역 Axios 인터셉터 설정
+  useEffect(() => {
+    const interceptor = axios.interceptors.response.use(
+      (response) => response, // 정상 응답은 그대로 반환
+      (error) => {
+        // 401(인증 실패) 또는 403(권한 없음) 에러 감지
+        if (
+          error.response &&
+          (error.response.status === 401 || error.response.status === 403)
+        ) {
+          // 중복 알림 방지를 위해 로그인 상태일 때만 실행
+          if (localStorage.getItem("token")) {
+            alert("세션이 만료되었습니다. 다시 로그인해주세요.");
+
+            // 로컬 스토리지 토큰 삭제
+            localStorage.removeItem("token");
+            // 사용자 데이터가 있다면 삭제
+            localStorage.removeItem("user_data");
+            // Context 상태 업데이트 (로그아웃 처리)
+            if (handleLogout) handleLogout();
+            // 메인 페이지로 이동
+            navigate("/");
+          }
+        }
+        return Promise.reject(error); // 에러를 호출한 컴포넌트로 넘김
+      }
+    );
+
+    // 컴포넌트 언마운트 시 인터셉터 제거 (메모리 누수 방지)
+    return () => {
+      axios.interceptors.response.eject(interceptor);
+    };
+  }, [handleLogout, navigate]);
 
   const handleMenuClick = (e, path) => {
     if (!isLoggedIn) {
