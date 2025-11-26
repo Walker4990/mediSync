@@ -235,12 +235,14 @@ const UserInfoEdit = ({ currentUser, onUserUpdate }) => {
     if (currentUser && typeof currentUser === "object") {
       const patientData = currentUser.patient || {};
       const fullResidentNo = patientData.residentNo || "";
+      // 숫자만 추출 (DB에 하이픈이 있든 없든 13자리 숫자만 뽑아냄)
+      const cleanResidentNo = fullResidentNo.replace(/[^0-9]/g, "");
       let res1 = "";
       let res2 = "";
 
-      if (fullResidentNo.length === 13) {
-        res1 = fullResidentNo.substring(0, 6);
-        res2 = fullResidentNo.substring(6, 13);
+      if (cleanResidentNo.length === 13) {
+        res1 = cleanResidentNo.substring(0, 6);
+        res2 = cleanResidentNo.substring(6, 13);
       }
 
       const initialConsent =
@@ -297,15 +299,10 @@ const UserInfoEdit = ({ currentUser, onUserUpdate }) => {
   const handleChange = useCallback(
     (e) => {
       const { name, value } = e.target;
-
-      // 유효성 검사를 수행
       if (name === "residentNo1" || name === "residentNo2") {
-        const maxLength = name === "residentNo1" ? 6 : 7;
-
-        // 입력 값이 숫자 외 문자를 포함하거나 길이를 초과하면 상태 업데이트를 막습니다.
-        // if (value.length > maxLength || !/^\d*$/.test(value)) return;
+        // 숫자만 입력 가능하도록 정규식 처리
+        if (!/^\d*$/.test(value)) return;
       }
-      // 그 외 필드(비밀번호 포함)는 바로 상태 업데이트 실행
       setEditData((prev) => ({ ...prev, [name]: value }));
     },
     [setEditData]
@@ -359,7 +356,7 @@ const UserInfoEdit = ({ currentUser, onUserUpdate }) => {
       return;
     }
 
-    const fullResidentNo = residentNo1 + residentNo2; // 주민번호 합치기
+    const fullResidentNo = `${residentNo1}-${residentNo2}`;
     setIsUpdating(true);
 
     try {
@@ -543,8 +540,11 @@ const UserInfoEdit = ({ currentUser, onUserUpdate }) => {
   const handlePatientLinkToggle = async () => {
     if (isUpdating) return;
 
-    const fullResidentNo = editData.residentNo1 + editData.residentNo2;
-    if (fullResidentNo.length !== 13) {
+    const fullResidentNo = `${editData.residentNo1}-${editData.residentNo2}`;
+    if (
+      editData.residentNo1.length !== 6 ||
+      editData.residentNo2.length !== 7
+    ) {
       setModal({
         isOpen: true,
         title: "연동 오류",

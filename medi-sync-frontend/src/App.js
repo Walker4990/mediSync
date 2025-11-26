@@ -6,6 +6,7 @@ import AccountRegiForm from "./pages/admin/AccountRegiForm";
 import AdminMyPage from "./pages/admin/AdminMyPage";
 import OAuthRedirectHandler from "./component/OAuthRedirectHandler";
 import DashBoard from "./pages/admin/DashBoard";
+import HRDashBoard from "./pages/admin/HRDashBoard";
 import PatientList from "./pages/admin/PatientList";
 import StaffList from "./pages/admin/StaffList";
 import DoctorList from "./pages/admin/DoctorList";
@@ -77,10 +78,10 @@ function AppContent() {
           <Route path="/admin" element={<Home />} />
           <Route path="/admin/register" element={<AccountRegiForm />} />
           <Route path="/admin/mypage" element={<AdminMyPage />} />
-
           <Route path="/admin/patients" element={<PatientList />} />
           <Route path="/admin/staff" element={<StaffList />} />
           <Route path="/admin/doctor" element={<DoctorList />} />
+          <Route path="/admin/dashboard/hr" element={<HRDashBoard />} />
           <Route path="/admin/history" element={<MediHistory />} />
           <Route path="/admin/medicalRecord" element={<MedicalRecordPage />} />
           <Route path="/admin/drug" element={<DrugPage />} />
@@ -104,7 +105,7 @@ function AppContent() {
           <Route path="/admin/finance" element={<FinanceTransactionPage />} />
           <Route path="/admin/finance/dashboard" element={<DashBoard />} />
           <Route path="/admin/insurance" element={<InsurerPage />} />
-          <Route path="/admin/finance/refund" element={<AdminRefundPage /> } />
+          <Route path="/admin/finance/refund" element={<AdminRefundPage />} />
           {/*유저페이지*/}
           <Route element={<UserLayout />}>
             <Route path="/" element={<UserHome />} />/

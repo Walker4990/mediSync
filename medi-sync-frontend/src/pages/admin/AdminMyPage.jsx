@@ -12,7 +12,11 @@ import {
 } from "lucide-react";
 import AdminHeader from "../../component/AdminHeader";
 
-// 직책(Position) 옵션
+const API_URL = "http://localhost:8080/api/admins/mypage";
+const BASE_URL = "http://localhost:8080";
+const UPLOAD_API_URL = "http://localhost:8080/api/uploads/profile";
+const DEPT_API_URL = "http://localhost:8080/api/departments";
+
 const POSITION_OPTIONS = [
   { value: "NURSE", label: "간호사" },
   { value: "RADIOLOGIST", label: "방사선사" },
@@ -22,17 +26,33 @@ const POSITION_OPTIONS = [
   { value: "DOCTOR", label: "의사" },
 ];
 
-// 재직 상태(Status) 옵션
 const STATUS_OPTIONS = [
   { value: "ACTIVE", label: "재직 중" },
   { value: "LEAVE", label: "휴직" },
   { value: "RETIRED", label: "퇴사" },
 ];
 
-// 옵션 배열에서 value에 해당하는 label을 찾아주는 헬퍼 함수
 const getOptionLabel = (options, value) => {
   const option = options.find((opt) => String(opt.value) === String(value));
   return option ? option.label : value;
+};
+
+// 사이드바 메뉴 버튼
+const MenuButton = ({ icon: Icon, label, isActive, onClick }) => {
+  return (
+    <button
+      onClick={onClick}
+      className={`flex items-center w-full px-3 py-2 rounded-lg text-left transition-colors duration-200
+                ${
+                  isActive
+                    ? "bg-blue-500 text-white font-semibold shadow-md"
+                    : "text-gray-700 hover:bg-gray-100"
+                }`}
+    >
+      <Icon className="w-5 h-5 mr-3" />
+      <span className="text-sm">{label}</span>
+    </button>
+  );
 };
 
 // 비밀번호 변경 모달
@@ -41,12 +61,7 @@ const PasswordChangeModal = ({ isOpen, onClose, adminId }) => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const API_URL = "http://localhost:8080/api/admins";
-
-  const customAlert = (message) => {
-    console.log(message);
-  };
+  const ADMIN_API_URL = "http://localhost:8080/api/admins";
 
   const resetForm = () => {
     setNewPassword("");
@@ -83,12 +98,12 @@ const PasswordChangeModal = ({ isOpen, onClose, adminId }) => {
 
     setIsSubmitting(true);
     try {
-      const response = await axios.put(`${API_URL}/${adminId}/password`, {
+      const response = await axios.put(`${ADMIN_API_URL}/${adminId}/password`, {
         password: newPassword,
       });
 
       if (response.status === 200 || response.status === 204) {
-        customAlert("✅ 비밀번호가 성공적으로 변경되었습니다.");
+        alert("✅ 비밀번호가 성공적으로 변경되었습니다.");
         handleClose();
       } else {
         throw new Error(
@@ -170,172 +185,22 @@ const PasswordChangeModal = ({ isOpen, onClose, adminId }) => {
   );
 };
 
-// ---------------------------------------------------------------------
-
-const API_URL = "http://localhost:8080/api/admins/mypage";
-const BASE_URL = "http://localhost:8080";
-const UPLOAD_API_URL = "http://localhost:8080/api/uploads/profile";
-const DEPT_API_URL = "http://localhost:8080/api/departments";
-
-const AdminMyPage = () => {
-  const [admin, setAdmin] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState({});
-  const [viewMode, setViewMode] = useState("profile");
-
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [previewUrl, setPreviewUrl] = useState(null);
-  const [uploading, setUploading] = useState(false);
-  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
-
-  const [departmentOptions, setDepartmentOptions] = useState([]);
-  const [isDeptLoading, setIsDeptLoading] = useState(true);
-
-  const customAlert = (message) => {
-    console.log(message);
-  };
-
-  // 관리자 데이터 로딩
-  useEffect(() => {
-    const fetchAdminData = async () => {
-      setLoading(true);
-      const storedData = localStorage.getItem("admin_data");
-
-      let data = null;
-
-      if (storedData) {
-        data = JSON.parse(storedData);
-      } else {
-        try {
-          const response = await axios.get(API_URL);
-          data = response.data;
-          localStorage.setItem("admin_data", JSON.stringify(data));
-        } catch (error) {
-          console.error("데이터 로드 오류:", error);
-        }
-      }
-
-      setAdmin(data);
-      setFormData(data || {});
-      setLoading(false);
-    };
-
-    fetchAdminData();
-  }, []);
-
-  // 부서 데이터 로딩
-  useEffect(() => {
-    let mounted = true;
-    const loadDepartments = async () => {
-      try {
-        const res = await axios.get(DEPT_API_URL);
-        if (!mounted) return;
-        const opts = Array.isArray(res.data)
-          ? res.data.map((d) => ({
-              value: String(d.deptId),
-              label: String(d.deptName),
-              name: String(d.deptName), // 부서명을 name으로도 저장하여 표시할 수 있도록
-            }))
-          : [];
-        setDepartmentOptions([
-          { value: "", label: "부서 선택", disabled: true },
-          ...opts,
-        ]);
-      } catch (err) {
-        console.warn("부서 로드 실패:", err);
-        setDepartmentOptions([]);
-      } finally {
-        setIsDeptLoading(false);
-      }
-    };
-    loadDepartments();
-    return () => {
-      mounted = false;
-    };
-  }, []);
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  // 이미지 파일 선택
-  const handleFileChange = (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (previewUrl) URL.revokeObjectURL(previewUrl);
-
-    setSelectedFile(file);
-    setPreviewUrl(URL.createObjectURL(file));
-  };
-
-  // 프로필 이미지 업로드
-  const uploadProfileImage = async (file) => {
-    const form = new FormData();
-    form.append("file", file);
-    const res = await axios.post(UPLOAD_API_URL, form, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
-    return res.data.url;
-  };
-
-  // 이미지 및 정보 저장
-  const handleSave = async () => {
-    if (uploading) return;
-    setUploading(true);
-
-    try {
-      let finalFormData = { ...formData };
-
-      // 1. 선택된 파일이 있다면 업로드 먼저 수행
-      if (selectedFile) {
-        const uploadedUrl = await uploadProfileImage(selectedFile);
-        finalFormData.profileImgUrl = uploadedUrl; // 업로드된 URL로 교체
-      }
-
-      // 2. 부서명 처리
-      if (finalFormData.deptId) {
-        const dept = departmentOptions.find(
-          (d) => d.value === String(finalFormData.deptId)
-        );
-        if (dept) finalFormData.deptName = dept.label;
-      } else {
-        delete finalFormData.deptId;
-      }
-
-      // 3. 최종 정보 DB 업데이트
-      const res = await axios.put(API_URL, finalFormData);
-
-      setAdmin(res.data);
-      setFormData(res.data);
-      setIsEditing(false);
-
-      // 상태 초기화
-      setSelectedFile(null);
-      if (previewUrl) URL.revokeObjectURL(previewUrl);
-      setPreviewUrl(null);
-
-      alert("✅ 정보가 수정되었습니다.");
-    } catch (err) {
-      console.error("저장 실패:", err);
-      alert("저장 중 오류가 발생했습니다.");
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  const handleCancel = () => {
-    setFormData(admin || {});
-    setIsEditing(false);
-    // 취소 시 이미지 미리보기 초기화
-    setSelectedFile(null);
-    if (previewUrl) URL.revokeObjectURL(previewUrl);
-    setPreviewUrl(null);
-  };
-
-  // 입력 필드 렌더링
+const ProfileManagement = ({
+  isEditing,
+  formData,
+  handleChange,
+  handleSave,
+  handleCancel,
+  uploading,
+  previewUrl,
+  handleFileChange,
+  selectedFile,
+  setSelectedFile,
+  setPreviewUrl,
+  departmentOptions,
+  isDeptLoading,
+}) => {
+  // 입력 필드 렌더링 헬퍼 함수
   const renderInput = (field) => {
     const fieldName = field.name === "deptName" ? "deptId" : field.name;
     const value = formData[fieldName] ?? "";
@@ -372,13 +237,12 @@ const AdminMyPage = () => {
 
     // 부서명(deptName) 필드를 부서 ID(deptId)로 변환
     if (field.name === "deptName" && isEditing) {
-      // 부서 ID를 저장할 때는 문자열로 변환
       const selectValue = formData.deptId ? String(formData.deptId) : "";
 
       return (
         <div className="relative">
           <select
-            name="deptId" // formData에 deptId로 저장
+            name="deptId"
             value={selectValue}
             onChange={handleChange}
             className="p-2 w-full border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 appearance-none bg-white h-[42px] pr-8"
@@ -437,162 +301,145 @@ const AdminMyPage = () => {
     );
   };
 
-  const ProfileManagement = () => {
-    const adminFields = [
-      { label: "직원 ID", name: "adminId", readonly: true },
-      { label: "사번", name: "empId", readonly: true },
-      { label: "이름", name: "name", readonly: !isEditing },
-      { label: "휴대폰", name: "phone", readonly: !isEditing, type: "tel" },
-      { label: "이메일", name: "email", readonly: !isEditing, type: "email" },
-      { label: "면허번호", name: "licenseNo", readonly: true },
-    ];
+  const adminFields = [
+    { label: "직원 ID", name: "adminId", readonly: true },
+    { label: "사번", name: "empId", readonly: true },
+    { label: "이름", name: "name", readonly: !isEditing },
+    { label: "휴대폰", name: "phone", readonly: !isEditing, type: "tel" },
+    { label: "이메일", name: "email", readonly: !isEditing, type: "email" },
+    { label: "면허번호", name: "licenseNo", readonly: true },
+  ];
 
-    const optionFields = [
-      {
-        label: "직책",
-        name: "position",
-        readonly: !isEditing,
-        type: "select",
-        options: POSITION_OPTIONS,
-      },
-      { label: "부서명", name: "deptName", readonly: !isEditing },
-      {
-        label: "상태",
-        name: "status",
-        readonly: !isEditing,
-        type: "select",
-        options: STATUS_OPTIONS,
-      },
-      { label: "입사일", name: "hiredDate", readonly: true },
-      { label: "생성일", name: "createdAt", readonly: true },
-    ];
+  const optionFields = [
+    {
+      label: "직책",
+      name: "position",
+      readonly: !isEditing,
+      type: "select",
+      options: POSITION_OPTIONS,
+    },
+    { label: "부서명", name: "deptName", readonly: !isEditing },
+    {
+      label: "상태",
+      name: "status",
+      readonly: !isEditing,
+      type: "select",
+      options: STATUS_OPTIONS,
+    },
+    { label: "입사일", name: "hiredDate", readonly: true },
+    { label: "생성일", name: "createdAt", readonly: true },
+  ];
 
-    return (
-      <>
-        {/* 개인 정보 섹션 */}
-        <div className="bg-white p-8 shadow-lg rounded-xl border border-gray-100 mb-8">
-          <div className="flex justify-between items-center mb-6 border-b pb-3">
-            <h2 className="text-xl font-bold text-gray-800 flex items-center">
-              <span className="bg-blue-100 p-2 rounded-full mr-3 text-blue-600">
-                <User className="w-5 h-5" />
-              </span>
-              개인 정보 관리
-            </h2>
+  return (
+    <>
+      {/* 개인 정보 섹션 */}
+      <div className="bg-white p-8 shadow-lg rounded-xl border border-gray-100 mb-8">
+        <div className="flex justify-between items-center mb-6 border-b pb-3">
+          <h2 className="text-xl font-bold text-gray-800 flex items-center">
+            <span className="bg-blue-100 p-2 rounded-full mr-3 text-blue-600">
+              <User className="w-5 h-5" />
+            </span>
+            개인 정보 관리
+          </h2>
 
-            {/* 액션 버튼 그룹 */}
-            {isEditing ? (
-              <div className="flex space-x-3">
-                <button
-                  onClick={handleSave}
-                  disabled={uploading}
-                  className="px-5 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 shadow font-medium"
-                >
-                  {uploading ? "업로드 중..." : "저장"}
-                </button>
-                <button
-                  onClick={handleCancel}
-                  className="px-5 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 shadow font-medium"
-                >
-                  취소
-                </button>
-              </div>
-            ) : (
+          {/* 액션 버튼 그룹 */}
+          {isEditing ? (
+            <div className="flex space-x-3">
               <button
-                onClick={() => setIsEditing(true)}
-                className="px-5 py-2 text-white bg-blue-600 rounded hover:bg-blue-700 shadow font-medium"
+                onClick={handleSave}
+                disabled={uploading}
+                className="px-5 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 shadow font-medium"
               >
-                정보 수정
+                {uploading ? "업로드 중..." : "저장"}
               </button>
-            )}
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {/* 프로필 이미지 영역 */}
-            <div className="flex flex-col items-center md:col-span-1 space-y-4 md:justify-center">
-              <div className="relative w-40 h-40">
-                <img
-                  src={
-                    previewUrl
-                      ? previewUrl
-                      : formData.profileImgUrl
-                      ? `${BASE_URL}${formData.profileImgUrl}`
-                      : "/no_image.png"
-                  }
-                  className="w-40 h-40 rounded-full object-cover border-4 border-blue-100 shadow-md"
-                  alt="프로필 이미지"
-                  onError={(e) => (e.target.src = "/no_image.png")}
-                />
-
-                {isEditing && (
-                  <>
-                    {/* 파일 인풋 */}
-                    <input
-                      id="profile-file-input"
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={handleFileChange}
-                      onClick={(e) => {
-                        e.target.value = null;
-                      }}
-                    />
-
-                    {/* 카메라 아이콘 (업로드 버튼) */}
-                    <button
-                      type="button"
-                      onClick={() =>
-                        document.getElementById("profile-file-input").click()
-                      }
-                      className="absolute bottom-0 right-0 p-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors shadow-lg"
-                      title="프로필 이미지 변경"
-                    >
-                      <Camera className="w-5 h-5" />
-                    </button>
-
-                    {/* 이미지 취소 버튼 (새 이미지 선택했을 때만 표시) */}
-                    {selectedFile && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSelectedFile(null);
-                          if (previewUrl) URL.revokeObjectURL(previewUrl);
-                          setPreviewUrl(null);
-                        }}
-                        className="absolute top-2 right-2 p-1 bg-white/80 text-red-600 rounded-full shadow-lg hover:bg-white"
-                        title="새 이미지 취소"
-                      >
-                        <XCircle className="w-5 h-5" />
-                      </button>
-                    )}
-                  </>
-                )}
-              </div>
+              <button
+                onClick={handleCancel}
+                className="px-5 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 shadow font-medium"
+              >
+                취소
+              </button>
             </div>
-
-            {/* 주요 정보 필드 */}
-            <div className="md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-6">
-              {adminFields.map((field) => (
-                <div key={field.name} className="flex flex-col space-y-1">
-                  <label className="text-sm font-semibold text-gray-600">
-                    {field.label}
-                  </label>
-                  {renderInput(field)}
-                </div>
-              ))}
-            </div>
-          </div>
+          ) : (
+            <button
+              onClick={handleChange}
+              className="px-5 py-2 text-white bg-blue-600 rounded hover:bg-blue-700 shadow font-medium hidden"
+            >
+              정보 수정
+            </button>
+          )}
+          {!isEditing && (
+            <button
+              onClick={() => handleCancel()}
+              className="px-5 py-2 text-white bg-blue-600 rounded hover:bg-blue-700 shadow font-medium"
+            >
+              정보 수정
+            </button>
+          )}
         </div>
 
-        {/* 근무 정보 섹션 */}
-        <div className="bg-white p-8 shadow-lg rounded-xl border border-gray-100">
-          <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center border-b pb-3">
-            <span className="bg-green-100 p-2 rounded-full mr-3 text-green-600">
-              <Settings className="w-5 h-5" />
-            </span>
-            근무 및 시스템 옵션
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-            {optionFields.map((field) => (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {/* 프로필 이미지 영역 */}
+          <div className="flex flex-col items-center md:col-span-1 space-y-4 md:justify-center">
+            <div className="relative w-40 h-40">
+              <img
+                src={
+                  previewUrl
+                    ? previewUrl
+                    : formData.profileImgUrl
+                    ? `${BASE_URL}${formData.profileImgUrl}`
+                    : "/no_image.png"
+                }
+                className="w-40 h-40 rounded-full object-cover border-4 border-blue-100 shadow-md"
+                alt="프로필 이미지"
+                onError={(e) => (e.target.src = "/no_image.png")}
+              />
+
+              {isEditing && (
+                <>
+                  <input
+                    id="profile-file-input"
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleFileChange}
+                    onClick={(e) => {
+                      e.target.value = null;
+                    }}
+                  />
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      document.getElementById("profile-file-input").click()
+                    }
+                    className="absolute bottom-0 right-0 p-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors shadow-lg"
+                    title="프로필 이미지 변경"
+                  >
+                    <Camera className="w-5 h-5" />
+                  </button>
+
+                  {selectedFile && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedFile(null);
+                        if (previewUrl) URL.revokeObjectURL(previewUrl);
+                        setPreviewUrl(null);
+                      }}
+                      className="absolute top-2 right-2 p-1 bg-white/80 text-red-600 rounded-full shadow-lg hover:bg-white"
+                      title="새 이미지 취소"
+                    >
+                      <XCircle className="w-5 h-5" />
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* 주요 정보 필드 */}
+          <div className="md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-6">
+            {adminFields.map((field) => (
               <div key={field.name} className="flex flex-col space-y-1">
                 <label className="text-sm font-semibold text-gray-600">
                   {field.label}
@@ -602,41 +449,220 @@ const AdminMyPage = () => {
             ))}
           </div>
         </div>
-      </>
-    );
+      </div>
+
+      {/* 근무 정보 섹션 */}
+      <div className="bg-white p-8 shadow-lg rounded-xl border border-gray-100">
+        <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center border-b pb-3">
+          <span className="bg-green-100 p-2 rounded-full mr-3 text-green-600">
+            <Settings className="w-5 h-5" />
+          </span>
+          근무 및 시스템 옵션
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+          {optionFields.map((field) => (
+            <div key={field.name} className="flex flex-col space-y-1">
+              <label className="text-sm font-semibold text-gray-600">
+                {field.label}
+              </label>
+              {renderInput(field)}
+            </div>
+          ))}
+        </div>
+      </div>
+    </>
+  );
+};
+
+const MySchedule = () => (
+  <div className="bg-white p-8 shadow-lg rounded-xl border border-gray-100">
+    <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center border-b pb-3">
+      <span className="bg-yellow-100 p-2 rounded-full mr-3 text-yellow-600">
+        <Calendar className="w-5 h-5" />
+      </span>
+      나의 주간 일정 / 당직표
+    </h2>
+    <div className="text-gray-600 h-96 flex items-center justify-center bg-gray-50 rounded-lg border border-dashed">
+      <p className="text-lg italic">
+        나의 주간/월간 스케줄 데이터가 여기에 표시됩니다.
+      </p>
+    </div>
+  </div>
+);
+
+const MyStatistics = () => (
+  <div className="bg-white p-8 shadow-lg rounded-xl border border-gray-100">
+    <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center border-b pb-3">
+      <span className="bg-red-100 p-2 rounded-full mr-3 text-red-600">
+        <BarChart className="w-5 h-5" />
+      </span>
+      나의 진료 통계
+    </h2>
+    <div className="text-gray-600 h-96 flex items-center justify-center bg-gray-50 rounded-lg border border-dashed">
+      <p className="text-lg italic">
+        월별 환자 수, 진료 시간, 수술 건수 등 개인 통계 차트가 표시됩니다.
+      </p>
+    </div>
+  </div>
+);
+
+// ---------------------------------------------------------------------
+// 메인 컴포넌트
+// ---------------------------------------------------------------------
+
+const AdminMyPage = () => {
+  const [admin, setAdmin] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [isEditing, setIsEditing] = useState(false);
+  const [formData, setFormData] = useState({});
+  const [viewMode, setViewMode] = useState("profile");
+
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+
+  const [departmentOptions, setDepartmentOptions] = useState([]);
+  const [isDeptLoading, setIsDeptLoading] = useState(true);
+
+  // 관리자 데이터 로딩
+  useEffect(() => {
+    const fetchAdminData = async () => {
+      setLoading(true);
+      const storedData = localStorage.getItem("admin_data");
+
+      let data = null;
+
+      if (storedData) {
+        data = JSON.parse(storedData);
+      } else {
+        try {
+          const response = await axios.get(API_URL);
+          data = response.data;
+          localStorage.setItem("admin_data", JSON.stringify(data));
+        } catch (error) {
+          console.error("데이터 로드 오류:", error);
+        }
+      }
+
+      setAdmin(data);
+      setFormData(data || {});
+      setLoading(false);
+    };
+
+    fetchAdminData();
+  }, []);
+
+  // 부서 데이터 로딩
+  useEffect(() => {
+    let mounted = true;
+    const loadDepartments = async () => {
+      try {
+        const res = await axios.get(DEPT_API_URL);
+        if (!mounted) return;
+        const opts = Array.isArray(res.data)
+          ? res.data.map((d) => ({
+              value: String(d.deptId),
+              label: String(d.deptName),
+              name: String(d.deptName),
+            }))
+          : [];
+        setDepartmentOptions([
+          { value: "", label: "부서 선택", disabled: true },
+          ...opts,
+        ]);
+      } catch (err) {
+        console.warn("부서 로드 실패:", err);
+        setDepartmentOptions([]);
+      } finally {
+        setIsDeptLoading(false);
+      }
+    };
+    loadDepartments();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const MySchedule = () => (
-    <div className="bg-white p-8 shadow-lg rounded-xl border border-gray-100">
-      <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center border-b pb-3">
-        <span className="bg-yellow-100 p-2 rounded-full mr-3 text-yellow-600">
-          <Calendar className="w-5 h-5" />
-        </span>
-        나의 주간 일정 / 당직표
-      </h2>
-      <div className="text-gray-600 h-96 flex items-center justify-center bg-gray-50 rounded-lg border border-dashed">
-        <p className="text-lg italic">
-          나의 주간/월간 스케줄 데이터가 여기에 표시됩니다.
-        </p>
-      </div>
-    </div>
-  );
+  // 이미지 파일 선택
+  const handleFileChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-  const MyStatistics = () => (
-    <div className="bg-white p-8 shadow-lg rounded-xl border border-gray-100">
-      <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center border-b pb-3">
-        <span className="bg-red-100 p-2 rounded-full mr-3 text-red-600">
-          <BarChart className="w-5 h-5" />
-        </span>
-        나의 진료 통계
-      </h2>
-      <div className="text-gray-600 h-96 flex items-center justify-center bg-gray-50 rounded-lg border border-dashed">
-        <p className="text-lg italic">
-          월별 환자 수, 진료 시간, 수술 건수 등 개인 통계 차트가 표시됩니다.
-        </p>
-      </div>
-    </div>
-  );
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+
+    setSelectedFile(file);
+    setPreviewUrl(URL.createObjectURL(file));
+  };
+
+  // 프로필 이미지 업로드
+  const uploadProfileImage = async (file) => {
+    const form = new FormData();
+    form.append("file", file);
+    const res = await axios.post(UPLOAD_API_URL, form, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return res.data.url;
+  };
+
+  // 이미지 및 정보 저장
+  const handleSave = async () => {
+    if (uploading) return;
+    setUploading(true);
+
+    try {
+      let finalFormData = { ...formData };
+
+      // 1. 선택된 파일이 있다면 업로드 먼저 수행
+      if (selectedFile) {
+        const uploadedUrl = await uploadProfileImage(selectedFile);
+        finalFormData.profileImgUrl = uploadedUrl;
+      }
+
+      // 2. 부서명 처리
+      if (finalFormData.deptId) {
+        const dept = departmentOptions.find(
+          (d) => d.value === String(finalFormData.deptId)
+        );
+        if (dept) finalFormData.deptName = dept.label;
+      } else {
+        delete finalFormData.deptId;
+      }
+
+      // 3. 최종 정보 DB 업데이트
+      const res = await axios.put(API_URL, finalFormData);
+
+      setAdmin(res.data);
+      setFormData(res.data);
+      setIsEditing(false);
+
+      // 상태 초기화
+      setSelectedFile(null);
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+      setPreviewUrl(null);
+
+      alert("✅ 정보가 수정되었습니다.");
+    } catch (err) {
+      console.error("저장 실패:", err);
+      alert("저장 중 오류가 발생했습니다.");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleCancel = () => {
+    setFormData(admin || {});
+    setIsEditing(false);
+    // 취소 시 이미지 미리보기 초기화
+    setSelectedFile(null);
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setPreviewUrl(null);
+  };
 
   if (loading) return <div className="pt-24 text-center">로딩 중...</div>;
   if (!admin) return <div className="pt-24 text-center">정보 없음</div>;
@@ -694,14 +720,68 @@ const AdminMyPage = () => {
 
           {/* 컨텐츠 영역 */}
           <section className="w-full md:w-3/4">
-            {viewMode === "profile" && <ProfileManagement />}
+            {viewMode === "profile" && (
+              <div className="relative">
+                <div className="bg-white p-8 shadow-lg rounded-xl border border-gray-100 mb-8">
+                  <div className="flex justify-between items-center mb-6 border-b pb-3">
+                    <h2 className="text-xl font-bold text-gray-800 flex items-center">
+                      <span className="bg-blue-100 p-2 rounded-full mr-3 text-blue-600">
+                        <User className="w-5 h-5" />
+                      </span>
+                      개인 정보 관리
+                    </h2>
+                    {isEditing ? (
+                      <div className="flex space-x-3">
+                        <button
+                          onClick={handleSave}
+                          disabled={uploading}
+                          className="px-5 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 shadow font-medium"
+                        >
+                          {uploading ? "업로드 중..." : "저장"}
+                        </button>
+                        <button
+                          onClick={handleCancel}
+                          className="px-5 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 shadow font-medium"
+                        >
+                          취소
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => setIsEditing(true)}
+                        className="px-5 py-2 text-white bg-blue-600 rounded hover:bg-blue-700 shadow font-medium"
+                      >
+                        정보 수정
+                      </button>
+                    )}
+                  </div>
+                  <ProfileManagementContent
+                    isEditing={isEditing}
+                    formData={formData}
+                    handleChange={handleChange}
+                    handleFileChange={handleFileChange}
+                    selectedFile={selectedFile}
+                    setSelectedFile={setSelectedFile}
+                    previewUrl={previewUrl}
+                    setPreviewUrl={setPreviewUrl}
+                    departmentOptions={departmentOptions}
+                    isDeptLoading={isDeptLoading}
+                  />
+                </div>
+                {/* 근무 정보 섹션도 ProfileManagementContent 내부에 있거나 분리 필요.
+                    위의 ProfileManagement가 두 섹션(개인정보, 근무정보)을 모두 포함하므로,
+                    ProfileManagement 전체를 렌더링하되, "헤더/버튼" 제어권만 상위로 가져오는게 베스트.
+                    아래에 새로 정의한 ProfileManagementContent를 사용합니다.
+                */}
+              </div>
+            )}
             {viewMode === "schedule" && <MySchedule />}
             {viewMode === "stats" && <MyStatistics />}
           </section>
         </div>
       </main>
 
-      {/* 비밀번호 변경 모달 렌더링 */}
+      {/* 비밀번호 변경 모달 */}
       {admin && (
         <PasswordChangeModal
           isOpen={isPasswordModalOpen}
@@ -713,22 +793,232 @@ const AdminMyPage = () => {
   );
 };
 
-export default AdminMyPage;
+const ProfileManagementContent = ({
+  isEditing,
+  formData,
+  handleChange,
+  handleFileChange,
+  selectedFile,
+  setSelectedFile,
+  previewUrl,
+  setPreviewUrl,
+  departmentOptions,
+  isDeptLoading,
+}) => {
+  // 입력 렌더링 함수 (재사용)
+  const renderInput = (field) => {
+    const fieldName = field.name === "deptName" ? "deptId" : field.name;
+    const value = formData[fieldName] ?? "";
 
-// 사이드바 메뉴 버튼
-const MenuButton = ({ icon: Icon, label, isActive, onClick }) => {
+    if (field.readonly || !isEditing) {
+      let displayVal = value;
+      if (field.name === "position")
+        displayVal = getOptionLabel(POSITION_OPTIONS, value);
+      if (field.name === "status")
+        displayVal = getOptionLabel(STATUS_OPTIONS, value);
+      if (field.name === "hiredDate" && value)
+        displayVal = new Date(value).toLocaleDateString();
+      if (field.name === "createdAt" && value)
+        displayVal = new Date(value).toLocaleString();
+
+      if (field.name === "deptName") {
+        const idValue = formData.deptId
+          ? String(formData.deptId)
+          : formData.deptName
+          ? null
+          : value;
+        const dept = departmentOptions.find((opt) => opt.value === idValue);
+        displayVal = dept ? dept.label : formData.deptName || "-";
+      }
+
+      return (
+        <span className="p-2 w-full bg-gray-100 border border-gray-200 rounded-md text-gray-700 block min-h-[42px] flex items-center">
+          {displayVal || "-"}
+        </span>
+      );
+    }
+
+    if (field.name === "deptName" && isEditing) {
+      const selectValue = formData.deptId ? String(formData.deptId) : "";
+      return (
+        <div className="relative">
+          <select
+            name="deptId"
+            value={selectValue}
+            onChange={handleChange}
+            className="p-2 w-full border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 appearance-none bg-white h-[42px] pr-8"
+            disabled={isDeptLoading}
+          >
+            <option value="" disabled>
+              {isDeptLoading ? "로딩 중..." : "부서 선택"}
+            </option>
+            {departmentOptions
+              .filter((opt) => opt.value !== "")
+              .map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+          </select>
+          <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+        </div>
+      );
+    }
+
+    if (field.type === "select") {
+      return (
+        <div className="relative">
+          <select
+            name={field.name}
+            value={value}
+            onChange={handleChange}
+            className="p-2 w-full border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 appearance-none bg-white h-[42px] pr-8"
+          >
+            <option value="" disabled>
+              선택
+            </option>
+            {field.options.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+          <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+        </div>
+      );
+    }
+
+    return (
+      <input
+        type={field.type || "text"}
+        name={field.name}
+        value={value}
+        onChange={handleChange}
+        className="p-2 w-full border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[42px]"
+        readOnly={field.readonly}
+      />
+    );
+  };
+
+  const adminFields = [
+    { label: "직원 ID", name: "adminId", readonly: true },
+    { label: "사번", name: "empId", readonly: true },
+    { label: "이름", name: "name", readonly: !isEditing },
+    { label: "휴대폰", name: "phone", readonly: !isEditing, type: "tel" },
+    { label: "이메일", name: "email", readonly: !isEditing, type: "email" },
+    { label: "면허번호", name: "licenseNo", readonly: true },
+  ];
+
+  const optionFields = [
+    {
+      label: "직책",
+      name: "position",
+      readonly: !isEditing,
+      type: "select",
+      options: POSITION_OPTIONS,
+    },
+    { label: "부서명", name: "deptName", readonly: !isEditing },
+    {
+      label: "상태",
+      name: "status",
+      readonly: !isEditing,
+      type: "select",
+      options: STATUS_OPTIONS,
+    },
+    { label: "입사일", name: "hiredDate", readonly: true },
+    { label: "생성일", name: "createdAt", readonly: true },
+  ];
+
   return (
-    <button
-      onClick={onClick}
-      className={`flex items-center w-full px-3 py-2 rounded-lg text-left transition-colors duration-200
-                ${
-                  isActive
-                    ? "bg-blue-500 text-white font-semibold shadow-md"
-                    : "text-gray-700 hover:bg-gray-100"
-                }`}
-    >
-      <Icon className="w-5 h-5 mr-3" />
-      <span className="text-sm">{label}</span>
-    </button>
+    <>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="flex flex-col items-center md:col-span-1 space-y-4 md:justify-center">
+          <div className="relative w-40 h-40">
+            <img
+              src={
+                previewUrl
+                  ? previewUrl
+                  : formData.profileImgUrl
+                  ? `${BASE_URL}${formData.profileImgUrl}`
+                  : "/no_image.png"
+              }
+              className="w-40 h-40 rounded-full object-cover border-4 border-blue-100 shadow-md"
+              alt="프로필 이미지"
+              onError={(e) => (e.target.src = "/no_image.png")}
+            />
+            {isEditing && (
+              <>
+                <input
+                  id="profile-file-input"
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleFileChange}
+                  onClick={(e) => {
+                    e.target.value = null;
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() =>
+                    document.getElementById("profile-file-input").click()
+                  }
+                  className="absolute bottom-0 right-0 p-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors shadow-lg"
+                  title="프로필 이미지 변경"
+                >
+                  <Camera className="w-5 h-5" />
+                </button>
+                {selectedFile && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedFile(null);
+                      if (previewUrl) URL.revokeObjectURL(previewUrl);
+                      setPreviewUrl(null);
+                    }}
+                    className="absolute top-2 right-2 p-1 bg-white/80 text-red-600 rounded-full shadow-lg hover:bg-white"
+                    title="새 이미지 취소"
+                  >
+                    <XCircle className="w-5 h-5" />
+                  </button>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+
+        <div className="md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-6">
+          {adminFields.map((field) => (
+            <div key={field.name} className="flex flex-col space-y-1">
+              <label className="text-sm font-semibold text-gray-600">
+                {field.label}
+              </label>
+              {renderInput(field)}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="mt-8 bg-white p-8 shadow-lg rounded-xl border border-gray-100">
+        <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center border-b pb-3">
+          <span className="bg-green-100 p-2 rounded-full mr-3 text-green-600">
+            <Settings className="w-5 h-5" />
+          </span>
+          근무 및 시스템 옵션
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+          {optionFields.map((field) => (
+            <div key={field.name} className="flex flex-col space-y-1">
+              <label className="text-sm font-semibold text-gray-600">
+                {field.label}
+              </label>
+              {renderInput(field)}
+            </div>
+          ))}
+        </div>
+      </div>
+    </>
   );
 };
+
+export default AdminMyPage;

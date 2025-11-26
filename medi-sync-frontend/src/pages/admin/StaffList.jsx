@@ -1,14 +1,13 @@
 import React, { useEffect, useState, useMemo } from "react";
 import axios from "axios";
 import { format } from "date-fns";
-import { FaEdit, FaTrashAlt, FaSearch } from "react-icons/fa";
+import { Search, Edit, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
 import AdminHeader from "../../component/AdminHeader";
-import ConfirmModal from "../../component/ConfirmModal";
-import AdminDetail from "../../component/AdminDetail";
+import AdminDetailModal from "../../component/AdminDetailModal";
 
 // API 기본 URL
 const API_BASE_URL = "http://localhost:8080/api/admins/staffs";
-const DEPT_API_URL = "http://192.168.0.24:8080/api/departments";
+const DEPT_API_URL = "http://localhost:8080/api/departments";
 
 // 직무(Position) 옵션
 const POSITION_OPTIONS = [
@@ -26,19 +25,6 @@ const STATUS_OPTIONS = [
   { value: "RETIRED", label: "퇴사" },
 ];
 
-// 날짜 포맷 함수
-const formatDateTime = (dateString) => {
-  if (!dateString) return "-";
-  try {
-    const isoDateString = dateString.includes("T")
-      ? dateString
-      : dateString.replace(" ", "T");
-    return format(new Date(isoDateString), "yyyy-MM-dd HH:mm");
-  } catch (error) {
-    return dateString;
-  }
-};
-
 // 입사일 포맷 함수 (날짜만)
 const formatDateOnly = (dateString) => {
   if (!dateString) return "-";
@@ -55,8 +41,7 @@ const getPositionLabel = (value) =>
 const getStatusLabel = (value) =>
   STATUS_OPTIONS.find((opt) => opt.value === value)?.label || value;
 
-// --- StaffForm 컴포넌트 (등록/수정 모달 내용) ---
-
+// 등록/수정 모달
 const StaffForm = ({ staffData, onClose }) => {
   const isEditing = !!staffData;
   const today = format(new Date(), "yyyy-MM-dd");
@@ -101,7 +86,6 @@ const StaffForm = ({ staffData, onClose }) => {
       delete dataToSend.deptName;
 
       if (isEditing) {
-        // 수정 시에는 staffId가 포함된 formData 그대로 전송
         res = await axios.put(
           `${API_BASE_URL}/${dataToSend.adminId}`,
           dataToSend
@@ -115,7 +99,6 @@ const StaffForm = ({ staffData, onClose }) => {
         console.log("등록 성공:", res.data);
       }
 
-      // alert() 대신 커스텀 모달이나 토스트 알림 사용 권장
       alert(
         res.data.message ||
           `${formData.name} 의료진 정보가 ${
@@ -161,13 +144,15 @@ const StaffForm = ({ staffData, onClose }) => {
         {isEditing && (
           <div className="bg-indigo-50 p-3 rounded-md text-sm border border-indigo-200">
             <label className="block text-indigo-600 font-semibold">
-              고유 ID
+              ID / 사번
             </label>
-            <p className="font-bold text-gray-800">{staffData.adminId}</p>
+            <p className="font-bold text-gray-800">
+              {staffData.adminId} / {staffData.empId}
+            </p>
           </div>
         )}
 
-        {/* 1. 이름 */}
+        {/* 이름 */}
         <div>
           <label
             htmlFor="name"
@@ -186,7 +171,7 @@ const StaffForm = ({ staffData, onClose }) => {
           />
         </div>
 
-        {/* 2. 직무 유형 (Position) */}
+        {/* 직무 유형 (Position) */}
         <div>
           <label
             htmlFor="position"
@@ -210,7 +195,7 @@ const StaffForm = ({ staffData, onClose }) => {
           </select>
         </div>
 
-        {/* 3. 진료과명 / 소속 */}
+        {/* 진료과명 / 소속 */}
         <div>
           <label
             htmlFor="deptId"
@@ -224,9 +209,11 @@ const StaffForm = ({ staffData, onClose }) => {
             value={formData.deptId}
             onChange={handleChange}
             required
-            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-blue-500 focus:border-blue-500 appearance-none"
+            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-indigo-500 focus:border-indigo-500 appearance-none"
           >
-            <option value="">진료과를 선택하세요</option>
+            <option value="" disabled>
+              진료과를 선택하세요
+            </option>
             {deptList.map((dept) => (
               <option key={dept.deptId} value={dept.deptId}>
                 {dept.deptName}
@@ -235,7 +222,7 @@ const StaffForm = ({ staffData, onClose }) => {
           </select>
         </div>
 
-        {/* 4. 면허번호 (등록 시에만 입력 가능) */}
+        {/* 면허번호 (등록 시에만 입력 가능) */}
         <div className={isEditing ? "opacity-50" : ""}>
           <label
             htmlFor="licenseNo"
@@ -255,7 +242,7 @@ const StaffForm = ({ staffData, onClose }) => {
           />
         </div>
 
-        {/* 5. 연락처 */}
+        {/* 연락처 */}
         <div>
           <label
             htmlFor="phone"
@@ -273,7 +260,7 @@ const StaffForm = ({ staffData, onClose }) => {
           />
         </div>
 
-        {/* 6. 재직 상태 (Status) */}
+        {/* 재직 상태 (Status) */}
         <div>
           <label
             htmlFor="status"
@@ -295,24 +282,6 @@ const StaffForm = ({ staffData, onClose }) => {
             ))}
           </select>
         </div>
-
-        {/* 7. 입사일 (Hired Date)
-        <div>
-          <label
-            htmlFor="hiredDate"
-            className="block text-sm font-medium text-gray-700"
-          >
-            입사일
-          </label>
-          <input
-            type="date"
-            id="hiredDate"
-            name="hiredDate"
-            value={formData.hiredDate}
-            onChange={handleChange}
-            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
-          />
-        </div> */}
 
         {error && <p className="text-red-500 text-sm mt-4">{error}</p>}
 
@@ -340,8 +309,7 @@ const StaffForm = ({ staffData, onClose }) => {
   );
 };
 
-// --- MedicalStaffList 메인 컴포넌트 ---
-
+// 메인 컴포넌트
 export default function MedicalStaffList() {
   const [staffList, setStaffList] = useState([]);
   const [search, setSearch] = useState("");
@@ -349,11 +317,21 @@ export default function MedicalStaffList() {
   const [viewMode, setViewMode] = useState("list");
   const [editingStaff, setEditingStaff] = useState(null);
   const [deletingStaff, setDeletingStaff] = useState(null);
+  const [selectedStaffId, setSelectedStaffId] = useState(null);
+
+  // 페이징 상태
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   // 초기 데이터 불러오기
   useEffect(() => {
     fetchStaff();
   }, []);
+
+  // 검색어 변경 시 페이지 리셋
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search]);
 
   // API 호출: 의료진 목록 조회 (GET)
   const fetchStaff = async () => {
@@ -363,7 +341,7 @@ export default function MedicalStaffList() {
       setStaffList(res.data);
     } catch (err) {
       console.error("의료진 조회 실패:", err);
-      // API 연결 오류 시 모의 데이터 로드
+      // API 연결 오류 시 모의 데이터 로드 등 처리
       if (
         axios.isAxiosError(err) &&
         (!err.response || err.response.status === 500)
@@ -373,7 +351,7 @@ export default function MedicalStaffList() {
         );
         setApiError(true);
       } else {
-        setApiError(true); // 기타 오류 시에도 오류 상태 표시
+        setApiError(true);
       }
     }
   };
@@ -407,7 +385,6 @@ export default function MedicalStaffList() {
         );
         fetchStaff();
       } else {
-        // 모의 데이터 삭제 (프론트엔드에서만 처리)
         setStaffList((prevStaffList) =>
           prevStaffList.filter((d) => d.staffId !== deletingStaff.staffId)
         );
@@ -436,25 +413,22 @@ export default function MedicalStaffList() {
     );
   }, [staffList, search]);
 
-  // 뷰 모드에 따라 렌더링할 내용 상이 (모달 처리)
+  // 페이징 계산
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = filteredStaff.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredStaff.length / itemsPerPage);
+
+  // 페이지 변경 핸들러
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+  };
+
+  // 뷰 모드에 따라 렌더링할 내용 상이 (등록/수정 모달)
   if (viewMode === "add" || viewMode === "edit") {
     return (
       <div className="fixed inset-0 bg-gray-900 bg-opacity-70 flex items-center justify-center p-4 z-50">
         <StaffForm staffData={editingStaff} onClose={handleCloseForm} />
-      </div>
-    );
-  }
-
-  if (viewMode === "detail" && editingStaff) {
-    return (
-      <div className="min-h-screen bg-gray-50 font-pretendard pt-24">
-        <AdminHeader />
-        <main className="max-w-7xl mx-auto px-8">
-          <AdminDetail
-            adminId={editingStaff.adminId}
-            onBackToList={() => setViewMode("list")}
-          />
-        </main>
       </div>
     );
   }
@@ -466,7 +440,7 @@ export default function MedicalStaffList() {
       <AdminHeader />
 
       {/* 컨텐츠 영역 */}
-      <main className="max-w-7xl mx-auto pt-24 px-8">
+      <main className="max-w-7xl mx-auto pt-24 px-8 mb-12">
         <h1 className="text-3xl font-bold text-blue-600 mb-8">
           의료진 정보 목록
           <span className="font-normal text-xl ml-2">
@@ -488,35 +462,17 @@ export default function MedicalStaffList() {
           </div>
         )}
 
-        {/* 검색창 + 버튼 그룹 */}
-        <div className="mb-6 flex flex-col md:flex-row justify-between items-start md:items-center space-y-3 md:space-y-0">
-          <div className="relative w-1/3">
+        {/* 검색창 */}
+        <div className="mb-6 flex flex-wrap justify-between items-center gap-4">
+          <div className="relative w-full sm:w-1/3 min-w-[250px] flex-grow">
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="이름, 직무, 진료과, 연락처 검색"
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-[400px] pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow"
             />
-            <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-          </div>
-          <div className="space-x-3 flex">
-            <button
-              onClick={() => {
-                setViewMode("add");
-                setEditingStaff(null);
-              }}
-              disabled
-              className="px-4 py-2 bg-gray-300 text-white rounded-lg hover:bg-gray-400 transition-colors shadow-md transform hover:scale-[1.02]"
-            >
-              신규 등록
-            </button>
-            <button
-              onClick={fetchStaff}
-              className="px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-colors shadow-md transform hover:scale-[1.02]"
-            >
-              ♻
-            </button>
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
           </div>
         </div>
 
@@ -538,7 +494,7 @@ export default function MedicalStaffList() {
             </thead>
 
             <tbody>
-              {filteredStaff.map((s) => (
+              {currentItems.map((s) => (
                 <tr
                   key={s.staffId}
                   className="border-b border-gray-100 hover:bg-indigo-50/50 text-gray-700 transition-colors"
@@ -547,8 +503,7 @@ export default function MedicalStaffList() {
                   <td
                     className="py-2 px-4 text-blue-600 cursor-pointer hover:font-bold"
                     onClick={() => {
-                      setEditingStaff(s);
-                      setViewMode("detail");
+                      setSelectedStaffId(s.adminId);
                     }}
                   >
                     {s.name}
@@ -593,13 +548,13 @@ export default function MedicalStaffList() {
                       }}
                       className="text-blue-600 hover:text-blue-800 p-1 rounded-md transition duration-150 ease-in-out"
                     >
-                      <FaEdit className="w-5 h-5" />{" "}
+                      <Edit className="w-5 h-5" />{" "}
                     </button>
                     <button
                       onClick={() => confirmDelete(s)}
                       className="text-red-600 hover:text-red-800 text-xs font-bold transition-colors"
                     >
-                      <FaTrashAlt className="w-5 h-5" />{" "}
+                      <Trash2 className="w-5 h-5" />{" "}
                     </button>
                   </td>
                 </tr>
@@ -618,18 +573,64 @@ export default function MedicalStaffList() {
             </tbody>
           </table>
         </div>
+
+        {/* 페이지네이션 UI */}
+        {filteredStaff.length > 0 && (
+          <div className="flex justify-center items-center space-x-2 mt-6">
+            {/* 이전 버튼 */}
+            <button
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+              className={`p-2 rounded-md border border-gray-300 ${
+                currentPage === 1
+                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                  : "bg-white text-gray-700 hover:bg-gray-50"
+              }`}
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+
+            {/* 페이지 번호 생성 */}
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+              (number) => (
+                <button
+                  key={number}
+                  onClick={() => handlePageChange(number)}
+                  className={`px-4 py-2 rounded-md border text-sm font-medium transition-colors ${
+                    currentPage === number
+                      ? "bg-blue-600 text-white border-blue-600"
+                      : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+                  }`}
+                >
+                  {number}
+                </button>
+              )
+            )}
+
+            {/* 다음 버튼 */}
+            <button
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className={`p-2 rounded-md border border-gray-300 ${
+                currentPage === totalPages
+                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                  : "bg-white text-gray-700 hover:bg-gray-50"
+              }`}
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
+          </div>
+        )}
       </main>
 
-      {/* 삭제 확인 모달 렌더링 (ConfirmModal 컴포넌트가 존재한다고 가정) */}
-      {/* {deletingStaff && (
-                <ConfirmModal
-                    message={`'${deletingStaff.staffName}' 의료진 정보를 정말로 삭제하시겠습니까?`}
-                    onConfirm={handleDelete}
-                    onCancel={() => setDeletingStaff(null)}
-                />
-            )}
-            */}
+      {/* 상세 정보 모달 */}
+      <AdminDetailModal
+        isOpen={!!selectedStaffId}
+        onClose={() => setSelectedStaffId(null)}
+        adminId={selectedStaffId}
+      />
 
+      {/* 삭제 확인 모달 렌더링 */}
       {deletingStaff && (
         <div className="fixed inset-0 bg-gray-900 bg-opacity-70 flex items-center justify-center p-4 z-50">
           <div className="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full">

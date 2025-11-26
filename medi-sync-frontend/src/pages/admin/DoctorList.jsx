@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import AdminHeader from "../../component/AdminHeader";
 import ConfirmModal from "../../component/ConfirmModal";
-import AdminDetail from "../../component/AdminDetail";
+import AdminDetailModal from "../../component/AdminDetailModal";
 import { format } from "date-fns";
 import {
   ChevronDown,
@@ -49,6 +49,7 @@ const STATUS_OPTIONS = [
 const getStatusLabel = (value) =>
   STATUS_OPTIONS.find((opt) => opt.value === value)?.label || value;
 
+// 등록/수정 모달
 const AdminDoctorForm = ({
   adminData,
   onClose,
@@ -57,6 +58,7 @@ const AdminDoctorForm = ({
 }) => {
   const isEditing = !!adminData?.adminId;
   const initialDeptId = adminData?.deptId ? String(adminData.deptId) : "";
+  const today = format(new Date(), "yyyy-MM-dd");
 
   const [formData, setFormData] = useState({
     adminId: adminData?.adminId || null,
@@ -66,10 +68,10 @@ const AdminDoctorForm = ({
     deptId: initialDeptId,
     licenseNo: adminData?.licenseNo || "",
     phone: adminData?.phone || "",
-    status: STATUS_OPTIONS[0].value,
+    status: adminData?.status || STATUS_OPTIONS[0].value,
     hiredDate: adminData?.hiredDate
       ? format(new Date(adminData.hiredDate), "yyyy-MM-dd")
-      : "",
+      : today,
   });
 
   const [loading, setLoading] = useState(false);
@@ -86,6 +88,7 @@ const AdminDoctorForm = ({
     setLoading(true);
     setError(null);
 
+    // 필수 필드 검증
     if (!formData.deptId || !formData.hiredDate) {
       setError("진료과와 입사일은 필수 입력 항목입니다.");
       setLoading(false);
@@ -105,28 +108,31 @@ const AdminDoctorForm = ({
     try {
       let res;
       const dataToSend = { ...formData };
-      delete dataToSend.deptName;
+      delete dataToSend.deptName; // 서버 전송 시 제외
 
       if (isEditing) {
+        // 수정: PUT
         if (dataToSend.password === "") {
-          delete dataToSend.password; // 비밀번호가 비어있으면 전송하지 않음
+          delete dataToSend.password; // 비밀번호 미입력 시 전송 안 함
         }
         res = await axios.put(
           `${API_BASE_URL}/${dataToSend.adminId}`,
           dataToSend
         );
+        console.log("수정 성공:", res.data);
       } else {
+        // 등록: POST
         delete dataToSend.adminId; // 등록 시 adminId 제거
-        res = await axios.put(
-          `${API_BASE_URL}/${dataToSend.adminId}`,
-          dataToSend
-        );
+        res = await axios.post(API_BASE_URL, dataToSend);
+        console.log("등록 성공:", res.data);
       }
 
       const successMessage =
         res.data.message ||
-        `${isEditing ? "수정" : "등록"}이 성공적으로 완료되었습니다.`;
-      console.log(`✅ ${isEditing ? "수정" : "등록"} 성공:`, successMessage);
+        `${formData.name} 의사 정보가 ${
+          isEditing ? "수정" : "등록"
+        }되었습니다.`;
+
       onShowMessage(successMessage, "성공");
       onClose(true); // 성공 후 목록 새로고침
     } catch (err) {
@@ -160,63 +166,22 @@ const AdminDoctorForm = ({
 
   return (
     <div className="bg-white p-8 rounded-xl shadow-2xl w-full max-w-lg mx-auto transform transition-all duration-300">
-      <h2 className="text-2xl font-bold mb-6 text-blue-600">
+      <h2 className="text-2xl font-bold mb-6 text-indigo-600 border-b pb-2">
         {isEditing ? "의사 정보 수정" : "새 의사 등록"}
       </h2>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* ID / 사번 */}
         {isEditing && (
-          <div className="bg-gray-100 p-3 rounded-md text-sm">
-            <label className="block text-gray-600">ID / 사번</label>
-            <p className="font-semibold text-gray-800">
+          <div className="bg-indigo-50 p-3 rounded-md text-sm border border-indigo-200">
+            <label className="block text-indigo-600 font-semibold">
+              ID / 사번
+            </label>
+            <p className="font-bold text-gray-800">
               {adminData.adminId} / {adminData.empId}
             </p>
           </div>
         )}
-
-        {/* 사번 */}
-        {!isEditing && (
-          <div>
-            <label
-              htmlFor="empId"
-              className="block text-sm font-medium text-gray-700"
-            >
-              사번 *
-            </label>
-            <input
-              type="text"
-              id="empId"
-              name="empId"
-              value={formData.empId}
-              onChange={handleChange}
-              required={!isEditing}
-              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-blue-500 focus:border-blue-500"
-            />
-          </div>
-        )}
-
-        {/* 비밀번호 */}
-        <div>
-          <label
-            htmlFor="password"
-            className="block text-sm font-medium text-gray-700"
-          >
-            비밀번호 {isEditing ? "(변경 시 입력)" : "*"}
-          </label>
-          <input
-            type="password"
-            id="password"
-            name="password"
-            value={formData.password}
-            onChange={handleChange}
-            required={!isEditing}
-            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-blue-500 focus:border-blue-500"
-            placeholder={
-              isEditing ? "비밀번호를 변경하려면 입력하세요" : "새 비밀번호"
-            }
-          />
-        </div>
 
         {/* 이름 */}
         <div>
@@ -233,7 +198,7 @@ const AdminDoctorForm = ({
             value={formData.name}
             onChange={handleChange}
             required
-            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-blue-500 focus:border-blue-500"
+            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
           />
         </div>
 
@@ -256,9 +221,11 @@ const AdminDoctorForm = ({
               value={formData.deptId}
               onChange={handleChange}
               required
-              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-blue-500 focus:border-blue-500 appearance-none"
+              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-indigo-500 focus:border-indigo-500 appearance-none bg-white"
             >
-              <option value="">진료과를 선택하세요</option>
+              <option value="" disabled>
+                진료과를 선택하세요
+              </option>
               {deptList.map((dept) => (
                 <option key={dept.deptId} value={dept.deptId}>
                   {dept.deptName}
@@ -268,8 +235,8 @@ const AdminDoctorForm = ({
           </div>
         </div>
 
-        {/* 면허번호 (등록 시 필수, 수정 시에는 변경 불가) */}
-        <div className={isEditing ? "bg-gray-100 p-3 rounded-md text-sm" : ""}>
+        {/* 면허번호 (등록 시 필수, 수정 시 불가) */}
+        <div className={isEditing ? "opacity-50" : ""}>
           <label
             htmlFor="licenseNo"
             className="block text-sm font-medium text-gray-700"
@@ -284,8 +251,8 @@ const AdminDoctorForm = ({
             onChange={handleChange}
             required={!isEditing}
             disabled={isEditing}
-            className={`mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-blue-500 focus:border-blue-500 ${
-              isEditing ? "bg-gray-200 cursor-not-allowed" : ""
+            className={`mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-indigo-500 focus:border-indigo-500 ${
+              isEditing ? "bg-gray-50 cursor-not-allowed" : "bg-white"
             }`}
           />
         </div>
@@ -304,13 +271,61 @@ const AdminDoctorForm = ({
             name="phone"
             value={formData.phone}
             onChange={handleChange}
-            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-blue-500 focus:border-blue-500"
+            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+          />
+        </div>
+
+        {/* 재직 상태 */}
+        <div>
+          <label
+            htmlFor="status"
+            className="block text-sm font-medium text-gray-700"
+          >
+            재직 상태
+          </label>
+          <div className="relative mt-1">
+            <ChevronDown
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none"
+              aria-hidden="true"
+            />
+            <select
+              id="status"
+              name="status"
+              value={formData.status}
+              onChange={handleChange}
+              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-indigo-500 focus:border-indigo-500 appearance-none bg-white"
+            >
+              {STATUS_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {/* 입사일 */}
+        <div>
+          <label
+            htmlFor="hiredDate"
+            className="block text-sm font-medium text-gray-700"
+          >
+            입사일 *
+          </label>
+          <input
+            type="date"
+            id="hiredDate"
+            name="hiredDate"
+            value={formData.hiredDate}
+            onChange={handleChange}
+            required
+            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
           />
         </div>
 
         {error && <p className="text-red-500 text-sm mt-3">{error}</p>}
 
-        <div className="flex justify-end space-x-3 pt-4">
+        <div className="flex justify-end space-x-3 pt-4 border-t border-gray-100 mt-6">
           <button
             type="button"
             onClick={() => onClose && onClose(false)}
@@ -321,8 +336,8 @@ const AdminDoctorForm = ({
           </button>
           <button
             type="submit"
-            className={`px-4 py-2 text-white rounded-md shadow-sm transition-colors flex items-center justify-center ${
-              loading ? "bg-blue-400" : "bg-blue-600 hover:bg-blue-700"
+            className={`px-4 py-2 text-white rounded-md shadow-md transition-colors flex items-center justify-center ${
+              loading ? "bg-indigo-400" : "bg-indigo-600 hover:bg-indigo-700"
             }`}
             disabled={loading}
           >
@@ -347,7 +362,6 @@ const AdminDoctorForm = ({
 // ====================================================================
 
 const DoctorList = () => {
-  // 상태 관리
   const [admins, setAdmins] = useState([]);
   const [search, setSearch] = useState("");
   const [viewMode, setViewMode] = useState("list");
@@ -355,9 +369,10 @@ const DoctorList = () => {
   const [deletingAdmin, setDeletingAdmin] = useState(null);
   const [apiError, setApiError] = useState(false);
   const [uniqueDepartments, setUniqueDepartments] = useState([]);
-  const [message, setMessage] = useState(null); // InfoModal용 메시지
+  const [message, setMessage] = useState(null);
+  const [selectedAdminId, setSelectedAdminId] = useState(null);
 
-  // [페이징 관련 상태 추가]
+  // 페이징
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
@@ -365,7 +380,6 @@ const DoctorList = () => {
   const fetchAdmins = async () => {
     setApiError(false);
     try {
-      // API 호출
       const res = await axios.get(API_BASE_URL);
       setAdmins(res.data);
     } catch (err) {
@@ -374,17 +388,14 @@ const DoctorList = () => {
     }
   };
 
-  // 초기 데이터 및 부서 목록 로드
   useEffect(() => {
     fetchAdmins();
   }, []);
 
-  // 검색어가 변경되면 페이지를 1로 리셋
   useEffect(() => {
     setCurrentPage(1);
   }, [search]);
 
-  // 날짜 포맷 함수
   const formatDate = (dateString) => {
     if (!dateString) return "-";
     try {
@@ -394,7 +405,6 @@ const DoctorList = () => {
     }
   };
 
-  // 폼 닫기 핸들러 (isRefreshed가 true면 목록 새로고침)
   const handleCloseForm = (isRefreshed = false) => {
     setViewMode("list");
     setEditingAdmin(null);
@@ -403,7 +413,6 @@ const DoctorList = () => {
     }
   };
 
-  // 메시지 표시 핸들러
   const handleShowMessage = (msg, title = "알림") => {
     setMessage({ text: msg, title: title });
   };
@@ -412,16 +421,14 @@ const DoctorList = () => {
     setMessage(null);
   };
 
-  // 삭제 확인 모달 열기
   const confirmDelete = (admin) => {
     setDeletingAdmin(admin);
   };
 
-  // 최종 삭제 실행
   const handleDelete = async () => {
     if (!deletingAdmin) return;
     const adminToDelete = deletingAdmin;
-    setDeletingAdmin(null); // 모달 바로 닫기
+    setDeletingAdmin(null);
 
     try {
       if (!apiError) {
@@ -452,7 +459,6 @@ const DoctorList = () => {
     }
   };
 
-  // 검색 필터링
   const filtered = admins.filter(
     (a) =>
       (a.name || "").toLowerCase().includes(search.toLowerCase()) ||
@@ -462,18 +468,16 @@ const DoctorList = () => {
       (a.empId || "").toLowerCase().includes(search.toLowerCase())
   );
 
-  // [페이징 계산 로직 추가]
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentItems = filtered.slice(indexOfFirstItem, indexOfLastItem);
   const totalPages = Math.ceil(filtered.length / itemsPerPage);
 
-  // 페이지 변경 핸들러
   const handlePageChange = (pageNumber) => {
     setCurrentPage(pageNumber);
   };
 
-  // 뷰 모드에 따라 렌더링할 내용 상이
+  // 뷰 모드에 따라 렌더링할 내용 상이 (add/edit은 모달로 처리)
   if (viewMode === "add" || viewMode === "edit") {
     return (
       <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center p-8 z-50">
@@ -494,26 +498,10 @@ const DoctorList = () => {
     );
   }
 
-  if (viewMode === "detail" && editingAdmin) {
-    return (
-      <div className="min-h-screen bg-gray-50 font-pretendard pt-24">
-        <AdminHeader />
-        <main className="max-w-7xl mx-auto px-8">
-          <AdminDetail
-            adminId={editingAdmin.adminId}
-            onBackToList={() => setViewMode("list")}
-          />
-        </main>
-      </div>
-    );
-  }
-
   return (
     <div className="bg-gray-50 min-h-screen font-pretendard">
-      {/* 상단 고정 관리자 헤더 */}
       <AdminHeader />
 
-      {/* 컨텐츠 영역 */}
       <main className="max-w-7xl mx-auto pt-24 px-4 sm:px-8 mb-12">
         <h1 className="text-3xl font-bold text-blue-600 mb-8">
           의사 정보 목록
@@ -521,7 +509,8 @@ const DoctorList = () => {
             (총 {admins.length}명)
           </span>
         </h1>
-        {/* 검색창 + 버튼 그룹 */}
+
+        {/* 검색창 */}
         <div className="mb-6 flex flex-wrap justify-between items-center gap-4">
           <div className="relative w-full sm:w-1/3 min-w-[250px] flex-grow">
             <input
@@ -533,56 +522,44 @@ const DoctorList = () => {
             />
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
           </div>
-          <div>
-            {/* <button
-              onClick={() => {
-                setEditingAdmin(null);
-                setViewMode("add");
-              }}
-              className="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors shadow-md flex items-center"
-            >
-              <PlusCircle className="w-5 h-5 inline mr-2" /> 의사 추가
-            </button> */}
-          </div>
         </div>
-        <div className="overflow-x-auto border border-gray-200 rounded-lg shadow-xl">
-          <table className="min-w-full bg-white text-sm divide-y divide-gray-200">
+
+        <div className="overflow-x-auto">
+          <table className="w-full bg-white border border-gray-200 rounded-lg shadow-md text-sm">
             <thead className="bg-gray-100 text-gray-800 font-semibold border-b border-gray-200 sticky top-0">
               <tr>
                 <th className="py-3 px-4 text-left w-12">ID</th>
-                <th className="py-3 px-4 text-left w-20">사번</th>
-                <th className="py-3 px-4 text-left w-32">이름</th>
+                <th className="py-3 px-4 text-left w-24">이름</th>
                 <th className="py-3 px-4 text-left w-32">진료과명</th>
                 <th className="py-3 px-4 text-left w-28">면허번호</th>
                 <th className="py-3 px-4 text-left w-24">연락처</th>
                 <th className="py-3 px-4 text-left w-24">입사일</th>
-                <th className="py-3 px-4 text-left w-20">상태</th>
+                <th className="py-3 px-4 text-left w-20">재직 상태</th>
                 <th className="py-3 px-4 text-center w-24">관리</th>
               </tr>
             </thead>
 
             <tbody>
-              {/* filtered 대신 currentItems 사용 */}
               {currentItems.map((a) => (
                 <tr
                   key={a.adminId}
                   className="border-b border-gray-100 hover:bg-gray-50 text-gray-700 transition-colors"
                 >
                   <td className="py-2 px-4">{a.adminId || "-"}</td>
-                  <td className="py-2 px-4 font-medium">{a.empId || "-"}</td>
                   <td
                     className="py-2 px-4 text-blue-600 cursor-pointer hover:font-bold"
                     onClick={() => {
-                      setEditingAdmin(a); // 상세 페이지에서 사용할 데이터를 설정
-                      setViewMode("detail");
+                      setSelectedAdminId(a.adminId);
                     }}
                   >
                     {a.name || "-"}
                   </td>
                   <td className="py-2 px-4">{a.deptName || "-"}</td>
-                  <td className="py-2 px-4">{a.licenseNo || "-"}</td>
-                  <td className="py-2 px-4">{a.phone || "-"}</td>
-                  <td className="py-2 px-4 text-sm">
+                  <td className="py-2 px-4 font-mono text-xs">
+                    {a.licenseNo || "-"}
+                  </td>
+                  <td className="py-2 px-4 text-xs">{a.phone || "-"}</td>
+                  <td className="py-2 px-4 text-gray-500 text-xs">
                     {formatDate(a.hiredDate)}
                   </td>
                   <td className="py-2 px-4">
@@ -599,7 +576,6 @@ const DoctorList = () => {
                     </span>
                   </td>
                   <td className="py-2 px-4 text-center whitespace-nowrap space-x-2">
-                    {/* 수정 버튼 (Edit Icon) */}
                     <button
                       onClick={() => {
                         setEditingAdmin(a);
@@ -610,7 +586,6 @@ const DoctorList = () => {
                     >
                       <Edit className="w-5 h-5" />
                     </button>
-                    {/* 삭제 버튼 (Delete Icon) */}
                     <button
                       onClick={() => confirmDelete(a)}
                       className="text-red-600 hover:text-red-800 p-1 rounded-md transition duration-150 ease-in-out hover:bg-red-100"
@@ -639,7 +614,6 @@ const DoctorList = () => {
         {/* 페이지네이션 UI */}
         {filtered.length > 0 && (
           <div className="flex justify-center items-center space-x-2 mt-6">
-            {/* 이전 버튼 */}
             <button
               onClick={() => handlePageChange(currentPage - 1)}
               disabled={currentPage === 1}
@@ -652,7 +626,6 @@ const DoctorList = () => {
               <ChevronLeft className="w-5 h-5" />
             </button>
 
-            {/* 페이지 번호 생성 */}
             {Array.from({ length: totalPages }, (_, i) => i + 1).map(
               (number) => (
                 <button
@@ -669,7 +642,6 @@ const DoctorList = () => {
               )
             )}
 
-            {/* 다음 버튼 */}
             <button
               onClick={() => handlePageChange(currentPage + 1)}
               disabled={currentPage === totalPages}
@@ -685,7 +657,14 @@ const DoctorList = () => {
         )}
       </main>
 
-      {/* 삭제 확인 모달 렌더링 */}
+      {/* 상세 정보 모달 */}
+      <AdminDetailModal
+        isOpen={!!selectedAdminId}
+        onClose={() => setSelectedAdminId(null)}
+        adminId={selectedAdminId}
+      />
+
+      {/* 삭제 확인 모달 */}
       {deletingAdmin && (
         <ConfirmModal
           message={`'${deletingAdmin.name}' 의사 정보(직원 계정)를 정말로 삭제하시겠습니까?`}
@@ -694,7 +673,7 @@ const DoctorList = () => {
         />
       )}
 
-      {/* 알림 모달 렌더링 */}
+      {/* 알림 모달 */}
       {message && (
         <InfoModal
           message={message.text}
