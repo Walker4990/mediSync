@@ -124,6 +124,9 @@
             <when test="sort == 'latest'">DESC</when>
             <otherwise>ASC</otherwise>
         </choose>
+
+        LIMIT #{size}
+        OFFSET #{offset}
     </select>
 
 

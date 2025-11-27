@@ -71,10 +71,15 @@ public class DrugCheckController {
     }
 
     @GetMapping("/disponse/log")
-    public List<DrugLogDTO> getDrugLog( @RequestParam(defaultValue = "latest") String sort,
-                                    @RequestParam(required = false) String drugCode){
-       System.out.println("폐기 기록 순서 : " +sort+ " 코드 : " +  drugCode );
-        List<DrugLogDTO> list =  drugCheckService.getDrugLog(sort,drugCode);
+    public List<DrugLogDTO> getDrugLog(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "latest") String sort,
+            @RequestParam(required = false) String drugCode){
+
+        int offset = (page-1)*size;
+        System.out.println("폐기 기록 순서 : " +sort+ " 코드 : " +  drugCode );
+        List<DrugLogDTO> list =  drugCheckService.getDrugLog(sort,drugCode,size,offset);
         System.out.println("약품 로그 : "+ list);
         return list;
     }

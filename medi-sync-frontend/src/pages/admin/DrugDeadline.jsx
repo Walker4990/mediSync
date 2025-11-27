@@ -18,6 +18,9 @@ export default function DrugDeadline() {
   const [drugLog, setDrugLog] = useState([]);
   const [sortOrder, setSortOrder] = useState("");
   const [selectedDrugDeadline, setSelectedDrugDeadline] = useState("");
+  const [page, setPage] = useState(1);
+  const size = 10; // 한 페이지당 10개
+
   //전체 조회
   const fetchDrugList = async () => {
     try {
@@ -206,6 +209,8 @@ export default function DrugDeadline() {
           params: {
             sort: sortOrder,
             drugCode: selectedDrugDeadline,
+            page,
+            size,
           },
         }
       );
@@ -228,7 +233,7 @@ export default function DrugDeadline() {
     if (filter === "disposed") {
       fetchDisposedList();
     }
-  }, [sortOrder, selectedDrugDeadline]);
+  }, [filter, page, sortOrder, selectedDrugDeadline]);
 
   //탭 바뀔때 데이터 가져오기
   useEffect(() => {
@@ -685,6 +690,33 @@ export default function DrugDeadline() {
                     </tbody>
                   </table>
                 )}
+                <div className="flex justify-center mt-4 gap-2">
+                  <button
+                    onClick={() => setPage((p) => Math.max(p - 1, 1))}
+                    disabled={page === 1}
+                    className={`px-3 py-1 rounded ${
+                      page === 1
+                        ? "bg-gray-300 text-gray-500 cursor-not-allowd"
+                        : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                    }`}
+                  >
+                    이전
+                  </button>
+
+                  <span className="px-3 py-1">{page}</span>
+
+                  <button
+                    onClick={() => setPage((p) => p + 1)}
+                    disabled={drugLog.length < 10}
+                    className={`px-3 py-1 rounded ${
+                      drugLog.length < 10
+                        ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                        : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                    }`}
+                  >
+                    다음
+                  </button>
+                </div>
               </div>
             </div>
           )}

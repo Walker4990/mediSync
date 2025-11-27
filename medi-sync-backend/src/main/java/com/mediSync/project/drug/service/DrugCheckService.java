@@ -126,14 +126,15 @@ public class DrugCheckService {
         return 0;
     }
 
-    public List<DrugLogDTO> getDrugLog(String sort, String drugCode){
+    public List<DrugLogDTO> getDrugLog(String sort, String drugCode,int size,int offset){
         if (drugCode != null && drugCode.trim().isEmpty()) {
             drugCode = null;
         }
         Map<String,Object> params = new HashMap<>();
         params.put("sort", sort);
-
         params.put("drugCode", drugCode);
+        params.put("size",size);
+        params.put("offset",offset);
         return drugCheckMapper.getDrugLog(params);
 
     }
