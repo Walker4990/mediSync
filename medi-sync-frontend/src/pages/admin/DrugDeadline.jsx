@@ -24,7 +24,7 @@ export default function DrugDeadline() {
   //전체 조회
   const fetchDrugList = async () => {
     try {
-      const res = await axios.get("http://localhost:8080/api/drug");
+      const res = await axios.get("http://localhost:8080/api/drug/all");
       setDrugList(res.data);
       console.log("약품 전체 조회 : ", res.data);
     } catch (err) {

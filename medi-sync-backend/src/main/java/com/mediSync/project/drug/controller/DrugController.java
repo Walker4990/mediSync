@@ -1,8 +1,10 @@
 package com.mediSync.project.drug.controller;
 
 import com.mediSync.project.drug.dto.DrugDTO;
+import com.mediSync.project.drug.service.DrugCheckService;
 import com.mediSync.project.drug.service.DrugService;
 import com.mediSync.project.drug.vo.Drug;
+import com.mediSync.project.drug.vo.DrugLog;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,6 +19,7 @@ import java.util.Map;
 public class DrugController {
 
     private final DrugService drugService;
+    private final DrugCheckService drugCheckService;
 
     @GetMapping("/all")
     public List<DrugDTO> selectAllDrug() {
@@ -54,10 +57,25 @@ public class DrugController {
     }
     @PutMapping("/update")
     public ResponseEntity<Map<String, Object>> updateDrug(@RequestBody Drug drug) {
-        int result = drugService.editDrug(drug);
+        //기존 정보 가져오기
+        Drug origin = drugService.selectDrugByDrugCode(drug.getDrugCode());
+        //int result = drugService.editDrug(drug);
         Map<String, Object> map = new HashMap<>();
-        map.put("success", result > 0);
-        map.put("message", result > 0 ? "수정 성공!" : "수정 실패");
+        System.out.println("갱신할 약 정보 : "+ drug);
+
+
+        //map.put("success", result > 0);
+        //map.put("message", result > 0 ? "수정 성공!" : "수정 실패");
+
+        //새로 업데이트된 정보 가져오기
+        Drug newDrug = drugService.selectDrugByDrugCode(drug.getDrugCode());
+        DrugLog log = new DrugLog();
+        log.setDrugCode(drug.getDrugCode());
+
+        //만약 수량이 수정됐다면 로그 남기기
+
+
+
         return ResponseEntity.ok(map);
     }
     @DeleteMapping("/{drugCode}")
