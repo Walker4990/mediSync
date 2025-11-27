@@ -14,6 +14,40 @@ export default function Navbar() {
   } = useModal();
   const navigate = useNavigate();
 
+  useEffect(() => {
+    // 로그인 상태가 아닐 때는 체크하지 않음
+    if (!isLoggedIn) return;
+
+    const checkSessionExpiration = () => {
+      const loginTime = localStorage.getItem("loginTime");
+      const token = localStorage.getItem("token");
+
+      if (token && loginTime) {
+        const currentTime = new Date().getTime();
+        const loginTimestamp = parseInt(loginTime, 10);
+        const oneHour = 60 * 60 * 1000; // 60분
+
+        // 현재 시간이 로그인 시간 + 60분을 넘었는지 확인
+        if (currentTime - loginTimestamp > oneHour) {
+          alert("로그인 세션이 만료되었습니다. 다시 로그인해주세요.");
+
+          // 로그아웃 처리
+          localStorage.removeItem("token");
+          localStorage.removeItem("user_data");
+          localStorage.removeItem("loginTime");
+
+          if (handleLogout) handleLogout();
+          navigate("/");
+        }
+      }
+    };
+    checkSessionExpiration();
+    // 1분(60000ms)마다 주기적으로 체크
+    const intervalId = setInterval(checkSessionExpiration, 60000);
+    // 컴포넌트 언마운트 시 타이머 정리
+    return () => clearInterval(intervalId);
+  }, [isLoggedIn, handleLogout, navigate]);
+
   // 전역 Axios 인터셉터 설정
   useEffect(() => {
     const interceptor = axios.interceptors.response.use(

@@ -156,13 +156,13 @@ export default function AdminHeader() {
           <DropdownMenu
             title="인사관리"
             items={[
+              { name: "사원등록", href: "/admin/register" },
               { name: "의사정보", href: "/admin/doctor" },
               { name: "의료진정보", href: "/admin/staff" },
               { name: "일정확인", href: "/admin/schedule" },
               { name: "대시보드 (관리자전용)", href: "/admin/dashboard/hr" },
             ]}
           />
-
         </nav>
 
         {/* 우측 사용자 + 알림 */}
@@ -216,10 +216,7 @@ export default function AdminHeader() {
           )}
           <DropdownMenu
             title={styledAdminTitle}
-            items={[
-              { name: "사원등록", href: "/admin/register" },
-              { name: "마이페이지", onClick: handleMyPageClick },
-            ]}
+            items={[{ name: "마이페이지", onClick: handleMyPageClick }]}
           />
           <button
             className="bg-blue-500 hover:bg-blue-700 text-white px-4 py-1 rounded-md text-sm"
