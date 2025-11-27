@@ -22,8 +22,15 @@ public class PatientController {
     private final PatientService patientService;
 
     @GetMapping
-    public List<Patient> allPatient() {
-        return patientService.allPatients();
+    public Map<String, Object> allPatient(@RequestParam(defaultValue = "1") int page,
+                                          @RequestParam(defaultValue = "10") int size,
+                                          @RequestParam(required = false) String keyword) {
+        return patientService.allPatients(page, size, keyword);
+    }
+
+    @GetMapping("/search")
+    public List<Patient> searchPatient(String keyword){
+        return patientService.searchPatient(keyword);
     }
 
     @PostMapping("/register")
@@ -46,13 +53,17 @@ public class PatientController {
     }
 
     @GetMapping("/{patientId}/records")
-    public List<MedicalRecord> getPatientRecords(@PathVariable("patientId") Long patientId) {
-        return patientService.getPatientRecords(patientId);
+    public Map<String, Object> getPatientRecords(@PathVariable("patientId") Long patientId,
+                                                 @RequestParam(defaultValue = "1") int page,
+                                                 @RequestParam(defaultValue = "10") int size) {
+        return patientService.getPatientRecords(patientId, page, size);
     }
 
     @GetMapping("/{patientId}/prescriptions")
-    public List<Prescription> getPatientPrescriptions(@PathVariable("patientId") Long patientId) {
-        return patientService.getPatientPrescriptions(patientId);
+    public Map<String, Object> getPatientPrescriptions(@PathVariable("patientId") Long patientId,
+                                                      @RequestParam(defaultValue = "1") int page,
+                                                      @RequestParam(defaultValue = "10") int size) {
+        return patientService.getPatientPrescriptions(patientId, page, size);
     }
 
     @GetMapping("/{patientId}/detail")

@@ -104,7 +104,6 @@ export default function AdminHeader() {
             title="고객관리"
             items={[
               { name: "환자정보", href: "/admin/patients" },
-              { name: "진료내역", href: "/admin/history" },
               { name: "입원관리", href: "/admin/admission" },
               { name: "실시간 상담", href: "/admin/chat" },
             ]}
@@ -117,9 +116,7 @@ export default function AdminHeader() {
               { name: "일정확인", href: "/admin/schedule" },
             ]}
           />
-          <Link to="/admin/insurance" className="hover:text-blue-200">
-            보험관리
-          </Link>
+
         </nav>
 
         {/* 우측 사용자 + 알림 */}

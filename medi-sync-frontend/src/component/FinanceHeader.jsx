@@ -12,6 +12,7 @@ export default function FinanceHeader() {
         { title: "대시보드", icon: <FaChartPie />, link: "/admin/finance/dashboard" },
         { title: "거래내역", icon: <FaListUl />, link: "/admin/finance" },
         { title: "환불 관리", icon: <FaListUl />, link: "/admin/finance/refund" },
+        { title: "미납금 관리", icon: <FaListUl />, link: "/admin/finance/unpaid" },
     ];
 
     return (

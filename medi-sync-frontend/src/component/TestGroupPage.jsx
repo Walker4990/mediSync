@@ -13,17 +13,20 @@ export default function TestGroupPage({ group, title }) {
     const [keyword, setKeyword] = useState("");
     const [startDate, setStartDate] = useState("");
     const [endDate, setEndDate] = useState("");
+    const [page, setPage] = useState(1);
+    const [size] = useState(10);
+    const [totalPages, setTotalPages] = useState(1);
 
     // ✅ 그룹별 예약 조회
     const loadReservations = () => {
         const url = group
-            ? `http://192.168.0.24:8080/api/test/reservation/group/${group}`
-            : `http://192.168.0.24:8080/api/test/reservation`;
+            ? `http://192.168.0.24:8080/api/test/reservation/group/${group}/page`
+            : `http://192.168.0.24:8080/api/test/reservation/page`;
 
-        axios.get(url)
+        axios.get(url,{params: {page, size}})
             .then(res => {
-                console.log("📦 조회 결과:", res.data); // ✅ 여기에 넣어야 함
-                setReservations(res.data);
+                setReservations(res.data.items);
+                setTotalPages(res.data.totalPages);
             })
             .catch(err => console.error("❌ 조회 실패:", err));
     };
@@ -36,7 +39,7 @@ export default function TestGroupPage({ group, title }) {
             .catch(err => console.error("❌ 검색 실패:", err));
     };
 
-    useEffect(() => { loadReservations(); }, [group]);
+    useEffect(() => { loadReservations(); }, [group, page]);
 
     // ✅ 수정 모달 열기
     const handleEdit = (resv) => {
@@ -169,7 +172,7 @@ export default function TestGroupPage({ group, title }) {
                         <th className="px-4 py-2 text-left">검사일자</th>
                         <th className="px-4 py-2 text-left">시간</th>
                         <th className="px-4 py-2 text-left">상태</th>
-                        <th classNmae="px-4 py-2 text-left">결과 출력</th>
+                        <th className="px-4 py-2 text-left">결과 출력</th>
                         <th className="px-4 py-2 text-center">관리</th>
                     </tr>
                     </thead>
@@ -217,6 +220,45 @@ export default function TestGroupPage({ group, title }) {
                     )}
                     </tbody>
                 </table>
+
+            </div>
+            <div className="flex justify-center mt-6 gap-2">
+
+                <button
+                    disabled={page === 1}
+                    onClick={() => setPage(page - 1)}
+                    className="px-3 py-1 bg-gray-200 rounded disabled:opacity-40"
+                >
+                    이전
+                </button>
+
+                {[...Array(totalPages)].map((_, i) => {
+                    const pageNum = i + 1;
+                    return (
+                        <button
+                            key={pageNum}
+                            onClick={() => setPage(pageNum)}
+                            className={`
+                    px-3 py-1 rounded
+                    ${page === pageNum
+                                ? "bg-emerald-500 text-white"
+                                : "bg-gray-200 hover:bg-gray-300"
+                            }
+                `}
+                        >
+                            {pageNum}
+                        </button>
+                    );
+                })}
+
+                <button
+                    disabled={page === totalPages}
+                    onClick={() => setPage(page + 1)}
+                    className="px-3 py-1 bg-gray-200 rounded disabled:opacity-40"
+                >
+                    다음
+                </button>
+
             </div>
 
             {/* ✅ 수정 모달 */}

@@ -28,4 +28,12 @@ public interface TestReservationMapper {
                                                     @Param("end")LocalDateTime end);
 
     int canceledTestReservation(long id);
+
+    List<TestReservation> selectPaged(@Param("offset") int offset, @Param("size") int size);
+    int countAll();
+
+    List<TestReservation> selectPagedByGroup(@Param("group") String group,
+                                             @Param("offset") int offset,
+                                             @Param("size") int size);
+    int countByGroup(@Param("group") String group);
 }

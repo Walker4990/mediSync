@@ -12,10 +12,42 @@ export default function ReserveModal({
     const [selectedTime, setSelectedTime] = useState(null);
     const [loading, setLoading] = useState(false);
     const [operationName, setOperationName] = useState("");
+    const [operationList, setOperationList] = useState([]);
+    const [filteredList, setFilteredList] = useState([]);
+    const [showList, setShowList] = useState(false);
+    const [anesthesiaType, setAnesthesiaType] = useState("");
     const defaultTimes = [
         "09:00", "09:30", "10:00", "10:30", "11:00",
         "13:00", "13:30", "14:00", "14:30", "15:00", "15:30", "16:00"
     ];
+
+    useEffect(() => {
+        if (open && mode === "surgery"){
+            axios.get("http://192.168.0.24:8080/api/operation/cost/list")
+                .then(res => setOperationList(res.data))
+                .catch(err => console.log(err));
+        }
+    }, [open, mode]);
+
+    const handleOperationInput = (value) => {
+        setOperationName(value);
+
+        if (!value.trim()) {
+            setFilteredList([]);
+            setShowList(false);
+            return;
+        }
+        const filtered = operationList
+                .filter(op => op.operationName.toLowerCase()
+                .includes(value.toLowerCase()));
+        setFilteredList(filtered);
+        setShowList(true);
+    }
+
+    const handleSelectOperation = (name) => {
+        setOperationName(name);
+        setShowList(false);
+    }
 
     // ✅ 날짜 변경 시 예약 가능 시간 조회
     useEffect(() => {
@@ -89,6 +121,7 @@ export default function ReserveModal({
                     operationName: operationName || "수술",
                     scheduledDate: date,
                     scheduledTime: selectedTime + ":00",
+                    anesthesiaType : anesthesiaType || null,
                     roomId: 1,
                     cost: 1000000,
                 };
@@ -155,20 +188,47 @@ export default function ReserveModal({
                     )}
                 </div>
 
-                {/* 수술명 입력 (수술 모드일 때만) */}
                 {mode === "surgery" && (
-                    <div className="mb-4">
+                    <div className="mb-4 relative">
                         <label className="block text-gray-700 text-sm mb-1">수술명 입력</label>
                         <input
                             type="text"
                             value={operationName}
-                            onChange={(e) => setOperationName(e.target.value)}
-                            placeholder="예: 백내장 수술"
+                            onChange={(e) => handleOperationInput(e.target.value)}
+                            placeholder="예: 백내장, 위 절제술, 갑상선 수술"
                             className="border rounded p-2 w-full"
                         />
-                    </div>
-                )}
 
+                        {/* 자동완성 리스트 */}
+                        {showList && filteredList.length > 0 && (
+                            <ul className="absolute z-20 bg-white border rounded w-full max-h-40 overflow-y-auto shadow-md mt-1">
+                                {filteredList.map((op, index) => (
+                                    <li
+                                        key={index}
+                                        onClick={() => handleSelectOperation(op.operationName)}
+                                        className="px-3 py-2 hover:bg-blue-100 cursor-pointer text-sm"
+                                    >
+                                        {op.operationName}
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
+                    </div>
+
+                )}
+                <div className="mb-4">
+                    <label className="block text-gray-700 text-sm mb-1">마취 유형</label>
+                    <select
+                        value={anesthesiaType}
+                        onChange={(e) => setAnesthesiaType(e.target.value)}
+                        className="border rounded p-2 w-full"
+                    >
+                        <option value="">선택</option>
+                        <option value="GENERAL">전신 마취</option>
+                        <option value="SEDATION">수면 마취</option>
+                        <option value="LOCAL">국소 마취</option>
+                    </select>
+                </div>
                 {/* 버튼 */}
                 <div className="flex justify-end gap-3 mt-6">
                     <button onClick={onClose} className="text-gray-500">
@@ -177,7 +237,7 @@ export default function ReserveModal({
                     <button
                         onClick={handleReserve}
                         className="bg-blue-500 text-white px-4 py-2 rounded disabled:bg-gray-300"
-                        disabled={!date || !selectedTime}
+                        disabled={!date || !selectedTime || (mode === "surgery" && !operationName.trim())}
                     >
                         예약 저장
                     </button>

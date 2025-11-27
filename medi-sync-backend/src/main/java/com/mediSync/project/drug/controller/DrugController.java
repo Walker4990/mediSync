@@ -18,7 +18,7 @@ public class DrugController {
 
     private final DrugService drugService;
 
-    @GetMapping
+    @GetMapping("/all")
     public List<DrugDTO> selectAllDrug() {
         return drugService.selectAllDrug();
     }
@@ -68,6 +68,11 @@ public class DrugController {
         map.put("message", result > 0 ? "삭제 성공!" : "삭제 실패");
         return ResponseEntity.ok(map);
     }
-
-
+    @GetMapping("/page")
+    public Map<String, Object> getPagedDrugs(
+            @RequestParam int page,
+            @RequestParam int size
+    ) {
+        return drugService.getPagedDrugs(page, size);
+    }
 }

@@ -1,20 +1,26 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import axios from "axios";
 import AdminHeader from "../../component/AdminHeader";
 import { useNavigate } from "react-router-dom";
 
 export default function OperationListPage() {
     const [operations, setOperations] = useState([]);
+    const [page, setPage] = useState(1);
+    const [size, setSize] = useState(10);
+    const [totalPages, setTotalPages] = useState(1);
     const navigate = useNavigate();
 
     useEffect(() => {
         fetchOperations();
-    }, []);
+    }, [page, size]);
 
     const fetchOperations = () => {
         axios
-            .get("http://192.168.0.24:8080/api/operation/list")
-            .then((res) => setOperations(res.data))
+            .get("http://192.168.0.24:8080/api/operation/list", {params: {page, size}})
+            .then((res) => {
+                setOperations(res.data.items)
+                setTotalPages(res.data.totalPages)
+            })
             .catch((err) => console.error("❌ 수술 목록 조회 실패:", err));
     };
 
@@ -146,6 +152,45 @@ export default function OperationListPage() {
                         )}
                         </tbody>
                     </table>
+                </div>
+
+                <div className="flex justify-center mt-6 gap-2">
+
+                    <button
+                        disabled={page === 1}
+                        onClick={() => setPage(page - 1)}
+                        className="px-3 py-1 bg-gray-200 rounded disabled:opacity-40"
+                    >
+                        이전
+                    </button>
+
+                    {[...Array(totalPages)].map((_, i) => {
+                        const pageNum = i + 1;
+                        return (
+                            <button
+                                key={pageNum}
+                                onClick={() => setPage(pageNum)}
+                                className={`
+                    px-3 py-1 rounded
+                    ${page === pageNum
+                                    ? "bg-emerald-500 text-white"
+                                    : "bg-gray-200 hover:bg-gray-300"
+                                }
+                `}
+                            >
+                                {pageNum}
+                            </button>
+                        );
+                    })}
+
+                    <button
+                        disabled={page === totalPages}
+                        onClick={() => setPage(page + 1)}
+                        className="px-3 py-1 bg-gray-200 rounded disabled:opacity-40"
+                    >
+                        다음
+                    </button>
+
                 </div>
             </div>
         </div>

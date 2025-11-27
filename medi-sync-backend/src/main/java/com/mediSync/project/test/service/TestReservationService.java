@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -68,5 +69,31 @@ public class TestReservationService {
 
     public List<ReservationDTO> findTestReservationBetween(LocalDateTime start, LocalDateTime end){
         return testReservationMapper.findTestReservationBetween(start, end);
+    }
+    public Map<String, Object> selectPaged(int page, int size) {
+        int offset = (page - 1) * size;
+
+        List<TestReservation> items = testReservationMapper.selectPaged(offset, size);
+        int totalCount = testReservationMapper.countAll();
+
+        int totalPages = (int) Math.ceil((double) totalCount / size);
+
+        return Map.of(
+                "items", items,
+                "totalPages", totalPages
+        );
+    }
+    public Map<String, Object> selectPagedByGroup(String group, int page, int size) {
+        int offset = (page - 1) * size;
+
+        List<TestReservation> items = testReservationMapper.selectPagedByGroup(group, offset, size);
+        int totalCount = testReservationMapper.countByGroup(group);
+
+        int totalPages = (int) Math.ceil((double) totalCount / size);
+
+        return Map.of(
+                "items", items,
+                "totalPages", totalPages
+        );
     }
 }

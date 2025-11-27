@@ -20,4 +20,7 @@ public interface DrugMapper {
     // 자동완성 검색 (약품명/코드)
     List<Drug> searchDrugsByKeyword(@Param("keyword") String keyword);
     List<Drug> searchInjectionByKeyword(@Param("keyword") String Keyword);
+
+    int countAll();
+    List<Drug> selectPaged(int offset, int size);
 }

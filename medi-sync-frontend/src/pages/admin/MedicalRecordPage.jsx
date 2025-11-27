@@ -16,6 +16,8 @@ export default function MedicalRecordPage() {
         diagnosis: "",
         totalCost: "",
     });
+    const [patientKeyword, setPatientKeyword] = useState("");
+    const [patientSuggestions, setPatientSuggestions] = useState([]);
     const [doctors, setDoctors] = useState([]);
     const [patients, setPatients] = useState([]);
     const [records, setRecords] = useState([]);
@@ -30,6 +32,7 @@ export default function MedicalRecordPage() {
     const [selectedSurgery, setSelectedSurgery] = useState(null);
     const [surgeryModalOpen, setSurgeryModalOpen] = useState(false);
     const testNotifications = notifications.filter((n) => n.testName);
+
 
    
 
@@ -85,6 +88,8 @@ export default function MedicalRecordPage() {
             setTestSuggestions([]);
         }
     }, 300);
+
+
 
     // 초기 데이터 로드
     useEffect(() => {
@@ -386,13 +391,109 @@ export default function MedicalRecordPage() {
         setSelectedSurgery(record);
         setSurgeryModalOpen(true);
     };
+    const searchPatient = debounce(async (keyword) => {
+        if (!keyword || keyword.trim() === "") {
+            setPatientSuggestions([]);
+            return;
+        }
 
+        try {
+            const res = await axios.get("http://192.168.0.24:8080/api/patients/search", {
+                params: { keyword },
+            });
+            setPatientSuggestions(res.data);
+        } catch (err) {
+            console.error("환자 검색 실패:", err);
+            setPatientSuggestions([]);
+        }
+    }, 300);
 
+    const handlePatientSelect = async (p) => {
+        setPatientKeyword(p.name);
+        setPatientSuggestions([]);
+
+        setForm((prev) => ({
+            ...prev,
+            patientId: String(p.patientId),
+        }));
+
+        try {
+            const recordRes = await axios.get(
+                `http://192.168.0.24:8080/api/records/patient/${p.patientId}`
+            );
+            setRecords(recordRes.data || []);
+
+            if (recordRes.data && recordRes.data.length > 0) {
+                const recordId = recordRes.data[0].recordId;
+                const presRes = await axios.get(
+                    `http://192.168.0.24:8080/api/prescriptions/${recordId}`
+                );
+                setPrescriptions(presRes.data || []);
+            }
+        } catch {
+            setRecords([]);
+            setPrescriptions([]);
+        }
+
+        // ▣ 진료비 자동 계산
+        if (form.adminId) {
+            try {
+                const costRes = await axios.get(
+                    `http://192.168.0.24:8080/api/records/cost/preview`,
+                    { params: { adminId: form.adminId, patientId: p.patientId } }
+                );
+
+                if (costRes.data.success) {
+                    setForm((prev) => ({
+                        ...prev,
+                        totalCost: costRes.data.totalCost,
+                        insuranceAmount: costRes.data.insuranceAmount,
+                        patientPay: costRes.data.patientPay,
+                    }));
+                }
+            } catch (err) {
+                console.warn("진료비 미리보기 실패:", err);
+            }
+        }
+    };
 
     return (
         <div className="p-20 bg-gray-50 min-h-screen font-pretendard">
             <AdminHeader />
             <h1 className="text-2xl font-bold text-blue-700 mb-6 text-center">진료 통합 관리</h1>
+            {/* 🔍 환자 검색 */}
+            <div className="bg-white p-5 rounded-lg shadow mb-6">
+                <h2 className="text-lg font-semibold text-blue-600 mb-3">🔍 환자 검색</h2>
+
+                <div className="relative">
+                    <input
+                        type="text"
+                        value={patientKeyword}
+                        onChange={(e) => {
+                            setPatientKeyword(e.target.value);
+                            searchPatient(e.target.value);
+                        }}
+                        placeholder="환자명, 연락처 등으로 검색"
+                        className="border rounded p-2 w-full focus:ring-2 focus:ring-blue-300"
+                        autoComplete="off"
+                    />
+
+                    {/* 자동완성 리스트 */}
+                    {patientSuggestions.length > 0 && (
+                        <ul className="absolute bg-white border rounded w-full shadow max-h-60 overflow-y-auto z-20">
+                            {patientSuggestions.map((p) => (
+                                <li
+                                    key={p.patientId}
+                                    className="px-3 py-2 hover:bg-blue-50 cursor-pointer"
+                                    onClick={() => handlePatientSelect(p)}
+                                >
+                                    {p.name} ({p.gender}) / {p.phone}
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+                </div>
+            </div>
 
             <div className="grid grid-cols-2 gap-6">
                 {/* ✅ 진료 등록 폼 시작 */}

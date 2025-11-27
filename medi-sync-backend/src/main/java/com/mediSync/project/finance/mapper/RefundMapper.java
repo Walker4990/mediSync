@@ -13,7 +13,7 @@ public interface RefundMapper {
     RefundRequest findByorderId(@Param("orderId") String orderId);
 
     List<RefundRequest> findAll();
-    RefundRequest findById(@Param("orderId") Long RefundId);
+    RefundRequest findByRefundId(@Param("refundId") Long refundId);
 
     int approve(Long refundId);
     int reject(Long refundId);

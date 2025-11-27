@@ -45,28 +45,69 @@
         WHERE user_id = #{userId}
     </update>
 
-    <!-- 환자 정보 조회 -->
-    <select id="allPatient" resultType="patient">
-        SELECT * FROM patient
+    <select id="searchPatient" resultType="patient">
+        SELECT *
+        FROM patient
+        <where>
+            <if test="keyword != null">
+                (name LIKE CONCAT('%', #{keyword}, '%')
+                OR phone LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+        </where>
+        ORDER BY patient_id DESC
     </select>
 
+    <!-- 환자 정보 조회 -->
+    <select id="allPatient" resultType="patient">
+        SELECT *
+        FROM patient
+        <where>
+            <if test="keyword != null">
+                (name LIKE CONCAT('%', #{keyword}, '%')
+                OR phone LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+        </where>
+        ORDER BY patient_id DESC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="countPatient" resultType="int">
+        SELECT COUNT(*)
+        FROM patient
+        <where>
+            <if test="keyword != null">
+                (name LIKE #{keyword} OR phone LIKE #{keyword})
+            </if>
+        </where>
+    </select>
     <!-- 과거진료 내역 불러오기 (수술 시) -->
-    <select id="getPatientRecords" parameterType="long" resultType="medicalRecord">
+    <select id="getPatientRecords"  resultType="medicalRecord">
         SELECT
-        r.record_id,
-        r.created_at,
+        p.prescription_id,
+        p.record_id,
+        p.created_at,
+        p.type,
+        a.name,
+        p.dosage,
+        d.dept_name,
         r.diagnosis,
-        a.name AS doctorName,
-        dept.dept_name AS deptName
-        FROM medical_record r
+        a.name AS doctorName
+        FROM prescription p
+        JOIN medical_record r ON p.record_id = r.record_id
         LEFT JOIN admin_account a ON r.admin_id = a.admin_id
-        LEFT JOIN department dept ON a.dept_id = dept.dept_id
+        LEFT JOIN department d ON a.dept_id = d.dept_id
         WHERE r.patient_id = #{patientId}
-        ORDER BY r.created_at DESC
+        ORDER BY p.created_at DESC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+    <select id="countAllRecord" parameterType="long" resultType="int">
+        SELECT COUNT(*)
+        FROM medical_record
+        WHERE patient_id = #{patientId}
     </select>
 
     <!-- 처방 내역 불러오기 (수술 시) -->
-    <select id="getPatientPrescriptions" parameterType="long" resultType="prescription">
+    <select id="getPatientPrescriptions"  resultType="prescription">
         SELECT
         p.prescription_id       AS prescriptionId,
         p.record_id             AS recordId,
@@ -90,6 +131,14 @@
         LEFT JOIN admin_account a ON r.admin_id = a.admin_id
         WHERE r.patient_id = #{patientId}
         ORDER BY p.created_at DESC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="countAll" parameterType="long" resultType="int">
+        SELECT COUNT(*)
+        FROM prescription pr
+        JOIN medical_record r ON pr.record_id = r.record_id
+        WHERE r.patient_id = #{patientId}
     </select>
 
     <!-- 환자 상세정보 불러오기 (수술 시) -->
@@ -151,5 +200,9 @@
         SET admission_status = #{admissionStatus}
         WHERE patient_id = #{patientId}
     </update>
-
+    <update id="updatePatientRoom" parameterType="int">
+        UPDATE patient
+        SET room_id = #{roomId}
+        WHERE patient_id = #{patientId}
+    </update>
 </mapper>

@@ -1,10 +1,7 @@
 package com.mediSync.project.operation.mapper;
 
 import com.mediSync.project.medical.vo.AdminAccount;
-import com.mediSync.project.operation.vo.Operation;
-import com.mediSync.project.operation.vo.OperationLog;
-import com.mediSync.project.operation.vo.OperationRoom;
-import com.mediSync.project.operation.vo.OperationStaff;
+import com.mediSync.project.operation.vo.*;
 import com.mediSync.project.patient.dto.ReservationDTO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -13,12 +10,13 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Map;
 
 @Mapper
 public interface OperationMapper {
     int insertOperation(Operation op);
 
-    List<Operation> selectOperationList();
+    List<Operation> selectOperationList(@Param("offset") int offset,@Param("size") int size);
 
     Operation getOperationById(Long operationId);
 
@@ -64,4 +62,7 @@ public interface OperationMapper {
 
     int canceledOperation(long id);
 
+    int getBaseCost(String operationName);
+
+    List<OperationCost> getOperationCostList();
 }
