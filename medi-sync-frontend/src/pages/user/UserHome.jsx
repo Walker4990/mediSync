@@ -175,7 +175,7 @@ export default function UserHome() {
                     )}
 
                     <button className="w-full mt-10 bg-blue-600 text-white py-3.5 rounded-2xl font-semibold
-                       hover:bg-blue-700 active:scale-[0.98] transition">
+                       hover:bg-blue-700 active:scale-[0.98] transition" onClick={()=> navigate("/user/mypage")}>
                         진료 내역 보기
                     </button>
                 </div>

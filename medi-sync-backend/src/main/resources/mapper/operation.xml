@@ -21,15 +21,58 @@
         SELECT
         o.*,
         p.name AS patientName,
-        a.name AS doctorName,
-        r.room_name AS roomName
+        a.name AS adminName
         FROM operation o
-        JOIN patient p ON o.patient_id = p.patient_id
-        JOIN admin_account a ON o.admin_id = a.admin_id
-        LEFT JOIN operation_room r ON o.room_id = r.room_id
-        ORDER BY o.scheduled_date DESC, o.scheduled_time ASC
-        LIMIT #{size} OFFSET #{offset}
+        LEFT JOIN patient p ON o.patient_id = p.patient_id
+        LEFT JOIN admin_account a ON a.admin_id = o.admin_id
+        WHERE 1=1
+
+        <if test="keyword.patientName != null and keyword.patientName != ''">
+            AND p.name LIKE CONCAT('%', #{keyword.patientName}, '%')
+        </if>
+
+        <if test="keyword.adminName != null and keyword.adminName != ''">
+            AND a.name LIKE CONCAT('%', #{keyword.adminName}, '%')
+        </if>
+
+        <if test="keyword.scheduledDate != null and keyword.scheduledDate != ''">
+            AND o.scheduled_date = #{keyword.scheduledDate}
+        </if>
+
+        <if test="keyword.scheduledTime != null and keyword.scheduledTime != ''">
+            AND o.scheduled_time = #{keyword.scheduledTime}
+        </if>
+
+        ORDER BY o.scheduled_date DESC, o.scheduled_time DESC
+        LIMIT #{keyword.offset}, #{keyword.size}
     </select>
+
+
+    <select id="countAll" resultType="int">
+        SELECT COUNT(*)
+        FROM operation o
+        LEFT JOIN patient p ON o.patient_id = p.patient_id
+        LEFT JOIN admin_account a ON a.admin_id = o.admin_id
+        WHERE 1=1
+
+        <if test="keyword.patientName != null and keyword.patientName != ''">
+            AND p.name LIKE CONCAT('%', #{keyword.patientName}, '%')
+        </if>
+
+        <if test="keyword.adminName != null and keyword.adminName != ''">
+            AND a.name LIKE CONCAT('%', #{keyword.adminName}, '%')
+        </if>
+
+        <if test="keyword.scheduledDate != null and keyword.scheduledDate != ''">
+            AND o.scheduled_date = #{keyword.scheduledDate}
+        </if>
+
+        <if test="keyword.scheduledTime != null and keyword.scheduledTime != ''">
+            AND o.scheduled_time = #{keyword.scheduledTime}
+        </if>
+
+    </select>
+
 
     <!-- 수술방 목록 -->
     <select id="selectOperationRoomList" resultType="operationRoom">

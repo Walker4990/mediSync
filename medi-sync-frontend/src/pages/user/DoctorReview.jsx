@@ -4,6 +4,8 @@ import axios from "axios";
 import { div, header, option, p } from "framer-motion/client";
 import { Star, Type } from "lucide-react";
 import { motion, percent, AnimatePresence } from "framer-motion";
+import {pem as jwt} from "node-forge";
+import {jwtDecode} from "jwt-decode";
 export default function DoctorReview() {
   const { adminId } = useParams();
   const [doctor, setDoctor] = useState(null);
@@ -15,7 +17,10 @@ export default function DoctorReview() {
   const [reviews, setReviews] = useState([]); //리뷰 목록
   const [stats, setStats] = useState(null);
 
-  const patientId = 1;
+  const token = localStorage.getItem("token");
+  const decoded = jwtDecode(token);
+  const patientId = decoded?.userId;
+
   //페이지 뜨자마자 의사 정보 가져오기
 
   useEffect(() => {

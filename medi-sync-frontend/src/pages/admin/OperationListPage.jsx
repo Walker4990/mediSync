@@ -9,21 +9,31 @@ export default function OperationListPage() {
     const [size, setSize] = useState(10);
     const [totalPages, setTotalPages] = useState(1);
     const navigate = useNavigate();
-
+    const [patientName, setPatientName] = useState("");
+    const [adminName, setAdminName] = useState("");
+    const [scheduledDate, setScheduledDate] = useState("");
+    const [scheduledTime, setScheduledTime] = useState("");
     useEffect(() => {
         fetchOperations();
     }, [page, size]);
 
     const fetchOperations = () => {
-        axios
-            .get("http://192.168.0.24:8080/api/operation/list", {params: {page, size}})
+        axios.get("http://192.168.0.24:8080/api/operation/list", {
+            params: {
+                page,
+                size,
+                patientName,
+                adminName,
+                scheduledDate,
+                scheduledTime
+            }
+        })
             .then((res) => {
-                setOperations(res.data.items)
-                setTotalPages(res.data.totalPages)
+                setOperations(res.data.items);
+                setTotalPages(res.data.totalPages);
             })
             .catch((err) => console.error("❌ 수술 목록 조회 실패:", err));
     };
-
     const handleComplete = async (operationId) => {
         if (!window.confirm("수술을 완료 처리하시겠습니까?")) return;
         try {
@@ -54,6 +64,86 @@ export default function OperationListPage() {
                 <div className="flex justify-between items-center mb-6">
                     <h2 className="text-2xl font-bold text-gray-800">🏥 수술 일정 목록</h2>
 
+                </div>
+                {/* 🔍 검색 영역 */}
+                <div className="bg-gray-100 p-4 rounded-lg shadow-sm mb-6 border">
+                    <h3 className="font-semibold text-gray-700 mb-3 text-sm">검색 조건</h3>
+
+                    <div className="grid grid-cols-5 gap-4">
+
+                        {/* 환자명 */}
+                        <div className="flex flex-col text-sm">
+                            <label className="mb-1 font-medium">환자명</label>
+                            <input
+                                type="text"
+                                value={patientName}
+                                onChange={(e) => setPatientName(e.target.value)}
+                                className="border px-3 py-2 rounded"
+                                placeholder="예: 홍길동"
+                            />
+                        </div>
+
+                        {/* 의사명 */}
+                        <div className="flex flex-col text-sm">
+                            <label className="mb-1 font-medium">의사명</label>
+                            <input
+                                type="text"
+                                value={adminName}
+                                onChange={(e) => setAdminName(e.target.value)}
+                                className="border px-3 py-2 rounded"
+                                placeholder="예: 김의사"
+                            />
+                        </div>
+
+                        {/* 날짜 */}
+                        <div className="flex flex-col text-sm">
+                            <label className="mb-1 font-medium">수술일자</label>
+                            <input
+                                type="date"
+                                value={scheduledDate}
+                                onChange={(e) => setScheduledDate(e.target.value)}
+                                className="border px-3 py-2 rounded"
+                            />
+                        </div>
+
+                        {/* 시간 */}
+                        <div className="flex flex-col text-sm">
+                            <label className="mb-1 font-medium">수술시간</label>
+                            <input
+                                type="time"
+                                value={scheduledTime}
+                                onChange={(e) => setScheduledTime(e.target.value)}
+                                className="border px-3 py-2 rounded"
+                            />
+                        </div>
+
+                        {/* 버튼 */}
+                        <div className="flex gap-2 mt-6">
+                            <button
+                                onClick={() => {
+                                    setPage(1);
+                                    fetchOperations();
+                                }}
+                                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm w-full"
+                            >
+                                검색
+                            </button>
+
+                            <button
+                                onClick={() => {
+                                    setPatientName("");
+                                    setAdminName("");
+                                    setScheduledDate("");
+                                    setScheduledTime("");
+                                    setPage(1);
+                                    fetchOperations();
+                                }}
+                                className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded text-sm w-full"
+                            >
+                                초기화
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
                 <div className="overflow-x-auto">
@@ -88,7 +178,7 @@ export default function OperationListPage() {
                                 >
                                     <td className="border py-2">{op.operationId}</td>
                                     <td className="border py-2">{op.patientName}</td>
-                                    <td className="border py-2">{op.doctorName}</td>
+                                    <td className="border py-2">{op.adminName}</td>
                                     <td className="border py-2">{op.operationName}</td>
                                     <td className="border py-2">
                                         {op.scheduledDate?.substring(0, 10) || "-"}

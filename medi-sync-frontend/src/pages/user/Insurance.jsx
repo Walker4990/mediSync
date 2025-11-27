@@ -200,18 +200,23 @@ const Insurance = () => {
                         {treatmentHistory.map((item) => (
                             <div
                                 key={item.recordId}
-                                onClick={() => handleItemSelect(item)}
-                                className={`flex items-center p-3 cursor-pointer text-sm transition
-                ${
-                                    selectedItem && selectedItem.recordId === item.recordId
-                                        ? "bg-blue-100 border-l-4 border-blue-600"
-                                        : "hover:bg-gray-50"
-                                }`}
+                                onClick={() => {
+                                    if (["SENT", "APPROVED", "PAID"].includes(item.status)) return; // ⛔ 클릭 막기
+                                    handleItemSelect(item);
+                                }}
+                                className={`flex items-center p-3 text-sm transition
+        ${
+                                    ["SENT", "APPROVED", "PAID"].includes(item.status)
+                                        ? "bg-gray-100 text-gray-400 cursor-not-allowed" // ⛔ 비활성화 스타일
+                                        : "cursor-pointer hover:bg-gray-50"
+                                }
+        ${selectedItem && selectedItem.recordId === item.recordId ? "bg-blue-100 border-l-4 border-blue-600" : ""}
+    `}
                             >
                                 <div className="w-[10%] text-center">{item.date?.slice(5)}</div>
                                 <div className="w-[15%] text-left">{item.time || "-"}</div>
                                 <div className="w-[20%] text-left">{item.department || "-"}</div>
-                                <div className="w-[25%] text-left truncate">{item.details || "-"}</div>
+                                <div className="w-[25%] text-left truncate">{item.diagnosis || "-"}</div>
                                 <div className="w-[15%] text-right font-bold">{item.amount?.toLocaleString()}원</div>
                                 <div className="w-[15%] text-center font-semibold">
                                     {item.status === "SENT" && <span className="text-blue-600">접수 완료</span>}

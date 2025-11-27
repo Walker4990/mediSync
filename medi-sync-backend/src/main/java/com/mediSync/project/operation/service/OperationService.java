@@ -149,10 +149,17 @@ public class OperationService {
     }
 
 
-    public Map<String, Object> selectOperationList(int page, int size) {
+    public Map<String, Object> selectOperationList(Map<String, Object> keyword) {
+
+        int page = (int) keyword.getOrDefault("page", 1);
+        int size = (int) keyword.getOrDefault("size", 10);
         int offset = (page - 1) * size;
-        List<Operation> list = operationMapper.selectOperationList(offset, size);
-        int totalCount = testReservationMapper.countAll();
+
+        keyword.put("offset", offset);
+        keyword.put("size", size);
+
+        List<Operation> list = operationMapper.selectOperationList(keyword);
+        int totalCount = operationMapper.countAll(keyword);
 
         int totalPages = (int) Math.ceil((double) totalCount / size);
 
@@ -161,6 +168,7 @@ public class OperationService {
                 "totalPages", totalPages
         );
     }
+
 
     public Operation getOperationById(Long operationId) {
         return operationMapper.getOperationById(operationId);

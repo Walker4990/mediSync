@@ -53,7 +53,7 @@ export default function LoginModal() {
         // handleLoginSuccess();
         handleLoginSuccess(res.data.token);
         onClose();
-        alert("로그인 성공!");
+        window.location.reload();
       } else {
         setMessage(res.data.message || "로그인 실패");
       }

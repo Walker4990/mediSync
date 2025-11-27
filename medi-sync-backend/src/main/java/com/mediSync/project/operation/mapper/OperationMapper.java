@@ -16,8 +16,10 @@ import java.util.Map;
 public interface OperationMapper {
     int insertOperation(Operation op);
 
-    List<Operation> selectOperationList(@Param("offset") int offset,@Param("size") int size);
-
+    List<Operation> selectOperationList(
+            @Param("keyword") Map<String, Object> keyword
+    );
+    int countAll(@Param("keyword") Map<String, Object> keyword);
     Operation getOperationById(Long operationId);
 
     int checkScheduleConflict(@Param("roomId") Long roomId,

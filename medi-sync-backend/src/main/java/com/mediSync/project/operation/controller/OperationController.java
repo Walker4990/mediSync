@@ -15,6 +15,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -40,10 +41,23 @@ public class OperationController {
 
     @GetMapping("/list")
     public Map<String, Object> list(
+            @RequestParam(required = false) String patientName,
+            @RequestParam(required = false) String adminName,
+            @RequestParam(required = false) String scheduledDate,
+            @RequestParam(required = false) String scheduledTime,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
-        return operationService.selectOperationList(page, size);
+
+        Map<String, Object> keyword = new HashMap<>();
+        keyword.put("patientName", patientName);
+        keyword.put("adminName", adminName);
+        keyword.put("scheduledDate", scheduledDate);
+        keyword.put("scheduledTime", scheduledTime);
+        keyword.put("page", page);
+        keyword.put("size", size);
+
+        return operationService.selectOperationList(keyword);
     }
 
     @PutMapping("/{operationId}/status")

@@ -21,6 +21,7 @@ export default function ReserveModal({
         "09:00", "09:30", "10:00", "10:30", "11:00",
         "13:00", "13:30", "14:00", "14:30", "15:00", "15:30", "16:00"
     ];
+    const [duration, setDuration] = useState(0);
     const token = localStorage.getItem("admin_token");
     const decoded = token ? jwtDecode(token) : null;
 
@@ -33,6 +34,35 @@ export default function ReserveModal({
         }
     }, [open, mode]);
 
+    const addMinutes = (time, minutes) => {
+        const [h, m] = time.split(":").map(Number);
+        const date = new Date();
+        date.setHours(h);
+        date.setMinutes(m + minutes);
+
+        const hh = String(date.getHours()).padStart(2, "0");
+        const mm = String(date.getMinutes()).padStart(2, "0");
+
+        return `${hh}:${mm}`;
+    };
+
+    const handleSelectOperation = (name) => {
+        setOperationName(name);
+        setShowList(false);
+
+        const op = operationList.find(op => op.operationName === name);
+        if (op) setDuration(op.durationMinutes)
+    }
+
+    useEffect(() => {
+        if(mode !== "surgery" || !selectedTime || duration == 0 ) return;
+        const endTime = addMinutes(selectedTime, duration);
+        const updated = timeSlots.map(slot => ({
+            ...slot, available: slot.time >= selectedTime && slot.time < endTime
+            ? false : slot.available
+        }));
+        setTimeSlots(updated);
+    }, [selectedTime, duration]);
     const handleOperationInput = (value) => {
         setOperationName(value);
 
@@ -48,10 +78,7 @@ export default function ReserveModal({
         setShowList(true);
     }
 
-    const handleSelectOperation = (name) => {
-        setOperationName(name);
-        setShowList(false);
-    }
+
 
     // ✅ 날짜 변경 시 예약 가능 시간 조회
     useEffect(() => {
