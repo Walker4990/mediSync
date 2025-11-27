@@ -14,7 +14,10 @@ export default function DrugDeadline() {
   const [search, setSearch] = useState("");
   const [selectedDrugDispose, setSelectedDrugDispose] = useState(null);
   const [disposeQty, setDisposeQty] = useState(0);
-
+  const [disposeMemo, setDisposeMemo] = useState("");
+  const [drugLog, setDrugLog] = useState([]);
+  const [sortOrder, setSortOrder] = useState("");
+  const [selectedDrugDeadline, setSelectedDrugDeadline] = useState("");
   //전체 조회
   const fetchDrugList = async () => {
     try {
@@ -71,6 +74,27 @@ export default function DrugDeadline() {
     clearInterval(holdInterval.current);
     holdTimeout.current = null;
     holdInterval.current = null;
+  };
+
+  //폐기 등록
+  const inspectionDrug = async (drugCode, quantity, memo) => {
+    if (quantity <= 0) {
+      alert("폐기 수량은 최소 1개 이상 입니다.");
+      return;
+    }
+
+    if (window.confirm("정말 폐기 하시겠습니까? (수량 : " + quantity + "개)")) {
+      try {
+        const res = await axios.put(
+          `http://localhost:8080/api/inspection/drug/${drugCode}/${quantity}/${memo}`
+        );
+        alert("폐기 처리가 완료되었습니다.(폐기 수량 : " + quantity + "개)");
+        setSelectedDrugDispose(null);
+        fetchDrugList();
+      } catch (err) {
+        console.log("폐기 실패", err);
+      }
+    }
   };
 
   //검사 완료 표시
@@ -136,6 +160,11 @@ export default function DrugDeadline() {
 
       // 최종 정리된 객체
       const summary = {
+        unit: base.unit,
+        totalQuantity: base.totalQuantity,
+        minStock: base.minStock,
+        insuranceCode: base.insuranceCode,
+        supplier: base.supplier,
         checkId: base.checkId,
         drugName: base.drugName,
         location: base.location,
@@ -172,9 +201,16 @@ export default function DrugDeadline() {
   const fetchDisposedList = async () => {
     try {
       const res = await axios.get(
-        "http://localhost:8080/api/inspection/disponse"
+        "http://localhost:8080/api/inspection/disponse/log",
+        {
+          params: {
+            sort: sortOrder,
+            drugCode: selectedDrugDeadline,
+          },
+        }
       );
       console.log("폐기 기록 조회 : ", res.data);
+      setDrugLog(res.data);
     } catch (err) {
       console.error("폐기 기록 조회 실패", err);
     }
@@ -188,6 +224,11 @@ export default function DrugDeadline() {
   const closeModal = () => {
     setSelectedDrug(null);
   };
+  useEffect(() => {
+    if (filter === "disposed") {
+      fetchDisposedList();
+    }
+  }, [sortOrder, selectedDrugDeadline]);
 
   //탭 바뀔때 데이터 가져오기
   useEffect(() => {
@@ -423,7 +464,18 @@ export default function DrugDeadline() {
                     </div>
                   </div>
                 </div>
-
+                {/* 메모 입력 */}
+                <div className="mt-6">
+                  <label className="text-gray-700 font-medium">
+                    메모 (선택)
+                  </label>
+                  <textarea
+                    value={disposeMemo}
+                    onChange={(e) => setDisposeMemo(e.target.value)}
+                    placeholder="예: 유통기한 만료 / 품질 검사 불합격 / 약품 파손 등"
+                    className="w-full mt-2 p-3 border border-gray-300 rounded-xl resize-none h-24 focus:ring-2 focus:ring-blue-400 outline-none"
+                  />
+                </div>
                 {/* 하단 버튼 */}
                 <div className="flex justify-end gap-2 mt-6">
                   <button
@@ -433,6 +485,11 @@ export default function DrugDeadline() {
                         "폐기 등록",
                         selectedDrugDispose.drugCode,
                         disposeQty
+                      );
+                      inspectionDrug(
+                        selectedDrugDispose.drugCode,
+                        disposeQty,
+                        disposeMemo
                       );
                     }}
                     className="px-4 py-1 bg-red-500 text-white rounded-xl text-sm shadow hover:bg-red-600"
@@ -505,10 +562,71 @@ export default function DrugDeadline() {
 
           {/*폐기 페이지 */}
           {filter == "disposed" && (
-            <div className="bg-white shadow-lg rounded-xl p-5 col-span-2 h-[600px] overflow-y-auto">
-              <p className="text-gray-500 mt-10 text-sm text-center">
-                표시할 항목이 없습니다.
-              </p>
+            <div className="bg-white shadow-lg rounded-xl p-6 col-span-2 h-[650px] flex-col overflow-y-auto">
+              {/*헤더 */}
+              <h1 className="text-2xl font-bold mb-6 border-b pb-3 text-gray-800">
+                폐기 기록 조회
+              </h1>
+              {/*필터 영역 */}
+              <div className="grid grid-cols-2 gap-6 mb-8">
+                {/*정렬 기준 */}
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm font-semibold text-gray-600">
+                    정렬 기준
+                  </label>
+                  <select
+                    value={sortOrder}
+                    onChange={(e) => setSortOrder(e.target.value)}
+                    className="border p-2 rounded-lg bg-gray-50 hover:bg-white transition shadow-sm focus:ring-2 focus:ring-blue-400"
+                  >
+                    <option value="latest">최신순</option>
+                    <option value="oldest">오래된순</option>
+                  </select>
+                </div>
+
+                {/*약품 선택 */}
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm font-semibold text-gray-600">
+                    약품 선택
+                  </label>
+                  <select
+                    value={selectedDrugDeadline}
+                    onChange={(e) => setSelectedDrugDeadline(e.target.value)}
+                    className="border p-2 rounded-lg bg-gray-50 hover:bg-white transition shadow-sm focus:ring-2 focus:ring-blue-400"
+                  >
+                    <option value="">전체 약품</option>
+                    {drugList.map((drug) => (
+                      <option key={drug.drugCode} value={drug.drugCode}>
+                        {drug.drugName}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/*리스트 출력 */}
+              <div className="flex-1 overflow-y-auto bg-gray-50 rounded-lg p-4 shadow-inner">
+                {/*폐기 기록 리스트 */}
+                {drugLog.length === 0 ? (
+                  <p className="text-gray-500 text-sm text-center mt-10">
+                    조회된 폐기 기록이 없습니다.
+                  </p>
+                ) : (
+                  drugLog.map((log) => (
+                    <div
+                      key={log.drugCode}
+                      className="p-3 mb-3 bg-white rounded-lg border shadow-sm hover:shadow transition"
+                    >
+                      <div className="font-semibold text-gray-700">
+                        {log.drugName}
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        수량 : {log.quantity} /폐기일: {log.createdAt}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
           )}
         </div>
@@ -543,6 +661,14 @@ export default function DrugDeadline() {
                     {selectedDrug.location}
                   </p>
                   <p>
+                    <span className="font-semibold">수량: </span>{" "}
+                    {selectedDrug.totalQuantity}개
+                  </p>
+                  <p>
+                    <span className="font-semibold">종류:</span>{" "}
+                    {selectedDrug.unit}
+                  </p>
+                  <p>
                     <span className="font-semibold">유통기한:</span>{" "}
                     {selectedDrug.expirationDate}
                   </p>
@@ -551,8 +677,13 @@ export default function DrugDeadline() {
                     {selectedDrug.checkId}
                   </p>
                   <p>
-                    <span className="font-semibold">Detail ID:</span>{" "}
-                    {selectedDrug.detailId}
+                    <span className="font-semibold">제조업자:</span>{" "}
+                    {selectedDrug.supplier}
+                  </p>
+
+                  <p>
+                    <span className="font-semibold">보험 코드:</span>{" "}
+                    {selectedDrug.insuranceCode}
                   </p>
                 </div>
 
@@ -643,7 +774,12 @@ export default function DrugDeadline() {
                               >
                                 폐기
                               </button>
-                              <button className="px-3 py-1 text-xs bg-gray-300 text-gray-800 rounded hover:bg-gray-400 shadow">
+                              <button
+                                className="px-3 py-1 text-xs bg-gray-300 text-gray-800 rounded hover:bg-gray-400 shadow"
+                                onClick={() => {
+                                  checkDrugInspection(r.detailId);
+                                }}
+                              >
                                 반려
                               </button>
                             </div>

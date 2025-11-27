@@ -47,12 +47,17 @@
         dcd.detail_id,
         dcd.check_id,
         dcd.status,
-        dcd.quantity,
+        dcd.quantity as quantity,
         dcd.note,
         dcd.is_checked,
         d.drug_name,
         d.expiration_date,
-        d.location
+        d.location,
+        d.unit,
+        d.supplier,
+        d.insurance_code,
+        d.min_stock,
+        d.quantity as totalQuantity
         FROM drug_check_detail dcd
         join drug_check dc on dcd.check_id = dc.check_id
         join drug d on d.drug_code = dc.drug_code
@@ -100,4 +105,26 @@
     insert into drug_log(drug_code, type, quantity, before_stock,after_stock, memo)
         values(#{drugCode},#{type},#{quantity},#{beforeStock},#{afterStock},#{memo})
     </insert>
+
+    <select id="getDrugLog" resultType="druglogdto">
+        SELECT
+        dl.*,
+        d.drug_name
+        FROM drug_log dl
+        join drug d on d.drug_code = dl.drug_code
+
+        <where>
+            <if test="drugCode != null and drugCode != ''">
+                AND dl.drug_code = #{drugCode}
+            </if>
+        </where>
+
+        ORDER BY dl.created_at
+        <choose>
+            <when test="sort == 'latest'">DESC</when>
+            <otherwise>ASC</otherwise>
+        </choose>
+    </select>
+
+
 </mapper>

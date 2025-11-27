@@ -1,6 +1,7 @@
 package com.mediSync.project.drug.service;
 
 import com.mediSync.project.drug.dto.DrugCheckDTO;
+import com.mediSync.project.drug.dto.DrugLogDTO;
 import com.mediSync.project.drug.mapper.DrugCheckMapper;
 import com.mediSync.project.drug.vo.DrugCheckDetail;
 import com.mediSync.project.drug.vo.DrugLog;
@@ -97,6 +98,44 @@ public class DrugCheckService {
     public int updateCheck(long detailId){
         int res= drugCheckMapper.updateDetailCheck(detailId);
         return res;
+    }
+
+    @Transactional
+    public int updateinspectionDrugByDrugCode(String drugCode, int quantity, String memo){
+
+        Map<String,Object> params = new HashMap<>();
+        params.put("drugCode", drugCode);   // String
+        params.put("quantity", quantity);   // int
+
+        DrugLog log = new DrugLog();
+
+        //기존 개수 가져오기
+        int origin = drugCheckMapper.getTotalQuantityByDrugCode(drugCode);
+
+        log.setBeforeStock(origin);
+        log.setAfterStock(origin - quantity);
+        log.setQuantity(quantity);
+        log.setMemo(memo);
+        log.setDrugCode(drugCode);
+        log.setType("DISPOSE");
+        //폐기하기
+        drugCheckMapper.updateDrugDispose(params);
+        //로그 남기기
+        int res2 = drugCheckMapper.insertDrugLog(log);
+        System.out.println("로그 생성 결과 : "+ res2);
+        return 0;
+    }
+
+    public List<DrugLogDTO> getDrugLog(String sort, String drugCode){
+        if (drugCode != null && drugCode.trim().isEmpty()) {
+            drugCode = null;
+        }
+        Map<String,Object> params = new HashMap<>();
+        params.put("sort", sort);
+
+        params.put("drugCode", drugCode);
+        return drugCheckMapper.getDrugLog(params);
+
     }
 
 }

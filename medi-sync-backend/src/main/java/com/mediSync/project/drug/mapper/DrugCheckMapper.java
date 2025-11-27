@@ -1,6 +1,7 @@
 package com.mediSync.project.drug.mapper;
 
 import com.mediSync.project.drug.dto.DrugCheckDTO;
+import com.mediSync.project.drug.dto.DrugLogDTO;
 import com.mediSync.project.drug.vo.DrugCheckDetail;
 import com.mediSync.project.drug.vo.DrugLog;
 import org.apache.ibatis.annotations.Mapper;
@@ -22,4 +23,5 @@ public interface DrugCheckMapper {
     String getDrugCodeByDetailId(long detailId);
     int updateDrugDispose(Map<String, Object> params);
     int insertDrugLog(DrugLog log);
+    List<DrugLogDTO> getDrugLog(Map<String,Object> params);
 }

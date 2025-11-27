@@ -1,12 +1,15 @@
 package com.mediSync.project.drug.controller;
 
 import com.mediSync.project.drug.dto.DrugCheckDTO;
+import com.mediSync.project.drug.dto.DrugLogDTO;
 import com.mediSync.project.drug.service.DrugCheckService;
 import com.mediSync.project.drug.vo.DrugCheckDetail;
+import com.mediSync.project.drug.vo.DrugLog;
 import lombok.RequiredArgsConstructor;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -42,7 +45,10 @@ public class DrugCheckController {
     }
     @GetMapping("/month/detail/{checkId}")
     public List<DrugCheckDTO>getCheckedDrugByCheckId(@PathVariable long checkId){
-        return drugCheckService.getCheckedDrug(checkId);
+
+        List<DrugCheckDTO> list = drugCheckService.getCheckedDrug(checkId);
+        System.out.println("검사 상세 리스트 : "+ list);
+        return list;
     }
 
     @PutMapping("/dispose/{detailId}/{quantity}")
@@ -54,6 +60,23 @@ public class DrugCheckController {
     public int updateCheck(@PathVariable int detailId){
     drugCheckService.updateCheck(detailId);
         return 0;
+    }
+
+    @PutMapping("/drug/{drugCode}/{quantity}/{memo}")
+    public int inspectionDrug(@PathVariable String drugCode, @PathVariable int quantity, @PathVariable String memo){
+        System.out.println("코드 : "+ drugCode + " 수량 : " + quantity + " 메모 : "+ memo);
+        drugCheckService.updateinspectionDrugByDrugCode(drugCode,quantity,memo);
+
+        return 0;
+    }
+
+    @GetMapping("/disponse/log")
+    public List<DrugLogDTO> getDrugLog( @RequestParam(defaultValue = "latest") String sort,
+                                    @RequestParam(required = false) String drugCode){
+       System.out.println("폐기 기록 순서 : " +sort+ " 코드 : " +  drugCode );
+        List<DrugLogDTO> list =  drugCheckService.getDrugLog(sort,drugCode);
+        System.out.println("약품 로그 : "+ list);
+        return list;
     }
 
 }

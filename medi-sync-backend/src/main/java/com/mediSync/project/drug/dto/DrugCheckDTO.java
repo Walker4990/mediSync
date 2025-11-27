@@ -32,7 +32,7 @@ public class DrugCheckDTO {
     private LocalDate expirationDate;
     private String supplier; //제약사
     private Long itemId;//개수 상세 기록
-
+    private String insuranceCode;
 
     //검수 여부
 
@@ -50,6 +50,7 @@ public class DrugCheckDTO {
     @Data
     public static class Detail{
         //drugCheckDetail
+        private long detailId;
         private String status;
         private int quantity;
         private String note;
