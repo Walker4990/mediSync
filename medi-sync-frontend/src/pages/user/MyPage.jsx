@@ -35,6 +35,8 @@ import PaymentPage from "../../component/PaymentPage";
 const token = localStorage.getItem("token");
 const decoded = token ? jwtDecode(token) : null;
 const patientId = decoded?.userId || null;
+const API_BASE_URL = "http://192.168.0.24:8080/api/notification";
+const API_TEST_URL = "http://localhost:8080/api/notification";
 
 // ----------------------------------------------------
 // 커스텀 모달 컴포넌트 (Alert/Confirm 대체)
@@ -955,6 +957,7 @@ const NotificationSettings = () => {
         value: newSettings[key],
         setting: newSettings,
       });
+      console.log("알림 설정 완");
     } catch (error) {
       console.error("알림설정 업데이트 실패");
     }
@@ -1108,11 +1111,11 @@ const ViewReservation = ({ title, icon: Icon }) => {
   const [isCalendarModalOpen, setIsCalendarModalOpen] = useState(false);
 
   // 로그인 유저 임시 번호
-  const patient_id = 1;
+
   const fetchCalendarData = async () => {
     try {
       const res = await axios.get(
-        `http://localhost:8080/api/calendar?patient_id=${patient_id}`
+        `http://localhost:8080/api/calendar?patient_id=${patientId}`
       );
       console.log("받은 일정 데이터:", res.data);
       const formatted = res.data.map((item) => ({

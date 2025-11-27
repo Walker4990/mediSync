@@ -14,7 +14,6 @@
         AND reservation_date < DATE_ADD(#{reservationDate}, INTERVAL 1 DAY)
         AND admin_id = #{adminId}
         ]]>
-
     </select>
     <!--  예약하기  -->
     <insert id="addReservation" parameterType="reservation">
