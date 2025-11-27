@@ -45,4 +45,15 @@ public class JwtUtil {
             return false;
         }
     }
+//    관리자용 로그인
+    public String generateAdminToken(Long adminId, String empId) {
+        return Jwts.builder()
+                .claim("adminId", adminId)
+                .claim("empId", empId)
+                .claim("role", "ADMIN")
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
+                .signWith(key, SignatureAlgorithm.HS256)
+                .compact();
+    }
 }

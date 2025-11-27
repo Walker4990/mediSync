@@ -5,6 +5,7 @@
 
 <mapper namespace="com.mediSync.project.notification.mapper.NotificationMapper">
 
+    <!-- 회원 알림 정보 가져오기 -->
     <select id="getNotificationSetting" parameterType="long" resultType="notiset">
         select * from notification_setting
         where patient_id = #{patientId}

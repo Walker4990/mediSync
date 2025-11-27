@@ -10,23 +10,24 @@
     SELECT *
     FROM room
     WHERE current_count < capacity
-      AND (status = 'AVAILABLE' OR status = 'FULL')
+      AND status = 'AVAILABLE'
       AND (department = #{department} OR ward_name LIKE CONCAT('%', #{department}, '%'))
     ]]>
     </select>
 
     <update id="incrementRoomCount">
         UPDATE room
-        SET current_count = LEAST(current_count + 1, capacity),
+        SET
+        current_count = current_count + 1,
         status = CASE
         WHEN current_count + 1 >= capacity THEN 'FULL'
         ELSE 'AVAILABLE'
         END
-        WHERE room_id = #{roomId};
+        WHERE room_id = #{roomId}
     </update>
 
     <select id="selectAllRooms" resultType="room">
-        SELECT * FROM room
+        SELECT * FROM room ORDER BY room_no ASC
     </select>
 
     <select id="findCostByRoomId" resultType="room">

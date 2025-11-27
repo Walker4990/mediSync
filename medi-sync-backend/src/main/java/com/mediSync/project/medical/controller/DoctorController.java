@@ -2,6 +2,7 @@ package com.mediSync.project.medical.controller;
 
 import com.mediSync.project.medical.dto.DoctorDTO;
 import com.mediSync.project.medical.dto.DoctorInfoDTO;
+import com.mediSync.project.medical.dto.DoctorScheduleDTO;
 import com.mediSync.project.medical.service.DoctorService;
 import com.mediSync.project.medical.vo.AdminAccount;
 import lombok.RequiredArgsConstructor;
@@ -10,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -23,15 +25,19 @@ public class DoctorController {
     public List<DoctorInfoDTO> findAllDoctor(@RequestParam(required = false) Long deptId){
 
         System.out.println("department 넘어온 값 : "+deptId);
+        List<DoctorInfoDTO> list = new ArrayList<>();
         if( deptId != null && deptId != 0){
-            System.out.println("토글 선택");
-            return doctorService.selectDoctorByDepartment(deptId);
+            list = doctorService.selectDoctorByDepartment(deptId);
         }
         else {
-            System.out.println("전체 선택");
-            System.out.println(doctorService.selectAllDoctor());
-            return doctorService.selectAllDoctor();
+            list = doctorService.selectAllDoctor();
+
         }
+        for (DoctorInfoDTO li : list){
+            List<DoctorScheduleDTO> test = doctorService.selectDoctorScheduleByAdminId(li.getAdminId());
+            li.setSchedule(test);
+        }
+            return list;
     }
     //의사 등록
     @PostMapping

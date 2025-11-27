@@ -14,7 +14,6 @@
         AND reservation_date < DATE_ADD(#{reservationDate}, INTERVAL 1 DAY)
         AND admin_id = #{adminId}
         ]]>
-
     </select>
     <!--  예약하기  -->
     <insert id="addReservation" parameterType="reservation">
@@ -79,4 +78,11 @@
         WHERE reservation_id = #{reservationId}
         LIMIT 1
     </select>
+
+    <select id="countTodayReservations" parameterType="long" resultType="int">
+        SELECT COUNT(*) FROM reservation
+        WHERE patient_id = #{patientId}
+        AND DATE(reservation_date) = CURDATE()
+    </select>
+
 </mapper>

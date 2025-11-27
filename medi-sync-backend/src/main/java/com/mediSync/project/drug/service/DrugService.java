@@ -8,7 +8,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -61,5 +63,18 @@ public class DrugService {
     public List<Drug> searchInjectionByKeyword(String keyword) {
         if (keyword == null || keyword.trim().isEmpty()) return List.of();
         return drugMapper.searchInjectionByKeyword(keyword.trim());
+    }
+    public Map<String, Object> getPagedDrugs (int page, int size){
+        int offset = (page - 1) * size;
+
+        List<Drug> list = drugMapper.selectPaged(offset, size);
+        int totalCount = drugMapper.countAll();
+
+        int totalPages = (int) Math.ceil((double)totalCount / size);
+
+        Map<String, Object> map = new HashMap<>();
+        map.put("items", list);
+        map.put("totalPages", totalPages);
+        return map;
     }
 }

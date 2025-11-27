@@ -21,11 +21,21 @@ public class TestReservationController {
     public List<TestReservation> selectTestReservation() {
         return testReservationService.selectTestReservation();
     }
-    @GetMapping("/group/{group}")
-    public List<TestReservation> selectByGroup(@PathVariable("group") String group){
-        System.out.println("🔍 group = " + group);
-        return testReservationService.selectByGroup(group);
+
+    @GetMapping("/page")
+    public Map<String, Object> selectPaged(     @RequestParam(defaultValue = "1") int page,
+                                                @RequestParam(defaultValue = "10") int size
+    ){
+        return testReservationService.selectPaged(page, size);
     }
+
+    @GetMapping("/group/{group}/page")
+    public Map<String, Object> selectPagedByGroup(@PathVariable("group") String group,
+                                               @RequestParam(defaultValue = "1") int page,
+                                               @RequestParam(defaultValue = "10") int size){
+        return testReservationService.selectPagedByGroup(group, page, size);
+    }
+
     @GetMapping("/group/{group}/search")
     public List<TestReservation> searchByGroupAndKeyword( @PathVariable("group") String group,
                                                           @RequestParam(required = false) String keyword,

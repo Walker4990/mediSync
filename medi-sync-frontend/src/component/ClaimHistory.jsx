@@ -1,15 +1,26 @@
-import React from "react";
+import React, { useState } from "react";
 
 export default function ClaimHistory({ claims = [] }) {
-    if (!claims || claims.length === 0)
+
+    const [page, setPage] = useState(1);
+    const size = 10
+    const totalPages = Math.ceil((Array.isArray(claims) ? claims : claims.items || []).length / size);
+
+    // ✔ claims가 items인지 배열인지 판별
+    const list = Array.isArray(claims) ? claims : claims.items || [];
+
+    if (!list || list.length === 0)
         return <p className="text-gray-500 mt-4">청구 이력이 없습니다.</p>;
 
-    // 상태 컬러 매핑
+    // ✔ 페이지에 따라 보여줄 데이터 제한
+    const visible = list.slice(0, page * size);
+
     const statusColors = {
         SENT: "text-blue-600",
         APPROVED: "text-green-600",
         REJECTED: "text-red-500",
         RETRY: "text-yellow-500",
+        PAID: "text-green-600"
     };
 
     return (
@@ -27,23 +38,42 @@ export default function ClaimHistory({ claims = [] }) {
                     </tr>
                     </thead>
                     <tbody>
-                    {claims.map((c) => (
+                    {visible.map((c) => (
                         <tr key={c.claimId} className="text-center border-t hover:bg-gray-50">
                             <td className="py-2 px-3">{c.createdAt?.slice(0, 10) || "-"}</td>
                             <td className="py-2 px-3">{c.insurerName || c.insurerCode}</td>
                             <td className="py-2 px-3 font-medium">
-                                {c.claimAmount?.toLocaleString()} 원
+                                {Math.round(c.claimAmount)?.toLocaleString()} 원
                             </td>
                             <td className="py-2 px-3">
-                                {c.payoutAmount ? `${c.payoutAmount.toLocaleString()} 원` : "-"}
+                                {c.payoutAmount ? `${Math.round(c.payoutAmount).toLocaleString()} 원` : "-"}
                             </td>
                             <td className={`py-2 px-3 font-semibold ${statusColors[c.status] || "text-gray-500"}`}>
-                                {c.status ? c.status : "처리 중"}
+                                {c.status || "처리 중"}
                             </td>
                         </tr>
                     ))}
                     </tbody>
                 </table>
+
+                {/* ➕ 더보기 버튼 */}
+                <div className="mt-2">
+                    {page < totalPages && (
+                        <button
+                            onClick={() => setPage(page + 1)}
+                            className="
+                                w-full py-3
+                                flex items-center justify-center
+                                bg-blue-50 hover:bg-blue-100
+                                text-blue-700 font-semibold
+                                border-t border-gray-200
+                                transition
+                            "
+                        >
+                            +
+                        </button>
+                    )}
+                </div>
             </div>
         </div>
     );

@@ -230,6 +230,13 @@ const TimeModal = ({
   // 3. 이벤트 핸들러
   const handleSelectTime = (time) => setSelectedTime(time);
 
+  const dayMap = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
+
+  const nomalizeDay = (week) => {
+    if (!week) return null;
+    return week.substring(0, 3).toUpperCase();
+  };
+
   // 예약하기 버튼 클릭 시 이벤트 발생
     const handleNextStep = async (e) => {
         if (!selectedTime) {
@@ -300,8 +307,8 @@ const TimeModal = ({
         {/* 선택된 의사 표시 */}
         <div className="mb-6 bg-blue-50 border border-blue-200 p-3 rounded-lg text-center text-blue-700">
           <span className="font-normal">
-            {selectedDoctor.department} {selectedDoctor.doctorName} 의사 → 진료
-            시간을 선택해 주세요.
+            {selectedDoctor.department} {selectedDoctor.name} 의사 → 진료 시간을
+            선택해 주세요.
           </span>
         </div>
 
@@ -311,23 +318,40 @@ const TimeModal = ({
             진료 날짜
           </label>
           <div className="flex overflow-x-auto space-x-3 p-1">
-            {sevenDays.map((day) => (
-              <button
-                key={day.dateValue}
-                onClick={() => {
-                  setSelectedDate(day.dateValue);
-                  setSelectedTime(null); // 날짜 변경 시 시간 초기화
-                }}
-                className={`flex-shrink-0 w-20 py-2 rounded-lg text-center border-2 transition-all duration-200 ${
-                  selectedDate === day.dateValue
-                    ? "bg-blue-500 text-white border-blue-600 font-bold shadow-md"
-                    : "bg-gray-50 text-gray-700 border-gray-200 hover:bg-blue-100"
-                }`}
-              >
-                {day.isToday ? "오늘" : day.dayOfWeek}
-                <div className="text-xs">{day.dateString}</div>
-              </button>
-            ))}
+            {sevenDays.map((day) => {
+              const jsDay = new Date(day.dateValue).getDay();
+              const dayString = dayMap[jsDay];
+
+              const schedule = selectedDoctor?.schedule?.find(
+                (s) => nomalizeDay(s.week) === dayString
+              );
+
+              const isWorking =
+                schedule &&
+                (schedule.isWorking === 1 ||
+                  schedule.isWorking === "1" ||
+                  schedule.isWorking === true);
+              return (
+                <button
+                  key={day.dateValue}
+                  disabled={!isWorking}
+                  onClick={() => {
+                    setSelectedDate(day.dateValue);
+                    setSelectedTime(null); // 날짜 변경 시 시간 초기화
+                  }}
+                  className={`flex-shrink-0 w-20 py-2 rounded-lg text-center border-2 transition-all duration-200 ${
+                    !isWorking
+                      ? "bg-gray-200 text-gray-400 border-gray-300 cursor-not-allowed opacity-70"
+                      : selectedDate === day.dateValue
+                      ? "bg-blue-500 text-white border-blue-600 font-bold shadow-md"
+                      : "bg-gray-50 text-gray-700 border-gray-200 hover:bg-blue-100"
+                  }`}
+                >
+                  {day.isToday ? "오늘" : day.dayOfWeek}
+                  <div className="text-xs">{day.dateString}</div>
+                </button>
+              );
+            })}
           </div>
         </div>
 
@@ -509,6 +533,7 @@ export default function MedicalConsult() {
   // 이벤트 핸들러
   const handleReservationClick = (doctor) => {
     setSelectedDoctor(doctor);
+
     setIsModalOpen(true);
   };
 

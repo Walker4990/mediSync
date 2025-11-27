@@ -44,6 +44,7 @@ import DoctorReview from "./pages/user/DoctorReview";
 import OAuthCallback from "./component/OAuthCallback";
 import InsurerPage from "./pages/admin/InsurerPage";
 import PatientInsurancePage from "./pages/user/PatientInsurancePage";
+import DrugDeadline from "./pages/admin/DrugDeadline";
 
 import axios from "axios";
 import PaymentFail from "./component/PaymentFail";
@@ -52,7 +53,10 @@ import TossCallback from "./component/TossCallback";
 import PaymentPage from "./component/PaymentPage";
 import ServiceListPage from "./pages/user/ServiceListPage";
 import ServiceDetailPage from "./pages/user/ServiceDetailPage";
+import DrugInspection from "./pages/admin/DrugInspection";
 import AdminRefundPage from "./pages/admin/AdminRefundPage";
+import UnpaidManagePage from "./pages/admin/UnPaidManagePage";
+import UnpaidAlert from "./component/UnpaidAlert";
 const token = localStorage.getItem("token");
 if (token) {
   axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
@@ -85,6 +89,8 @@ function AppContent() {
           <Route path="/admin/history" element={<MediHistory />} />
           <Route path="/admin/medicalRecord" element={<MedicalRecordPage />} />
           <Route path="/admin/drug" element={<DrugPage />} />
+          <Route path="/admin/inspection" element={<DrugInspection />} />
+          <Route path="/admin/drug/deadline" element={<DrugDeadline />} />
           <Route
             path="/admin/test/reservation"
             element={<TestReservationPage />}
@@ -93,6 +99,7 @@ function AppContent() {
           <Route path="/admin/test/endoscope" element={<EndoscopeTestPage />} />
           <Route path="/admin/test/basic" element={<BasicTestPage />} />
           <Route path="/admin/test/other" element={<OtherTestPage />} />
+
           <Route
             path="/admin/operation/:operationId"
             element={<OperationDetailPage />}
@@ -106,6 +113,7 @@ function AppContent() {
           <Route path="/admin/finance/dashboard" element={<DashBoard />} />
           <Route path="/admin/insurance" element={<InsurerPage />} />
           <Route path="/admin/finance/refund" element={<AdminRefundPage />} />
+          <Route path="/admin/finance/unpaid" element={<UnpaidManagePage />} />
           {/*유저페이지*/}
           <Route element={<UserLayout />}>
             <Route path="/" element={<UserHome />} />/
@@ -124,6 +132,7 @@ function AppContent() {
               element={<PatientInsurancePage />}
             />
           </Route>
+          <Route path="/unpaid-alert" element={<UnpaidAlert />} />
           <Route path="/user/mypage/payment" element={<PaymentPage />} />
 
           <Route path="/services" element={<ServiceListPage />} />

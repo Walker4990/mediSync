@@ -35,5 +35,5 @@ public interface AdminReviewMapper {
 
     ReviewStateDTO selectRatingByAdminId(long adminid);
 
-    Map<String, Object> getRandomFiveStarReview();
+    List<Map<String, Object>> getRandomFiveStarReview();
 }

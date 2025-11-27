@@ -45,28 +45,69 @@
         WHERE user_id = #{userId}
     </update>
 
-    <!-- 환자 정보 조회 -->
-    <select id="allPatient" resultType="patient">
-        SELECT * FROM patient
+    <select id="searchPatient" resultType="patient">
+        SELECT *
+        FROM patient
+        <where>
+            <if test="keyword != null">
+                (name LIKE CONCAT('%', #{keyword}, '%')
+                OR phone LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+        </where>
+        ORDER BY patient_id DESC
     </select>
 
+    <!-- 환자 정보 조회 -->
+    <select id="allPatient" resultType="patient">
+        SELECT *
+        FROM patient
+        <where>
+            <if test="keyword != null">
+                (name LIKE CONCAT('%', #{keyword}, '%')
+                OR phone LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+        </where>
+        ORDER BY patient_id DESC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="countPatient" resultType="int">
+        SELECT COUNT(*)
+        FROM patient
+        <where>
+            <if test="keyword != null">
+                (name LIKE #{keyword} OR phone LIKE #{keyword})
+            </if>
+        </where>
+    </select>
     <!-- 과거진료 내역 불러오기 (수술 시) -->
-    <select id="getPatientRecords" parameterType="long" resultType="medicalRecord">
+    <select id="getPatientRecords"  resultType="medicalRecord">
         SELECT
-        r.record_id,
-        r.created_at,
+        p.prescription_id,
+        p.record_id,
+        p.created_at,
+        p.type,
+        a.name,
+        p.dosage,
+        d.dept_name,
         r.diagnosis,
-        a.name AS doctorName,
-        dept.dept_name AS deptName
-        FROM medical_record r
+        a.name AS doctorName
+        FROM prescription p
+        JOIN medical_record r ON p.record_id = r.record_id
         LEFT JOIN admin_account a ON r.admin_id = a.admin_id
-        LEFT JOIN department dept ON a.dept_id = dept.dept_id
+        LEFT JOIN department d ON a.dept_id = d.dept_id
         WHERE r.patient_id = #{patientId}
-        ORDER BY r.created_at DESC
+        ORDER BY p.created_at DESC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+    <select id="countAllRecord" parameterType="long" resultType="int">
+        SELECT COUNT(*)
+        FROM medical_record
+        WHERE patient_id = #{patientId}
     </select>
 
     <!-- 처방 내역 불러오기 (수술 시) -->
-    <select id="getPatientPrescriptions" parameterType="long" resultType="prescription">
+    <select id="getPatientPrescriptions"  resultType="prescription">
         SELECT
         p.prescription_id       AS prescriptionId,
         p.record_id             AS recordId,
@@ -90,6 +131,14 @@
         LEFT JOIN admin_account a ON r.admin_id = a.admin_id
         WHERE r.patient_id = #{patientId}
         ORDER BY p.created_at DESC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="countAll" parameterType="long" resultType="int">
+        SELECT COUNT(*)
+        FROM prescription pr
+        JOIN medical_record r ON pr.record_id = r.record_id
+        WHERE r.patient_id = #{patientId}
     </select>
 
     <!-- 환자 상세정보 불러오기 (수술 시) -->
@@ -97,35 +146,57 @@
         SELECT * FROM patient WHERE patient_id=#{patientId}
     </select>
 
-    <!-- 입원 환자 조회 -->
-    <select id="selectInpatient" resultType="patient">
+    <!-- 입원 환자 조회 (최근 기록 조회)-->
+    <select id="selectInpatient" resultType="map">
         SELECT
-        p.patient_id       AS patientId,
-        p.name             AS name,
-        p.phone            AS phone,
-        p.address          AS address,
-        p.admission_status AS admissionStatus,
-        r.room_no          AS roomNo,
-        r.ward_name        AS wardName,
-        r.nurse_in_charge  AS nurseName,
-        r.status           AS roomStatus,
-        mr.record_id       AS recordId,
-        mr.diagnosis       AS diagnosis,
-        mr.admin_id        AS adminId,
-        a.name             AS adminName,
-        p.admission_date   AS admissionDate,
-        p.discharge_date   AS dischargeDate
-        FROM patient p
+        a.admission_id      AS admissionId,
+        p.patient_id        AS patientId,
+        p.name              AS name,
+        p.phone             AS phone,
+        p.address           AS address,
+
+        -- 입원 정보
+        a.admitted_at       AS admittedAt,
+        a.discharged_at     AS dischargedAt,
+        a.status            AS admissionStatus,
+
+        -- 병실 정보
+        r.room_no           AS roomNo,
+        r.ward_name         AS wardName,
+        r.nurse_in_charge   AS nurseName,
+
+        -- 의료기록(가장 최근 1건)
+        mr.record_id        AS recordId,
+        mr.diagnosis        AS diagnosis,
+        mr.admin_id         AS adminId,
+        ad.name             AS adminName
+
+        FROM admission a
+        JOIN patient p
+        ON a.patient_id = p.patient_id
+
         LEFT JOIN room r
-        ON p.room_id = r.room_id
-        LEFT JOIN medical_record mr
+        ON a.room_id = r.room_id
+
+        -- 최신 medical_record 1건 서브쿼리
+        LEFT JOIN (
+        SELECT mr1.*
+        FROM medical_record mr1
+        WHERE mr1.record_id = (
+        SELECT MAX(record_id)
+        FROM medical_record
+        WHERE patient_id = mr1.patient_id
+        )
+        ) mr
         ON mr.patient_id = p.patient_id
-        AND mr.status IN ('PENDING', 'IN_PROGRESS')
-        LEFT JOIN admin_account a
-        ON mr.admin_id = a.admin_id
-        WHERE p.admission_status = 'INPATIENT'
-        ORDER BY r.room_no ASC;
+
+        LEFT JOIN admin_account ad
+        ON mr.admin_id = ad.admin_id
+
+        WHERE a.status = 'ADMITTED'
+        ORDER BY a.admitted_at DESC;
     </select>
+
 
     <!-- 환자 과거 처방 내역 조회 -->
     <select id="findByPatientId" parameterType="long" resultType="prescription">
@@ -151,5 +222,9 @@
         SET admission_status = #{admissionStatus}
         WHERE patient_id = #{patientId}
     </update>
-
+    <update id="updatePatientRoom" parameterType="int">
+        UPDATE patient
+        SET room_id = #{roomId}
+        WHERE patient_id = #{patientId}
+    </update>
 </mapper>

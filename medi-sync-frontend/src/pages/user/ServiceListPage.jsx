@@ -49,19 +49,7 @@ export default function ServiceListPage() {
             color: "bg-green-500",
             description: "여드름·기미·주름 개선 및 다양한 피부 치료 시술 제공.",
         },
-        // 전체 목록에 확장 가능
-        {
-            id: 6,
-            title: "정형외과 진료",
-            category: "치료",
-            description: "관절·근육·인대 관련 전문 진료.",
-        },
-        {
-            id: 7,
-            title: "내과 진료",
-            category: "건강관리",
-            description: "감기·위장·만성 질환 등 전반적인 내과 진료.",
-        },
+
     ];
 
     const filtered =

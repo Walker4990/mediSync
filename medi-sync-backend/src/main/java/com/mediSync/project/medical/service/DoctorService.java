@@ -2,6 +2,7 @@ package com.mediSync.project.medical.service;
 
 import com.mediSync.project.medical.dto.DoctorDTO;
 import com.mediSync.project.medical.dto.DoctorInfoDTO;
+import com.mediSync.project.medical.dto.DoctorScheduleDTO;
 import com.mediSync.project.medical.mapper.DoctorMapper;
 import com.mediSync.project.medical.vo.AdminAccount;
 import lombok.RequiredArgsConstructor;
@@ -39,6 +40,14 @@ public class DoctorService {
 
     public DoctorDTO findDoctorByAdminId(long adminId){
         return doctorMapper.findDoctorByAdminId(adminId);
+    }
+
+    public List<DoctorScheduleDTO> selectDoctorSchedule(){
+        return doctorMapper.selectDoctorSchedule();
+    }
+
+    public List<DoctorScheduleDTO>selectDoctorScheduleByAdminId(long adminId){
+        return doctorMapper.selectDoctorScheduleByAdminId(adminId);
     }
 
 }

@@ -108,7 +108,7 @@
         GROUP BY ar.admin_id;
 
     </select>
-
+    <!-- 유저 홈페이지 리뷰 랜덤 불러오기-->
     <select id="getRandomFiveStarReview" resultType="map">
     SELECT
     r.review_id AS reviewId,
@@ -123,7 +123,7 @@
     JOIN department d ON a.dept_id = d.dept_id
     WHERE r.rating = 5
     ORDER BY RAND()
-    LIMIT 1
+    LIMIT 3
 </select>
 
 

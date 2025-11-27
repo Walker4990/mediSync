@@ -1,11 +1,12 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
 import AdminHeader from "../../component/AdminHeader";
-import {FaTrashAlt} from "react-icons/fa";
+import { FaTrashAlt } from "react-icons/fa";
 
 export default function OperationDetailPage() {
     const { operationId } = useParams();
+
     const [operation, setOperation] = useState({
         operationName: "",
         anesthesiaType: "",
@@ -18,16 +19,27 @@ export default function OperationDetailPage() {
         status: "SCHEDULED",
         resultNote: "",
     });
+
     const [patient, setPatient] = useState(null);
     const [logs, setLogs] = useState([]);
     const [history, setHistory] = useState([]);
     const [newStaff, setNewStaff] = useState({ name: "", position: "" });
-    const [activeTab, setActiveTab] = useState("history"); // history | conditions
+    const [activeTab, setActiveTab] = useState("history");
     const [prescriptions, setPrescriptions] = useState([]);
     const [rooms, setRooms] = useState([]);
     const [suggestions, setSuggestions] = useState([]);
     const [staffList, setStaffList] = useState([]);
 
+    const [historyPage, setHistoryPage] = useState(1);
+    const [historyTotal, setHistoryTotal] = useState(0);
+    const [prescPage, setPrescPage] = useState(1);
+    const [prescTotal, setPrescTotal] = useState(0);
+
+    const [patientIdState, setPatientIdState] = useState(null);
+
+    // ────────────────────────────────────────────────
+    // 초기 세팅 : 수술 상세 + 로그 + 환자ID 저장
+    // ────────────────────────────────────────────────
     useEffect(() => {
         fetchDetail();
         fetchLogs();
@@ -36,41 +48,93 @@ export default function OperationDetailPage() {
     useEffect(() => {
         axios
             .get("http://192.168.0.24:8080/api/operation/room")
-            .then((res) => {
-                setRooms(res.data);
-            })
+            .then((res) => setRooms(res.data))
             .catch((err) => console.error("❌ 수술실 목록 불러오기 실패:", err));
     }, []);
 
     const fetchDetail = async () => {
         const res = await axios.get(`http://192.168.0.24:8080/api/operation/${operationId}`);
         setOperation(res.data);
+
         if (res.data.patientId) {
+            setPatientIdState(res.data.patientId);
             fetchPatient(res.data.patientId);
         }
+
         fetchStaffList();
     };
-
-    const fetchStaffList = async () => {
-        try {
-            const res = await axios.get(`http://192.168.0.24:8080/api/operation/${operationId}/operationStaffs`);
-            setStaffList(res.data);
-        } catch (error) {
-            console.log("참여 의료진 조회 실패 : ", error);
-        }
-    }
 
     const fetchPatient = async (patientId) => {
         const res = await axios.get(`http://192.168.0.24:8080/api/patients/${patientId}/detail`);
         setPatient(res.data);
-        // 추가 API로 과거 진료, 처방내역 불러오기
-        const [hRes, pRes] = await Promise.all([
-            axios.get(`http://192.168.0.24:8080/api/patients/${patientId}/records`),
-            axios.get(`http://192.168.0.24:8080/api/patients/${patientId}/prescriptions`),
-        ]);
-        setHistory(hRes.data);
-        setPrescriptions(pRes.data);
     };
+
+    const fetchStaffList = async () => {
+        try {
+            const res = await axios.get(
+                `http://192.168.0.24:8080/api/operation/${operationId}/operationStaffs`
+            );
+            setStaffList(res.data);
+        } catch (error) {
+            console.log("참여 의료진 조회 실패 : ", error);
+        }
+    };
+
+    // ────────────────────────────────────────────────
+    // 페이징 적용된 진료 기록
+    // ────────────────────────────────────────────────
+    const fetchHistory = async (patientId, page = 1) => {
+        try {
+            const res = await axios.get(
+                `http://192.168.0.24:8080/api/patients/${patientId}/records`,
+                { params: { page, size: 10 } }
+            );
+            setHistory(prev => [...prev, ...(res.data.items || [])]);
+
+            setHistoryTotal(res.data.totalCount || 0);
+        } catch (err) {
+            console.error("❌ 진료기록 조회 실패:", err);
+            setHistory([]); // undefined 방지
+        }
+    };
+
+    // ────────────────────────────────────────────────
+    // 페이징 적용된 처방 기록
+    // ────────────────────────────────────────────────
+    const fetchPrescriptions = async (patientId, page = 1) => {
+        try {
+            const res = await axios.get(
+                `http://192.168.0.24:8080/api/patients/${patientId}/prescriptions`,
+                { params: { page, size: 10 } }
+            );
+            setPrescriptions(prev => [...prev, ...(res.data.items || [])]);
+            setPrescTotal(res.data.totalCount || 0);
+        } catch (err) {
+            console.error("❌ 처방 내역 조회 실패:", err);
+            setPrescriptions([]); // undefined 방지
+        }
+    };
+    // 탭 변경하면 내역 초기화
+    useEffect(() => {
+        if (activeTab === "history") {
+            setHistory([]);
+            setHistoryPage(1);
+        } else {
+            setPrescriptions([]);
+            setPrescPage(1);
+        }
+    }, [activeTab]);
+
+    // ⭐ patientIdState가 준비되기 전에는 절대 호출되지 않음
+    useEffect(() => {
+        if (!patientIdState) return;
+
+        if (activeTab === "history") {
+            fetchHistory(patientIdState, historyPage);
+        } else {
+            fetchPrescriptions(patientIdState, prescPage);
+        }
+    }, [activeTab, historyPage, prescPage, patientIdState]);
 
     const fetchLogs = async () => {
         const res = await axios.get(`http://192.168.0.24:8080/api/operation/${operationId}/logs`);
@@ -84,36 +148,34 @@ export default function OperationDetailPage() {
     };
 
     const handleAddStaff = async () => {
-        console.log("🚀 전송할 스태프:", newStaff); // 👈 반드시 확인
         if (!newStaff.name || !newStaff.position) return alert("이름과 직책을 입력하세요.");
 
         try {
-            await axios.post(`http://192.168.0.24:8080/api/operation/${operationId}/staff`, newStaff);
+            await axios.post(
+                `http://192.168.0.24:8080/api/operation/${operationId}/staff`,
+                newStaff
+            );
             alert("✅ 의료진 추가 완료");
             setNewStaff({ name: "", position: "" });
             fetchDetail();
         } catch (err) {
             const message = err.response?.data?.message || err.response?.data;
-              if (typeof message === "string" && message.includes("이미 등록된 의료진")) {
+            if (typeof message === "string" && message.includes("이미 등록된 의료진")) {
                 alert("⚠️ 이미 참여중인 의료진입니다.");
             } else {
                 alert("❌ 의료진 등록 실패");
-                console.error("의료진 등록 오류:", err.response?.data);
             }
         }
     };
 
     const formatTime = (timeString) => {
         if (!timeString) return "";
-        // ISO 형태일 경우 (예: 2025-10-30T09:30:00)
         if (timeString.includes("T")) return timeString.split("T")[1].slice(0, 5);
-        // 초 단위 포함 시 (예: 09:30:00)
         return timeString.slice(0, 5);
     };
 
     const handleSearchStaff = async (inputValue) => {
-        if (inputValue === newStaff.name) return;
-        const value = inputValue.trim(); // 🔹 입력값을 받아 변수에 저장
+        const value = inputValue.trim();
         setNewStaff({ ...newStaff, name: value });
 
         if (!value) {
@@ -125,12 +187,11 @@ export default function OperationDetailPage() {
             const res = await axios.get("http://192.168.0.24:8080/api/staffs/search", {
                 params: { keyword: value },
             });
-            setSuggestions(res.data); // 🔹 검색결과 suggestions에 세팅
+            setSuggestions(res.data);
         } catch (err) {
             console.error("❌ 의료진 자동완성 실패:", err);
         }
     };
-
 
     const handleSelectSuggestion = (staff) => {
         setNewStaff({
@@ -139,27 +200,31 @@ export default function OperationDetailPage() {
             adminId: staff.adminId,
         });
 
-        //  실제 입력창에도 선택한 이름 반영
         const inputEl = document.querySelector("input[placeholder='이름']");
         if (inputEl) inputEl.value = staff.name;
 
-        //  자동완성 목록 닫기
         setSuggestions([]);
     };
 
     const handleDeleteStaff = async (staffId) => {
-        if(!window.confirm('정말 삭제하시겠습니까?')) return;
+        if (!window.confirm("정말 삭제하시겠습니까?")) return;
 
-        try{
-            await axios.delete(`http://192.168.0.24:8080/api/operation/${operationId}/staff/${staffId}`);
+        try {
+            await axios.delete(
+                `http://192.168.0.24:8080/api/operation/${operationId}/staff/${staffId}`
+            );
             alert("삭제 완료");
             fetchDetail();
-        } catch (err){
-            console.error("의료진 삭제 실패 : ",err)
+        } catch (err) {
+            console.error("의료진 삭제 실패 : ", err);
         }
-    }
+    };
 
-    if (!operation) return <p className="p-8 text-gray-500 text-center">⏳ 수술 정보를 불러오는 중...</p>;
+    // ────────────────────────────────────────────────
+    // ⛔ 렌더링 안전: history?.length 사용 (undefined 방지)
+    // ────────────────────────────────────────────────
+    const safeHistory = Array.isArray(history) ? history : [];
+    const safePrescriptions = Array.isArray(prescriptions) ? prescriptions : [];
 
     return (
         <div className="min-h-screen bg-gray-50">
@@ -170,7 +235,7 @@ export default function OperationDetailPage() {
                     🏥 수술 상세 정보 (ID: {operationId})
                 </h2>
 
-                {/* ✅ 환자 요약 섹션 */}
+                {/* ─────────────────────── 환자 정보 ─────────────────────── */}
                 {patient && (
                     <section className="bg-white rounded-2xl shadow p-6">
                         <h3 className="text-lg font-semibold text-blue-600 border-b pb-2">👤 환자 정보</h3>
@@ -185,11 +250,9 @@ export default function OperationDetailPage() {
                     </section>
                 )}
 
-                {/* ✅ 수술 정보 */}
+                {/* ─────────────────────── 수술 정보 ─────────────────────── */}
                 <section className="bg-white rounded-2xl shadow p-6 space-y-4">
-                    <h3 className="text-lg font-semibold text-blue-600 border-b pb-2">
-                        수술 정보
-                    </h3>
+                    <h3 className="text-lg font-semibold text-blue-600 border-b pb-2">수술 정보</h3>
 
                     <div className="grid grid-cols-2 gap-6">
                         {/* 수술명 */}
@@ -208,18 +271,11 @@ export default function OperationDetailPage() {
                         {/* 마취 유형 */}
                         <div>
                             <label className="text-sm text-gray-600">마취 유형</label>
-                            <select
+                            <input
                                 className="border w-full rounded-md p-2 mt-1"
                                 value={operation.anesthesiaType || ""}
-                                onChange={(e) =>
-                                    setOperation({ ...operation, anesthesiaType: e.target.value })
-                                }
-                            >
-                                <option value="">선택</option>
-                                <option value="LOCAL">국소 마취</option>
-                                <option value="GENERAL">전신 마취</option>
-                                <option value="SEDATION">수면 마취</option>
-                            </select>
+                                readOnly
+                            />
                         </div>
 
                         {/* 수술 일자 */}
@@ -229,10 +285,8 @@ export default function OperationDetailPage() {
                                 type="date"
                                 className="border w-full rounded-md p-2 mt-1"
                                 value={operation.scheduledDate || ""}
-                                onChange={(e) =>
-                                    setOperation({ ...operation, scheduledDate: e.target.value })
-                                }
-                                readOnly />
+                                readOnly
+                            />
                         </div>
 
                         {/* 수술 시간 */}
@@ -242,24 +296,21 @@ export default function OperationDetailPage() {
                                 type="time"
                                 className="border w-full rounded-md p-2 mt-1"
                                 value={formatTime(operation.scheduledTime)}
-                                onChange={(e) =>
-                                    setOperation({ ...operation, scheduledTime: e.target.value })
-                                }
-                                readOnly />
+                                readOnly
+                            />
                         </div>
 
-
-                        {/* 수술실 */}<div>
-                        <label className="text-sm text-gray-600">수술실</label>
-                        <select
-                            className="border w-full rounded-md p-2 mt-1 bg-gray-100 cursor-not-allowed"
-                            value={operation.roomName || ""} // ✅ roomName 표시
-                            disabled // ✅ 읽기 전용으로 잠금
-                        >
-                            <option value="">{operation.roomName || "배정되지 않음"}</option>
-                        </select>
-                    </div>
-
+                        {/* 수술실 */}
+                        <div>
+                            <label className="text-sm text-gray-600">수술실</label>
+                            <select
+                                className="border w-full rounded-md p-2 mt-1 bg-gray-100 cursor-not-allowed"
+                                value={operation.roomName || ""}
+                                disabled
+                            >
+                                <option value="">{operation.roomName || "배정되지 않음"}</option>
+                            </select>
+                        </div>
 
                         {/* 담당의 */}
                         <div>
@@ -267,10 +318,7 @@ export default function OperationDetailPage() {
                             <input
                                 className="border w-full rounded-md p-2 mt-1"
                                 value={operation.doctorName || ""}
-                                onChange={(e) =>
-                                    setOperation({ ...operation, doctorName: e.target.value })
-                                }
-                                placeholder="예: 김의사"
+                                readOnly
                             />
                         </div>
 
@@ -288,7 +336,6 @@ export default function OperationDetailPage() {
                             />
                         </div>
 
-
                         {/* 결과 기록 */}
                         <div className="col-span-2">
                             <label className="text-sm text-gray-600">결과 기록</label>
@@ -303,6 +350,20 @@ export default function OperationDetailPage() {
                         </div>
                     </div>
 
+                    {/* 예상 소요시간 */}
+                    <div>
+                        <label className="text-sm text-gray-600">예상 소요시간 (분)</label>
+                        <input
+                            type="number"
+                            className="border w-full rounded-md p-2 mt-1"
+                            value={operation.duration || ""}
+                            onChange={(e) =>
+                                setOperation({ ...operation, duration: e.target.value })
+                            }
+                            placeholder="예: 120"
+                        />
+                    </div>
+
                     <div className="flex justify-end">
                         <button
                             onClick={handleUpdate}
@@ -313,9 +374,11 @@ export default function OperationDetailPage() {
                     </div>
                 </section>
 
-
+                {/* ─────────────────────── 의료진 관리 ─────────────────────── */}
                 <section className="bg-white rounded-2xl shadow p-6 space-y-4">
-                    <h3 className="text-lg font-semibold text-blue-600 border-b pb-2">👨‍⚕️ 참여 의료진 등록</h3>
+                    <h3 className="text-lg font-semibold text-blue-600 border-b pb-2">
+                        👨‍⚕️ 참여 의료진 등록
+                    </h3>
 
                     <div className="relative">
                         <div className="flex gap-2">
@@ -328,7 +391,9 @@ export default function OperationDetailPage() {
                             <input
                                 placeholder="역할 (집도의 / 간호사 등)"
                                 value={newStaff.position}
-                                onChange={(e) => setNewStaff({ ...newStaff, position: e.target.value })}
+                                onChange={(e) =>
+                                    setNewStaff({ ...newStaff, position: e.target.value })
+                                }
                                 className="border p-2 flex-1 rounded-md"
                             />
                             <button
@@ -339,7 +404,6 @@ export default function OperationDetailPage() {
                             </button>
                         </div>
 
-                        {/* 자동완성 리스트 */}
                         {suggestions.length > 0 && (
                             <ul className="absolute z-10 bg-white border mt-1 rounded-md shadow w-full max-h-40 overflow-y-auto">
                                 {suggestions.map((staff, idx) => (
@@ -354,6 +418,7 @@ export default function OperationDetailPage() {
                             </ul>
                         )}
                     </div>
+
                     {staffList.length > 0 ? (
                         <table className="w-full text-sm text-left border mt-3">
                             <thead className="bg-gray-100 text-gray-700">
@@ -365,15 +430,18 @@ export default function OperationDetailPage() {
                             </thead>
                             <tbody>
                             {staffList.map((s, idx) => (
-                                <tr key={s.staffId || `staff-${idx}`} className="border-b hover:bg-gray-50">
+                                <tr
+                                    key={s.staffId || `staff-${idx}`}
+                                    className="border-b hover:bg-gray-50"
+                                >
                                     <td className="p-2">{s.name}</td>
                                     <td className="p-2">{s.position}</td>
                                     <td className="p-2">
                                         <button
                                             onClick={() => handleDeleteStaff(s.staffId)}
-                                            className="text-red-600 hover:text-red-800 p-1 rounded-md transition duration-150 ease-in-out"
+                                            className="text-red-600 hover:text-red-800 p-1 rounded-md"
                                         >
-                                            <FaTrashAlt className="w-5 h-5" />{" "}
+                                            <FaTrashAlt className="w-5 h-5" />
                                         </button>
                                     </td>
                                 </tr>
@@ -381,12 +449,12 @@ export default function OperationDetailPage() {
                             </tbody>
                         </table>
                     ) : (
-                        <p className="text-gray-500 text-sm mt-3">현재 참여 의료진이 없습니다.</p>
-                        )}
+                        <p className="text-gray-500 text-sm mt-3">
+                            현재 참여 의료진이 없습니다.
+                        </p>
+                    )}
                 </section>
-
-
-                {/* ✅ 하단 탭: 과거 진료 / 처방 기록 */}
+                {/* ─────────────────────── 진료/처방 기록 ─────────────────────── */}
                 <section className="bg-white rounded-2xl shadow p-6 space-y-4">
                     <div className="flex gap-4 border-b pb-2">
                         <button
@@ -411,65 +479,105 @@ export default function OperationDetailPage() {
                         </button>
                     </div>
 
-                    {/* ✅ 과거 진료내역 */}
+                    {/* ──────────── 진료내역 ──────────── */}
                     {activeTab === "history" ? (
-                        history.length === 0 ? (
+                        safeHistory.length === 0 ? (
                             <p className="text-gray-500">진료내역 없음</p>
                         ) : (
-                            <table className="w-full text-sm text-left border-t">
-                                <thead className="bg-gray-100 text-gray-700">
-                                <tr>
-                                    <th className="p-2">날짜</th>
-                                    <th className="p-2">진료과</th>
-                                    <th className="p-2">진단명</th>
-                                    <th className="p-2">담당의</th>
-                                </tr>
-                                </thead>
-                                <tbody>
-                                {history.map((h) => (
-                                    <tr key={h.recordId} className="border-b hover:bg-gray-50">
-                                        <td className="p-2">{h.createdAt}</td>
-                                        <td className="p-2">{h.deptName}</td>
-                                        <td className="p-2">{h.diagnosis}</td>
-                                        <td className="p-2">{h.doctorName}</td>
+                            <>
+                                <table className="w-full text-sm text-left border-t">
+                                    <thead className="bg-gray-100 text-gray-700">
+                                    <tr>
+                                        <th className="p-2">날짜</th>
+                                        <th className="p-2">진료과</th>
+                                        <th className="p-2">진단명</th>
+                                        <th className="p-2">담당의</th>
                                     </tr>
-                                ))}
-                                </tbody>
-                            </table>
+                                    </thead>
+                                    <tbody>
+                                    {safeHistory.map((h,idx) => (
+                                        <tr key={`${h.recordId}-${idx}`} className="border-b hover:bg-gray-50">
+                                            <td className="p-2">{h.createdAt}</td>
+                                            <td className="p-2">{h.deptName}</td>
+                                            <td className="p-2">{h.diagnosis}</td>
+                                            <td className="p-2">{h.doctorName}</td>
+                                        </tr>
+                                    ))}
+                                    </tbody>
+                                </table>
+                                <div className="mt-2">
+                                    {historyPage < Math.ceil(historyTotal / 10) && (
+                                        <button
+                                            onClick={() => setHistoryPage(historyPage + 1)}
+                                            className="
+                w-full py-3
+                flex items-center justify-center
+                bg-blue-50 hover:bg-blue-100
+                text-blue-700 font-semibold
+                border-t border-gray-200
+                transition
+            "
+                                        >
+                                        +</button>
+                                    )}
+                                </div>
+                            </>
                         )
-                    ) : /* ✅ 처방내역 */ prescriptions.length === 0 ? (
-                        <p className="text-gray-500">처방내역 없음</p>
                     ) : (
-                        <table className="w-full text-sm text-left border-t">
-                            <thead className="bg-gray-100 text-gray-700">
-                            <tr>
-                                <th className="p-2">처방일</th>
-                                <th className="p-2">약품명</th>
-                                <th className="p-2">용량</th>
-                                <th className="p-2">투여기간</th>
-                                <th className="p-2">담당의</th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            {prescriptions.map((p, idx) => (
-                                <tr key={p.prescriptionId || `presc-${idx}`}>
-                                    <td>{p.createdAt}</td>
-                                    <td>{p.type}</td>
-                                    <td>
-                                        {p.type === "DRUG" && `${p.drugName}×${p.dosage}ml`}
-                                        {p.type === "TEST" && `${p.testName} (${p.testArea})`}
-                                        {p.type === "INJECTION" && `${p.injectionName} ×${p.dosage}ml`}
-                                    </td>
-                                    <td>{p.duration}</td>
-                                    <td>{p.doctorName}</td>
-                                </tr>
-                            ))}
-                            </tbody>
-                        </table>
+                        /* ──────────── 처방내역 ──────────── */
+                        safePrescriptions.length === 0 ? (
+                            <p className="text-gray-500">처방내역 없음</p>
+                        ) : (
+                            <>
+                                <table className="w-full text-sm text-left border-t">
+                                    <thead className="bg-gray-100 text-gray-700">
+                                    <tr>
+                                        <th className="p-2">처방일</th>
+                                        <th className="p-2">약품명</th>
+                                        <th className="p-2">용량</th>
+                                        <th className="p-2">투여기간</th>
+                                        <th className="p-2">담당의</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    {safePrescriptions.map((p, idx) => (
+                                        <tr key={p.prescriptionId || `presc-${idx}`}>
+                                            <td>{p.createdAt}</td>
+                                            <td>{p.type}</td>
+                                            <td>
+                                                {p.type === "DRUG" && `${p.drugName}×${p.dosage}ml`}
+                                                {p.type === "TEST" && `${p.testName} (${p.testArea})`}
+                                                {p.type === "INJECTION" && `${p.injectionName}×${p.dosage}ml`}
+                                            </td>
+                                            <td>{p.duration}</td>
+                                            <td>{p.doctorName}</td>
+                                        </tr>
+                                    ))}
+                                    </tbody>
+                                </table>
+
+                                <div className="flex justify-center mt-6">
+                                    {prescPage < Math.ceil(prescTotal / 10) && (
+                                        <button
+                                            onClick={() => setPrescPage(prescPage + 1)}
+                                            className=" w-full py-3
+                                                        flex items-center justify-center
+                                                        bg-blue-50 hover:bg-blue-100
+                                                        text-blue-700 font-semibold
+                                                        border-t border-gray-200
+                                                        transition"
+                                        >
+                                            +
+                                        </button>
+                                    )}
+                                </div>
+                            </>
+                        )
                     )}
                 </section>
 
-                {/* ✅ 로그 */}
+
+                {/* ─────────────────────── 변경 로그 ─────────────────────── */}
                 <section className="bg-white rounded-2xl shadow p-6 space-y-4">
                     <h3 className="text-lg font-semibold text-blue-600 border-b pb-2">🗂 변경 로그</h3>
                     {logs.length === 0 ? (

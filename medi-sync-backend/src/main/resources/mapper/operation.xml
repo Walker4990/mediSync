@@ -8,13 +8,11 @@
     <!-- 수술 등록 -->
     <insert id="insertOperation" parameterType="operation" useGeneratedKeys="true" keyProperty="operationId">
         INSERT INTO operation (
-        patient_id, admin_id, assistant_id, record_id,
-        operation_name, diagnosis, anesthesia_type,
-        room_id, scheduled_date, scheduled_time, cost, status
+        patient_id, admin_id, record_id, operation_name, anesthesia_type,
+        room_id, scheduled_date, scheduled_time, duration, cost, status
         ) VALUES (
-        #{patientId}, #{adminId}, #{assistantId}, #{recordId},
-        #{operationName}, #{diagnosis}, #{anesthesiaType},
-        #{roomId}, #{scheduledDate}, #{scheduledTime}, #{cost}, 'SCHEDULED'
+        #{patientId}, #{adminId}, #{recordId}, #{operationName}, #{anesthesiaType},
+        #{roomId}, #{scheduledDate}, #{scheduledTime}, #{duration}, #{cost}, 'SCHEDULED'
         )
     </insert>
 
@@ -30,6 +28,7 @@
         JOIN admin_account a ON o.admin_id = a.admin_id
         LEFT JOIN operation_room r ON o.room_id = r.room_id
         ORDER BY o.scheduled_date DESC, o.scheduled_time ASC
+        LIMIT #{size} OFFSET #{offset}
     </select>
 
     <!-- 수술방 목록 -->
@@ -51,13 +50,16 @@
         o.patient_id,
         p.name AS patientName,
         o.admin_id,
-        a.name AS adminName,
+        o.anesthesia_type AS anesthesiaType,
+        a.name AS doctorName,
         o.operation_name AS operationName,
         o.cost,
         o.status,
         o.scheduled_date,
         o.scheduled_time,
         o.room_id,
+        o.duration,
+        o.result_note AS resultNote,
         orr.room_name AS roomName
         FROM operation o
         LEFT JOIN patient p ON o.patient_id = p.patient_id
@@ -98,6 +100,7 @@
         SET operation_name = #{operationName},
         anesthesia_type = #{anesthesiaType},
         result_note = #{resultNote},
+        duration = #{duration},
         updated_at = NOW()
         WHERE operation_id = #{operationId}
     </update>
@@ -229,5 +232,19 @@
         set type = "CANCELED"
         WHERE operation_id = #{id}
     </update>
+
+    <select id="getBaseCost" parameterType="string" resultType="int">
+        SELECT base_cost AS baseCost FROM operation_cost WHERE operation_name = #{operationName}
+    </select>
+
+    <update id="updateOperationCost">
+        UPDATE operation
+        SET cost = #{cost}
+        WHERE operation_id = #{operationId}
+    </update>
+
+    <select id="getOperationCostList" resultType="cost">
+        SELECT * FROM operation_cost ORDER BY operation_name
+    </select>
 
 </mapper>

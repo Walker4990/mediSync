@@ -75,6 +75,20 @@
         ORDER BY cr.created_at DESC
     </select>
 
+    <select id="countAll">
+        SELECT COUNT(*)
+        FROM claim_request cr
+        JOIN insurer ir
+        ON ir.insurer_code = cr.insurer_code
+        WHERE EXISTS (
+        SELECT 1
+        FROM patient_insurance pi
+        WHERE pi.insurer_code = cr.insurer_code
+        AND pi.patient_id = #{patientId}
+        )
+    </select>
+
+
     <!-- 보험사 목록 -->
     <select id="selectInsurerList" resultType="insurer">
         SELECT insurer_code, insurer_name, api_endpoint, contact
@@ -118,4 +132,13 @@
             updated_at = NOW()
         WHERE claim_id = #{claimId}
     </update>
+
+    <select id="latestClamStatus" parameterType="long" resultType="string">
+        SELECT c.status
+        FROM claim_request c
+        JOIN medical_record r ON c.record_id = r.record_id
+        WHERE r.patient_id = #{patientId}
+        ORDER BY c.created_at DESC
+        LIMIT 1
+    </select>
 </mapper>

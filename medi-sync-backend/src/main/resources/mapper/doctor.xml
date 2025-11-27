@@ -30,6 +30,15 @@
         ORDER BY a.name ASC
     </select>
 
+    <select id="selectDoctorSchedule" resultType="dsdto">
+        select * from admin_schedule
+    </select>
+
+    <select id="selectDoctorScheduleByAdminId" parameterType="long" resultType="dsdto">
+        select * from admin_schedule
+        where admin_id = #{adminId}
+    </select>
+
     <!-- ️ 의사 단건 조회 -->
     <select id="doctorSelectById" parameterType="long" resultType="adminAccount">
         SELECT

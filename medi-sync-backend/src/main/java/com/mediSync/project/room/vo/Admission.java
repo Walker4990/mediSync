@@ -30,5 +30,6 @@ public class Admission {
     private String nurseInCharge;
     private int capacity;
     private int currentCount;
-
+    private String adminName;
+    private Long adminId;
 }

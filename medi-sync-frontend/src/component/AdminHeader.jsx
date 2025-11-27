@@ -122,9 +122,14 @@ export default function AdminHeader() {
 
         {/* 네비게이션 */}
         <nav className="flex gap-6 text-sm">
-          <Link to="/admin/drug" className="hover:text-blue-200">
-            약품관리
-          </Link>
+          <DropdownMenu
+            title="약품관리"
+            items={[
+              { name: "약품정보", href: "/admin/drug" },
+              { name: "약품 정기 검사", href: "/admin/inspection" },
+              { name: "약품 폐기 관리", href: "/admin/drug/deadline" },
+            ]}
+          />
           <Link to="/admin/medicalRecord" className="hover:text-blue-200">
             진료관리
           </Link>
@@ -144,7 +149,6 @@ export default function AdminHeader() {
             title="고객관리"
             items={[
               { name: "환자정보", href: "/admin/patients" },
-              { name: "진료내역", href: "/admin/history" },
               { name: "입원관리", href: "/admin/admission" },
               { name: "실시간 상담", href: "/admin/chat" },
             ]}
@@ -158,9 +162,7 @@ export default function AdminHeader() {
               { name: "대시보드 (관리자전용)", href: "/admin/dashboard/hr" },
             ]}
           />
-          <Link to="/admin/insurance" className="hover:text-blue-200">
-            보험관리
-          </Link>
+
         </nav>
 
         {/* 우측 사용자 + 알림 */}

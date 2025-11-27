@@ -30,4 +30,6 @@ public interface ReservationMapper {
     int updateStatus(Long reservationId, String status);
 
     Long findRecordIdByReservationId(Long reservationId);
+
+    int countTodayReservations(Long patientId);
 }

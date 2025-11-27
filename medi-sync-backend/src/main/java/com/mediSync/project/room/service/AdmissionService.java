@@ -68,7 +68,8 @@ public class AdmissionService {
                     "patientName", ad.getPatientName(),
                     "roomNo", ad.getRoomNo()
             ));
-
+            patientMapper.updatePatientAdmissionStatus(ad.getPatientId(), "OUTPATIENT");
+            patientMapper.updatePatientRoom(ad.getPatientId(), null);
             log.info("✅ 자동 퇴원 처리 완료: {}", ad.getPatientName());
             } catch (Exception e) {
                 log.error("자동 퇴원 처리 실패: {}", e.getMessage());

@@ -57,4 +57,8 @@ public class ChatMessageController {
     public void markMessagesAsRead(@PathVariable Long senderId, @PathVariable Long receiverId) {
         chatMessageService.markMessagesAsRead(senderId, receiverId);
     }
+    @GetMapping("/partners/{adminId}")
+    public List<ChatMessage> getPartners(@PathVariable Long adminId) {
+        return chatMessageService.getChatPartners(adminId);
+    }
 }

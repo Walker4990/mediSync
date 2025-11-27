@@ -7,6 +7,7 @@ import org.apache.ibatis.type.Alias;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -27,8 +28,10 @@ public class DoctorInfoDTO {
     private LocalDateTime createdAt;
     private String profileImgUrl;
 
-
     //평점 추가
     private Double avgRating;
     private int ratingCount;
+
+    //스케쥴 리스트
+    private List<DoctorScheduleDTO> schedule;
 }
