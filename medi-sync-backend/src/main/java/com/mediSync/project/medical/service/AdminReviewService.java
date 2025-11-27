@@ -100,7 +100,7 @@ public class AdminReviewService {
 
 
     // 리뷰 랜덤 뽑기
-    public Map<String, Object> getRandomFiveStarReview(){
+    public List<Map<String, Object>> getRandomFiveStarReview(){
         return adminReviewMapper.getRandomFiveStarReview();
     }
 

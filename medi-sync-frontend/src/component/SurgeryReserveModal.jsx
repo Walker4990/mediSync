@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import {jwtDecode} from "jwt-decode";
 
 export default function ReserveModal({
                                          open,
@@ -20,7 +21,10 @@ export default function ReserveModal({
         "09:00", "09:30", "10:00", "10:30", "11:00",
         "13:00", "13:30", "14:00", "14:30", "15:00", "15:30", "16:00"
     ];
+    const token = localStorage.getItem("admin_token");
+    const decoded = token ? jwtDecode(token) : null;
 
+    const adminId = decoded?.adminId || null;
     useEffect(() => {
         if (open && mode === "surgery"){
             axios.get("http://192.168.0.24:8080/api/operation/cost/list")
@@ -116,7 +120,7 @@ export default function ReserveModal({
                 }
                 : {
                     recordId: test.recordId,
-                    adminId: test.adminId,
+                    adminId,
                     patientId: test.patientId,
                     operationName: operationName || "수술",
                     scheduledDate: date,

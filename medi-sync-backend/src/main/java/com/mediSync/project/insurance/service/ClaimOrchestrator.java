@@ -170,8 +170,18 @@ public class ClaimOrchestrator {
     public List<Insurer> getInsurerList() {
         return claimMapper.selectInsurerList();
     }
-    public List<Map<String, Object>> selectClaimHistoryByPatient(Long patientId) {
-        return claimMapper.selectClaimHistoryByPatient(patientId);
+
+    public Map<String, Object> selectClaimHistoryByPatient(Long patientId, int page, int size) {
+        int offset = (page - 1) * size;
+        List<Map<String, Object>> items = claimMapper.selectClaimHistoryByPatient(patientId);
+        int totalCount = claimMapper.countAll(patientId);
+        int totalPages = (int) Math.ceil((double)totalCount / size);
+
+        return Map.of(
+                "items", items,
+                "totalCount", totalCount,
+                "totalPages", totalPages
+        );
     }
     @Transactional
     public void submitClaim(ClaimRequestDto dto) {

@@ -132,7 +132,6 @@ public class OperationService {
 
         admissionMapper.insertAdmission(admission);
 
-        roomMapper.incrementRoomCount(selectedRoomForAdmission.getRoomId());
 
         //  알림 전송 (수술 전날 입원 예정)
         Patient patient = patientMapper.getPatientDetail(operation.getPatientId());

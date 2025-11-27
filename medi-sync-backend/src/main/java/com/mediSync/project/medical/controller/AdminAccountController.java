@@ -101,14 +101,12 @@ public class AdminAccountController {
         AdminAccount admin = adminAccountService.selectAdminByEmpId(empId);
 
         if (admin != null && passwordEncoder.matches(password, admin.getPassword())) {
-            String token = jwtUtil.generateToken(admin.getEmpId(), admin.getAdminId());
 
-//            String token = jwtUtil.generateToken(
-//                    admin.getEmpId(),    // 1. Subject (empId)
-//                    admin.getAdminId(),  // 2. id (adminId)
-//                    "ADMIN"              // 3. Role ("ADMIN")
-//            );
-
+            // 🔥 여기만 변경
+            String token = jwtUtil.generateAdminToken(
+                    admin.getAdminId(),
+                    admin.getEmpId()
+            );
             return ResponseEntity.ok(Map.of(
                     "success", true,
                     "token", token,

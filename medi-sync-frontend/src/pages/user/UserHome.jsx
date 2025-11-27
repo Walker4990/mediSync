@@ -8,10 +8,23 @@ import "swiper/css/navigation";
 import "swiper/css/effect-fade";
 import axios from "axios";
 import UnpaidAlert from "../../component/UnpaidAlert";
+import {jwtDecode} from "jwt-decode";
 
 export default function UserHome() {
     const [doctor, setDoctor] = useState([]);
+    const [dashboard, setDashboard] = useState(null);
 
+    useEffect(() => {
+        const token = localStorage.getItem("token");
+        if (!token) return;
+        const decoded = jwtDecode(token);
+        console.log(decoded.userId, decoded.patientId);
+        const patientId = decoded.userId;
+
+        axios.get(`http://192.168.0.24:8080/api/patients/dashboard/${patientId}`)
+            .then(res => setDashboard(res.data))
+            .catch(err => console.log(err))
+    }, []);
 
 
     useEffect(()=>{
@@ -20,7 +33,7 @@ export default function UserHome() {
             .catch(err => console.log("추천 의사 조회 실패", err));
     },[])
 
-    const [review, setReview] = useState(null);
+    const [review, setReview] = useState([]);
     useEffect(()=>{
         axios.get("http://192.168.0.24:8080/api/reviews/random")
         .then(res => setReview(res.data))
@@ -119,76 +132,54 @@ export default function UserHome() {
                 </Swiper>
             </section>
 
-
-
-            {/*/!* ================= FEATURE CARDS ================= *!/*/}
-            {/*<section className="max-w-6xl mx-auto px-6 md:px-12 py-20 grid grid-cols-1 md:grid-cols-3 gap-10">*/}
-            {/*    {[*/}
-            {/*        {*/}
-            {/*            title: "비대면 진료",*/}
-            {/*            desc: "의사 상담을 집에서도 간편하게",*/}
-            {/*            icon: "💬",*/}
-            {/*            color: "from-blue-500 to-sky-400",*/}
-            {/*        },*/}
-            {/*        {*/}
-            {/*            title: "보험 자동청구",*/}
-            {/*            desc: "진료 후 보험사로 자동 접수",*/}
-            {/*            icon: "💳",*/}
-            {/*            color: "from-purple-500 to-purple-400",*/}
-            {/*        },*/}
-            {/*        {*/}
-            {/*            title: "건강 기록 관리",*/}
-            {/*            desc: "나의 건강 상태를 한눈에",*/}
-            {/*            icon: "📈",*/}
-            {/*            color: "from-teal-500 to-emerald-400",*/}
-            {/*        },*/}
-            {/*    ].map((card, i) => (*/}
-            {/*        <div*/}
-            {/*            key={i}*/}
-            {/*            className="bg-white rounded-2xl shadow-xl p-10 text-center hover:-translate-y-2 hover:shadow-2xl transition-all duration-300"*/}
-            {/*        >*/}
-            {/*            <div*/}
-            {/*                className={`w-16 h-16 mx-auto mb-6 flex items-center justify-center text-4xl rounded-full bg-gradient-to-br ${card.color} text-white shadow`}*/}
-            {/*            >*/}
-            {/*                {card.icon}*/}
-            {/*            </div>*/}
-            {/*            <h3 className="text-2xl font-bold text-gray-800 mb-2">*/}
-            {/*                {card.title}*/}
-            {/*            </h3>*/}
-            {/*            <p className="text-gray-500 text-sm">{card.desc}</p>*/}
-            {/*        </div>*/}
-            {/*    ))}*/}
-            {/*</section>*/}
-            {/* ================= HOSPITAL FEATURE SECTION ================= */}
             {/* ================= FEATURE SECTION ================= */}
-            <section className="max-w-6xl mx-auto px-6 md:px-10 py-16 grid grid-cols-1 md:grid-cols-3 gap-10">  {/* 💙 폭 통일 */}
+            <section className="max-w-6xl mx-auto px-6 md:px-10 py-16 grid grid-cols-1 md:grid-cols-3 gap-10">
 
                 {/* ▣ 오늘의 진료 안내 */}
-                <div className="bg-gradient-to-br from-white to-blue-50 shadow-xl hover:shadow-2xl rounded-3xl p-8 hover:-translate-y-2 transition">  {/* 💙 카드 스타일 통일 */}
-                    <h3 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
-                        <span className="text-3xl">🗓️</span>
-                        오늘의 진료 안내
+                <div className="bg-white shadow-xl rounded-3xl p-8 border border-blue-100 hover:shadow-2xl hover:-translate-y-1 transition">
+                    <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                        <span className="text-3xl">🩺</span>
+                        현재 진료 상황
                     </h3>
 
-                    <div className="space-y-4 text-gray-700">
-                        <div className="flex justify-between">
-                            <span>진료 예약</span>
-                            <span className="font-semibold text-blue-600">0건</span>
-                        </div>
-                        <div className="flex justify-between">
-                            <span>검사 예정</span>
-                            <span className="font-semibold text-blue-600">1건</span>
-                        </div>
-                        <div className="flex justify-between">
-                            <span>보험 청구 진행</span>
-                            <span className="font-semibold text-purple-600">심사중</span>
-                        </div>
-                    </div>
+                    {dashboard && (
+                        <div className="space-y-5">
 
-                    <button className="w-full mt-8 bg-blue-600 text-white py-3 rounded-xl font-semibold hover:bg-blue-700 transition">
+                            {/* 진료 예약 */}
+                            <div className="flex justify-between items-center">
+                                <span className="text-gray-600">진료 예약</span>
+                                <span className="font-bold text-blue-600 text-lg">
+                    {dashboard.todayReservation}건
+                </span>
+                            </div>
+
+                            {/* 검사 예정 */}
+                            <div className="flex justify-between items-center">
+                                <span className="text-gray-600">검사 예정</span>
+                                <span className="font-bold text-blue-600 text-lg">
+                    {dashboard.todayTests}건
+                </span>
+                            </div>
+
+                            {/* 보험 청구 진행 */}
+                            <div className="flex justify-between items-center">
+                                <span className="text-gray-600">보험 청구 진행</span>
+                                <span className="font-bold text-purple-600 text-lg">
+                                    {dashboard.claimStatus === "PAID"
+                                        ? "청구 완료"
+                                        : (dashboard.claimStatus || "정보 없음")}
+                                </span>
+                            </div>
+
+                        </div>
+                    )}
+
+                    <button className="w-full mt-10 bg-blue-600 text-white py-3.5 rounded-2xl font-semibold
+                       hover:bg-blue-700 active:scale-[0.98] transition">
                         진료 내역 보기
                     </button>
                 </div>
+
 
                 {/* ▣ 추천 의사 */}
                 <div className="bg-gradient-to-br from-white to-green-50 shadow-xl hover:shadow-2xl rounded-3xl p-8 hover:-translate-y-2 transition">
@@ -275,22 +266,31 @@ export default function UserHome() {
 
             </section>
 
-            <section className="max-w-6xl mx-auto px-6 md:px-10 py-16">   {/* 💙 폭 통일 */}
-                <div className="bg-white shadow-xl hover:shadow-2xl rounded-3xl p-8 hover:-translate-y-2 transition">
-                    <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-                        <span className="text-yellow-500 text-2xl">⭐</span>
-                        실제 환자 리뷰
-                    </h3>
+            <section className="max-w-6xl mx-auto px-6 md:px-10 py-16">
+                <div className="flex flex-col gap-6">
+                    {review.length > 0 ? (
+                        review.map((r) => (
+                            <div
+                                key={r.reviewId}
+                                className="bg-white shadow-xl hover:shadow-2xl rounded-3xl p-8 hover:-translate-y-2 transition"
+                            >
+                                <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                                    <span className="text-yellow-500 text-2xl">⭐</span>
+                                    실제 환자 리뷰
+                                </h3>
 
-                    {review ? (
-                        <div className="space-y-3">
-                            <p className="text-gray-700 italic">"{review.memo}"</p>
-                            <div className="mt-4">
-                                <p className="font-semibold text-gray-800">{review.name}</p>
-                                <p className="text-gray-500 text-sm">{review.deptName}</p>
-                                <p className="text-yellow-500 text-sm font-semibold">⭐ 5.0 / 5.0</p>
+                                <div className="space-y-3">
+                                    <p className="text-gray-700 italic">"{r.memo}"</p>
+                                    <div className="mt-4">
+                                        <p className="font-semibold text-gray-800">{r.name}</p>
+                                        <p className="text-gray-500 text-sm">{r.deptName}</p>
+                                        <p className="text-yellow-500 text-sm font-semibold">
+                                            ⭐ {r.rating}.0 / 5.0
+                                        </p>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
+                        ))
                     ) : (
                         <p className="text-gray-500 text-sm">리뷰 불러오는 중...</p>
                     )}

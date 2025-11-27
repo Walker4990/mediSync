@@ -79,4 +79,11 @@
         WHERE reservation_id = #{reservationId}
         LIMIT 1
     </select>
+
+    <select id="countTodayReservations" parameterType="long" resultType="int">
+        SELECT COUNT(*) FROM reservation
+        WHERE patient_id = #{patientId}
+        AND DATE(reservation_date) = CURDATE()
+    </select>
+
 </mapper>

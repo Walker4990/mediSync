@@ -49,4 +49,7 @@ public interface ClaimMapper {
     List<ClaimRequest> findPendingClaims();
     void updateClaimPaid(@Param("claimId") Long claimId,
                          @Param("claimAmount") BigDecimal claimAmount);
+
+    String latestClamStatus(Long patientId);
+    int countAll(Long patientId);
 }

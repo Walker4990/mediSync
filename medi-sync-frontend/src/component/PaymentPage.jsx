@@ -19,6 +19,10 @@ export default function PaymentPage() {
     const [refundModal, setRefundModal] = React.useState({
         visible: false, orderId: null, amount: 0, reason: ""
     });
+    const [page, setPage] = React.useState(1);
+    const size = 10
+    const visiblePayments = payments.slice(0, page * size);
+    const totalPages = Math.ceil(payments.length / size);
     const fetchPayments = async () => {
         const res = await axios.get(
             `http://192.168.0.24:8080/api/payment/history/${patientId}`
@@ -90,7 +94,7 @@ export default function PaymentPage() {
 
     return (
         <div className="p-6">
-            <h3 className="text-xl font-semibold mb-4">보험 / 수납 정보</h3>
+            <h3 className="text-xl font-semibold mb-4">수납 정보</h3>
 
             {unpaid ? (
                 <div className="p-4 bg-red-50 rounded-lg border mb-6">
@@ -140,7 +144,7 @@ export default function PaymentPage() {
                     </tr>
                     </thead>
                     <tbody>
-                    {payments.map((p) => {
+                    {visiblePayments.map((p) => {
 
                         return (
                             <tr
@@ -200,6 +204,21 @@ export default function PaymentPage() {
                     })}
                     </tbody>
                 </table>
+                {page < totalPages && (
+                    <button
+                        onClick={() => setPage(page + 1)}
+                        className="
+            w-full py-3
+            flex items-center justify-center
+            bg-blue-50 hover:bg-blue-100
+            text-blue-700 font-semibold
+            border-t border-gray-200
+            transition
+        "
+                    >
+                        +
+                    </button>
+                )}
             </div>
 
 

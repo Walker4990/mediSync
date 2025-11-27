@@ -142,6 +142,10 @@
         AND TIMESTAMP(ts.test_date, ts.test_time) BETWEEN #{start} AND #{end};
     </select>
 
-
+    <select id="countTodayTests" parameterType="long" resultType="int">
+        SELECT COUNT(*) FROM test_reservation
+        WHERE patient_id =#{patientId}
+        AND DATE(reserved_at) = CURDATE()
+    </select>
 
 </mapper>
