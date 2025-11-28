@@ -11,6 +11,7 @@
         <result column="phone" property="phone"/>
         <result column="email" property="email"/>
         <result column="position" property="position"/>
+        <result column="role" property="role"/>
         <result column="profile_img_url" property="profileImgUrl"/>
         <result column="status" property="status"/>
         <result column="license_no" property="licenseNo"/>
@@ -19,6 +20,7 @@
 
         <result column="dept_id" property="deptId"/>
         <result column="dept_name" property="deptName"/>
+        <result column="rating" property="rating"/>
     </resultMap>
 
     <!-- erp 계정 등록 -->
@@ -60,7 +62,7 @@
     <!-- 의사 조회 -->
     <select id="selectAllDoctor" resultMap="adminAccount">
         SELECT a.*, d.dept_name
-        FROM admin_account a JOIN department d ON a.dept_id = d.dept_id
+        FROM admin_account a left JOIN department d ON a.dept_id = d.dept_id
         WHERE position = 'DOCTOR'
         ORDER BY a.admin_id DESC
     </select>
@@ -68,18 +70,42 @@
     <!-- 의료진 조회 -->
     <select id="selectAllStaff" resultMap="adminAccount">
         SELECT a.*, d.dept_name
-        FROM admin_account a JOIN department d ON a.dept_id = d.dept_id
+        FROM admin_account a left JOIN department d ON a.dept_id = d.dept_id
         WHERE position IN ('NURSE', 'RADIOLOGIST', 'LAB_TECH', 'ASSISTANT', 'ADMIN')
         ORDER BY a.admin_id DESC
     </select>
 
-    <!-- 정보 수정 -->
+    <!-- 정보 수정 (동적 SQL 적용) -->
     <update id="updateAdmin" parameterType="adminAccount">
         UPDATE admin_account
-        SET name = #{name}, dept_id = #{deptId}, phone = #{phone}, status = #{status}
-        <if test="password != null and password != ''">
-            , password = #{password}
-        </if>
+        <set>
+            <if test="name != null and name != ''">
+                name = #{name},
+            </if>
+            <if test="phone != null and phone != ''">
+                phone = #{phone},
+            </if>
+            <if test="email != null and email != ''">
+                email = #{email},
+            </if>
+            <if test="position != null and position != ''">
+                position = #{position},
+            </if>
+            <!-- deptId는 0이 될 수 있으므로 null 체크만 -->
+            <if test="deptId != null">
+                dept_id = #{deptId},
+            </if>
+            <if test="status != null and status != ''">
+                status = #{status},
+            </if>
+            <if test="profileImgUrl != null">
+                profile_img_url = #{profileImgUrl},
+            </if>
+            <!-- 비밀번호는 암호화된 상태로 넘어올 때만 업데이트 -->
+            <if test="password != null and password != ''">
+                password = #{password},
+            </if>
+        </set>
         WHERE admin_id = #{adminId}
     </update>
 
@@ -89,22 +115,20 @@
         WHERE admin_id = #{adminId}
     </delete>
 
-    <select id="getRecommandedDoctor" resultType="adminAccount">
+    <select id="getRecommandedDoctor" resultMap="adminAccount">
         SELECT
-            a.admin_id AS adminId,
-            a.name AS name,
-            a.position AS position,
+        a.admin_id AS adminId,
+        a.name AS name,
+        a.position AS position,
         a.dept_id AS deptId,
         d.dept_name AS deptName,
         IFNULL(AVG(r.rating), 0) AS rating
         FROM admin_account a
-            JOIN department d ON a.dept_id = d.dept_id
-            LEFT JOIN admin_review r ON a.admin_id = r.admin_id
+        JOIN department d ON a.dept_id = d.dept_id
+        LEFT JOIN admin_review r ON a.admin_id = r.admin_id
         WHERE a.position = 'DOCTOR'
         GROUP BY a.admin_id
         ORDER BY rating DESC
         LIMIT 10
-
     </select>
-
 </mapper>

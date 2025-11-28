@@ -420,20 +420,18 @@ public class UserAccountController {
 
         if (user != null && passwordEncoder.matches(password, user.getPassword())) {
             String token = jwtUtil.generateToken(user.getLoginId(), user.getUserId());
-//            String token = jwtUtil.generateToken(
-//                    user.getLoginId(),  // 1. Subject (loginId)
-//                    user.getUserId(),   // 2. id (userId)
-//                    "USER"              // 3. Role ("USER")
-//            );
 
             return ResponseEntity.ok(Map.of(
                     "success", true,
                     "token", token,
+                    "user", user,
                     "message", "로그인 성공"
             ));
         } else {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(Map.of("success", false, "message", "아이디 또는 비밀번호가 일치하지 않습니다."));
+            return ResponseEntity.ok(Map.of(
+                    "success", false,
+                    "message", "아이디 또는 비밀번호가 일치하지 않습니다."
+            ));
         }
     }
 
@@ -488,7 +486,7 @@ public class UserAccountController {
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Update failed after password check.");
             }
         } else {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("현재 비밀번호가 일치하지 않습니다.");
+            return ResponseEntity.badRequest().body("현재 비밀번호가 일치하지 않습니다.");
         }
     }
 

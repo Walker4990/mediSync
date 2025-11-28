@@ -10,8 +10,10 @@ export default function AdminHeader() {
   const [open, setOpen] = useState(false);
   const [shake, setShake] = useState(false);
   const [adminName, setAdminName] = useState("관리자");
+  const [adminId, setAdminId] = useState(null);
   const navigate = useNavigate();
 
+  // 🔔 알림 애니메이션 효과
   useEffect(() => {
     if (unreadCount > 0) {
       setShake(true);
@@ -20,57 +22,100 @@ export default function AdminHeader() {
     }
   }, [unreadCount]);
 
-  // 컴포넌트 마운트 시 관리자 정보 불러오기
+  // 전역 Axios 인터셉터 설정 (모든 페이지 적용)
   useEffect(() => {
-    const fetchAdminInfo = async () => {
-      // localStorage에서 먼저 데이터 확인
-      const storedData = localStorage.getItem("admin_data");
+    const interceptor = axios.interceptors.response.use(
+      (response) => response, // 정상 응답은 그대로 반환
+      (error) => {
+        // 401(인증 실패) 또는 403(권한 없음) 에러 감지
+        if (
+          error.response &&
+          (error.response.status === 401 || error.response.status === 403)
+        ) {
+          // 중복 알림 방지를 위해 현재 경로가 이미 로그인 페이지가 아닐 때만 실행
+          if (window.location.pathname !== "/admin") {
+            alert("세션이 만료되었습니다. 다시 로그인해주세요.");
 
-      if (storedData) {
-        // localStorage에 데이터가 있으면 API 호출 없이 바로 사용
-        const admin = JSON.parse(storedData);
-        setAdminName(admin.name || "관리자");
-      } else {
-        // localStorage에 데이터가 없으면 (토큰은 있을 수 있음) API 호출 시도
-        try {
-          console.log("localStorage에 admin_data 없음. API 호출 시도...");
-          const response = await axios.get("/api/admins/mypage");
-          if (response.data && response.data.name) {
-            setAdminName(response.data.name);
-            // API로 가져온 정보를 localStorage에 저장
-            localStorage.setItem("admin_data", JSON.stringify(response.data));
-          }
-        } catch (error) {
-          console.error("관리자 정보 로드 실패:", error);
-          if (
-            error.response &&
-            (error.response.status === 401 || error.response.status === 403)
-          ) {
-            console.warn("인증 실패, 로그인 페이지로 이동합니다.");
-            // 로그아웃 처리
+            // 로그아웃 처리 (토큰 및 정보 삭제)
             localStorage.removeItem("admin_token");
             localStorage.removeItem("admin_data");
             delete axios.defaults.headers.common["Authorization"];
-            navigate("/admin"); // 로그인 페이지로 이동
+
+            // 로그인 페이지로 강제 이동
+            navigate("/admin");
           }
+        }
+        return Promise.reject(error);
+      }
+    );
+
+    // 컴포넌트 언마운트 시 인터셉터 제거 (메모리 누수 방지)
+    return () => {
+      axios.interceptors.response.eject(interceptor);
+    };
+  }, [navigate]);
+
+  // 컴포넌트 마운트 시 관리자 정보 불러오기
+  useEffect(() => {
+    const fetchAdminInfo = async () => {
+      const storedData = localStorage.getItem("admin_data");
+
+      if (storedData) {
+        const admin = JSON.parse(storedData);
+        setAdminName(admin.name || "관리자");
+        setAdminId(admin.adminId);
+      } else {
+        try {
+          // 토큰은 있는데 데이터가 없는 경우 API 호출
+          const token = localStorage.getItem("admin_token");
+          if (token) {
+            axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+
+            const response = await axios.get("/api/admins/mypage");
+            if (response.data && response.data.name) {
+              setAdminName(response.data.name);
+              setAdminId(response.data.adminId);
+              localStorage.setItem("admin_data", JSON.stringify(response.data));
+            }
+          }
+        } catch (error) {
+          console.error("관리자 정보 로드 실패:", error);
         }
       }
     };
     fetchAdminInfo();
-  }, [navigate]);
+  }, []);
 
-  // 로그아웃
+  // 로그아웃 함수
   const handleLogout = () => {
-    localStorage.removeItem("admin_token");
-    localStorage.removeItem("admin_data");
-    delete axios.defaults.headers.common["Authorization"];
-    navigate("/admin");
+    const confirmLogout = window.confirm("정말 로그아웃 하시겠습니까?");
+    if (confirmLogout) {
+      localStorage.removeItem("admin_token");
+      localStorage.removeItem("admin_data");
+      delete axios.defaults.headers.common["Authorization"];
+      navigate("/admin");
+    }
+  };
+
+  const styledAdminTitle = (
+    <span className="flex items-center space-x-1 text-sm">
+      <span className="font-semibold text-white text-base">{adminName}</span>
+      <span className="text-blue-200">님</span>
+    </span>
+  );
+
+  const handleMyPageClick = () => {
+    if (adminId) {
+      navigate(`/admin/mypage`);
+    } else {
+      alert("관리자 정보를 찾을 수 없습니다.");
+    }
   };
 
   return (
     <header className="bg-blue-600 text-white shadow-md fixed top-0 left-0 w-full z-50 font-pretendard">
       <div className="max-w-7xl mx-auto flex justify-between items-center px-8 py-3">
-        {/* 로고 / 타이틀 */}
+        {/* 로고 */}
         <Link to="/admin/main" className="text-xl font-bold tracking-wide">
           MediSync <span className="text-blue-200">Admin</span>
         </Link>
@@ -111,17 +156,18 @@ export default function AdminHeader() {
           <DropdownMenu
             title="인사관리"
             items={[
+              { name: "사원등록", href: "/admin/register" },
               { name: "의사정보", href: "/admin/doctor" },
               { name: "의료진정보", href: "/admin/staff" },
               { name: "일정확인", href: "/admin/schedule" },
+              { name: "대시보드 (관리자전용)", href: "/admin/dashboard/hr" },
             ]}
           />
-
         </nav>
 
         {/* 우측 사용자 + 알림 */}
         <div className="flex items-center gap-6 relative">
-          {/* 🔔 알림 아이콘 */}
+          {/* 알림 아이콘 */}
           <div
             className="relative cursor-pointer"
             onClick={() => setOpen(!open)}
@@ -134,7 +180,7 @@ export default function AdminHeader() {
             )}
           </div>
 
-          {/* 드롭다운 */}
+          {/* 알림 드롭다운 */}
           {open && (
             <div className="absolute right-0 top-8 bg-white text-gray-800 shadow-lg rounded-lg w-72 overflow-hidden z-50">
               <div className="flex justify-between items-center px-4 py-2 border-b">
@@ -169,17 +215,14 @@ export default function AdminHeader() {
             </div>
           )}
           <DropdownMenu
-            title={adminName}
-            items={[
-              { name: "사원등록", href: "/admin/register" },
-              { name: "마이페이지", href: "/admin/mypage" },
-            ]}
+            title={styledAdminTitle}
+            items={[{ name: "마이페이지", onClick: handleMyPageClick }]}
           />
           <button
-            className="bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded-md text-sm"
+            className="bg-blue-500 hover:bg-blue-700 text-white px-4 py-1 rounded-md text-sm"
             onClick={handleLogout}
           >
-                로그아웃     
+            로그아웃
           </button>
         </div>
       </div>
