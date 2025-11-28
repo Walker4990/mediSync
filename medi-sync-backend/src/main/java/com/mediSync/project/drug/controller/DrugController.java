@@ -57,23 +57,12 @@ public class DrugController {
     }
     @PutMapping("/update")
     public ResponseEntity<Map<String, Object>> updateDrug(@RequestBody Drug drug) {
-        //기존 정보 가져오기
-        Drug origin = drugService.selectDrugByDrugCode(drug.getDrugCode());
-        //int result = drugService.editDrug(drug);
+
+        int result = drugService.editDrug(drug);
         Map<String, Object> map = new HashMap<>();
-        System.out.println("갱신할 약 정보 : "+ drug);
 
-
-        //map.put("success", result > 0);
-        //map.put("message", result > 0 ? "수정 성공!" : "수정 실패");
-
-        //새로 업데이트된 정보 가져오기
-        Drug newDrug = drugService.selectDrugByDrugCode(drug.getDrugCode());
-        DrugLog log = new DrugLog();
-        log.setDrugCode(drug.getDrugCode());
-
-        //만약 수량이 수정됐다면 로그 남기기
-
+        map.put("success", result > 0);
+        map.put("message", result > 0 ? "수정 성공!" : "수정 실패");
 
 
         return ResponseEntity.ok(map);

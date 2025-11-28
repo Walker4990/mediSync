@@ -21,7 +21,6 @@
         contact      = VALUES(contact)
     </insert>
 
-
     <!-- 전체 목록 조회 -->
     <select id="findAll" resultType="map">
         SELECT insurer_code, insurer_name, api_endpoint, contact
@@ -29,5 +28,13 @@
         ORDER BY insurer_name ASC
     </select>
 
+    <!-- 전체 목록 조회 -->
+    <select id="getInsurerCode" resultType="insurer">
+        SELECT
+        insurer_code,
+        insurer_name
+        FROM insurer
+        ORDER BY insurer_code ASC
+    </select>
 
 </mapper>

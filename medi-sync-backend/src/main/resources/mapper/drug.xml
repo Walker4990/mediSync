@@ -53,7 +53,8 @@
                quantity=#{quantity},
                expiration_date=#{expirationDate},
                insurance_code=#{insuranceCode},
-               supplier=#{supplier}
+               supplier=#{supplier},
+               location = #{location}
         WHERE drug_code=#{drugCode}
     </update>
 
