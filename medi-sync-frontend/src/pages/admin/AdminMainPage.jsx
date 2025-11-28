@@ -155,9 +155,10 @@ export default function AdminMainPage() {
                                         </div>
                                         <div className="text-gray-700 text-sm">
                                             <b>예정일:</b>{" "}
-                                            {op.scheduledDate
-                                                ? new Date(op.scheduledDate).toLocaleString("ko-KR")
-                                                : "-"}
+                                            {op.scheduledDate && op.scheduledTime
+                                                ? `${op.scheduledDate} ${op.scheduledTime.slice(0, 5)}`
+                                                : "-"
+                                            }
                                         </div>
                                     </div>
                                 );

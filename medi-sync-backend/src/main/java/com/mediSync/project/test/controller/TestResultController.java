@@ -2,6 +2,7 @@ package com.mediSync.project.test.controller;
 
 import com.mediSync.project.test.dto.LisResultDTO;
 import com.mediSync.project.test.service.TestResultService;
+import com.mediSync.project.test.vo.TestResult;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
@@ -9,6 +10,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.Map;
 
 
 @RestController
@@ -34,6 +37,18 @@ public class TestResultController {
     public ResponseEntity<String> mockLisResult(@RequestBody LisResultDTO dto) {
         testResultService.processLisResult(dto);
         return ResponseEntity.ok("✅ Mock LIS 검사 결과가 저장되었습니다.");
+    }
+
+    @GetMapping("/list/{patientId}")
+    public Map<String, Object> getResultsByPatients(@PathVariable Long patientId,
+                                                    @RequestParam(defaultValue = "1") int page,
+                                                    @RequestParam(defaultValue = "5") int size) {
+        return testResultService.getResultsByPatients(patientId, page, size);
+    }
+
+    @GetMapping("/{testResultId}")
+    public TestResult getResultDetail(@PathVariable Long testResultId) {
+        return testResultService.getResultDetail(testResultId);
     }
 }
 

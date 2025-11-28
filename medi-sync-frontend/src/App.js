@@ -67,7 +67,7 @@ function AppContent() {
   const hideNotification =
     location.pathname.startsWith("/user/medicalDetail") ||
     location.pathname.startsWith("/admin/finance") ||
-    location.pathname === "/admin";
+      location.pathname.startsWith("/admin")
   return (
     <>
       {!hideNotification && <WebSocketListener />}

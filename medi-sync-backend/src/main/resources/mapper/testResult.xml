@@ -50,4 +50,38 @@
         )
     </select>
 
+    <!-- 환자 검사 결과 조회 -->
+    <select id="getResultsByPatients" resultType="testResult">
+        SELECT
+            test_result_id,
+            record_id,
+            patient_id,
+            admin_id,
+            test_code,
+            test_name,
+            test_area,
+            test_date,
+            result_value,
+            result_note,
+            status,
+            created_at,
+            updated_at
+        FROM test_result
+        WHERE patient_id = #{patientId}
+        ORDER BY test_date DESC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="countAll" resultType="int">
+        SELECT
+            COUNT(*)
+        FROM test_result
+        WHERE patient_id = #{patientId}
+    </select>
+    <select id="getResultDetail" resultType="testResult">
+        SELECT *
+        FROM test_result
+        WHERE test_result_id = #{testResultId}
+    </select>
+
 </mapper>

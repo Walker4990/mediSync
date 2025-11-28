@@ -249,6 +249,7 @@
         JOIN operation_room opr ON op.room_id = opr.room_id
         JOIN admin_account a ON op.admin_id = a.admin_id
         WHERE scheduled_date = #{scheduledDate}
+        AND op.status IN ('SCHEDULED', 'IN_PROGRESS')
         ORDER BY scheduled_time ASC
 
     </select>

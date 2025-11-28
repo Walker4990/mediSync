@@ -29,6 +29,7 @@ import SupportChatWidget from "./SupportChatPage";
 import PatientInsurancePage from "./PatientInsurancePage";
 import PaymentPage from "../../component/PaymentPage";
 import UserInfoEdit from "../../component/UserInfoEdit";
+import TestResultList from "../../component/TestResultList";
 
 const token = localStorage.getItem("token");
 const decoded = token ? jwtDecode(token) : null;
@@ -536,7 +537,7 @@ const MyPage = () => {
         return <PatientRecords title="진료 기록" icon={FileText} />;
       case "tests":
         return (
-          <ViewReservation
+          <TestResultList
             title="검사 결과 조회"
             icon={Search}
             currentUser={currentUser}

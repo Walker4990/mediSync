@@ -310,6 +310,21 @@ public class TestResultService {
         return Image.getInstance(pngOutput.toByteArray());
     }
 
+    public Map<String, Object> getResultsByPatients(Long patientId, int page, int size){
+        int offset = (page - 1) * size;
+        List<TestResult> items = testResultMapper.getResultsByPatients(patientId, offset, size);
+        int totalCount = testResultMapper.countAll(patientId);
+        int totalPages = (int) Math.ceil((double) totalCount / size);
 
+        return Map.of(
+                "items", items,
+                "totalCount", totalCount,
+                "totalPages", totalPages
+        );
+    }
+
+    public TestResult getResultDetail(Long testResultId) {
+        return testResultMapper.getResultDetail(testResultId);
+    }
 }
 
