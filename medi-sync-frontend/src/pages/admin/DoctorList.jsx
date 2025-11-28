@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import axios from "axios";
 import { format } from "date-fns";
 import {
@@ -7,7 +7,9 @@ import {
   Search,
   ChevronLeft,
   ChevronRight,
-  PlusCircle, // 아이콘 추가 (필요 시)
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
 } from "lucide-react";
 
 // 컴포넌트 임포트
@@ -15,6 +17,7 @@ import AdminHeader from "../../component/AdminHeader";
 import ConfirmModal from "../../component/ConfirmModal";
 import AdminDetailModal from "../../component/AdminDetailModal";
 import AdminDoctorForm from "../../component/DoctorEditForm";
+
 // API 기본 URL
 const API_BASE_URL = "http://localhost:8080/api/admins/doctors";
 
@@ -38,7 +41,7 @@ const InfoModal = ({ message, onClose, title = "알림" }) => (
   </div>
 );
 
-// 재직 상태(Status) 옵션 (리스트 뱃지 표시에 필요하므로 유지)
+// 재직 상태(Status) 옵션
 const STATUS_OPTIONS = [
   { value: "ACTIVE", label: "재직 중" },
   { value: "LEAVE", label: "휴직" },
@@ -57,6 +60,12 @@ const DoctorList = () => {
   const [apiError, setApiError] = useState(false);
   const [message, setMessage] = useState(null);
   const [selectedAdminId, setSelectedAdminId] = useState(null);
+
+  // 정렬 상태 관리 (key: 컬럼명, direction: 오름차순/내림차순)
+  const [sortConfig, setSortConfig] = useState({
+    key: null,
+    direction: "ascending",
+  });
 
   // 페이징
   const [currentPage, setCurrentPage] = useState(1);
@@ -145,25 +154,73 @@ const DoctorList = () => {
     }
   };
 
-  const filtered = admins.filter(
-    (a) =>
-      (a.name || "").toLowerCase().includes(search.toLowerCase()) ||
-      (a.phone || "").includes(search) ||
-      (a.deptName || "").toLowerCase().includes(search.toLowerCase()) ||
-      (a.licenseNo || "").toLowerCase().includes(search.toLowerCase()) ||
-      (a.empId || "").toLowerCase().includes(search.toLowerCase())
-  );
+  // 정렬 핸들러
+  const handleSort = (key) => {
+    let direction = "ascending";
+    if (sortConfig.key === key && sortConfig.direction === "ascending") {
+      direction = "descending";
+    }
+    setSortConfig({ key, direction });
+  };
 
+  // 필터링 및 정렬
+  const processedData = useMemo(() => {
+    // 검색 필터링
+    let data = admins.filter(
+      (a) =>
+        (a.name || "").toLowerCase().includes(search.toLowerCase()) ||
+        (a.phone || "").includes(search) ||
+        (a.deptName || "").toLowerCase().includes(search.toLowerCase()) ||
+        (a.licenseNo || "").toLowerCase().includes(search.toLowerCase()) ||
+        (a.empId || "").toLowerCase().includes(search.toLowerCase())
+    );
+
+    // 정렬
+    if (sortConfig.key) {
+      data.sort((a, b) => {
+        const aValue = a[sortConfig.key] || ""; // null 처리
+        const bValue = b[sortConfig.key] || "";
+
+        // ID가 숫자라면 숫자 비교, 문자라면 문자열 비교
+        if (sortConfig.key === "adminId") {
+          if (Number(aValue) < Number(bValue))
+            return sortConfig.direction === "ascending" ? -1 : 1;
+          if (Number(aValue) > Number(bValue))
+            return sortConfig.direction === "ascending" ? 1 : -1;
+          return 0;
+        }
+
+        if (aValue < bValue) {
+          return sortConfig.direction === "ascending" ? -1 : 1;
+        }
+        if (aValue > bValue) {
+          return sortConfig.direction === "ascending" ? 1 : -1;
+        }
+        return 0;
+      });
+    }
+    return data;
+  }, [admins, search, sortConfig]);
+
+  // 페이징 처리
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = filtered.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(filtered.length / itemsPerPage);
+  const currentItems = processedData.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(processedData.length / itemsPerPage);
 
   const handlePageChange = (pageNumber) => {
     setCurrentPage(pageNumber);
   };
 
-  // 뷰 모드에 따라 렌더링할 내용 상이 (add/edit은 모달로 처리)
+  // 정렬 아이콘
+  const renderSortIcon = (key) => {
+    if (sortConfig.key !== key)
+      return <ArrowUpDown className="w-4 h-4 ml-1 text-gray-400" />;
+    if (sortConfig.direction === "ascending")
+      return <ArrowUp className="w-4 h-4 ml-1 text-blue-600" />;
+    return <ArrowDown className="w-4 h-4 ml-1 text-blue-600" />;
+  };
+
   if (viewMode === "add" || viewMode === "edit") {
     return (
       <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center p-8 z-50">
@@ -197,7 +254,6 @@ const DoctorList = () => {
           </span>
         </h1>
 
-        {/* 검색창 */}
         <div className="mb-6 flex flex-wrap justify-between items-center gap-4">
           <div className="relative w-full sm:w-1/3 min-w-[250px] flex-grow">
             <input
@@ -215,13 +271,45 @@ const DoctorList = () => {
           <table className="w-full bg-white border border-gray-200 rounded-lg shadow-md text-sm">
             <thead className="bg-gray-100 text-gray-800 font-semibold border-b border-gray-200 sticky top-0">
               <tr>
-                <th className="py-3 px-4 text-left w-12">ID</th>
-                <th className="py-3 px-4 text-left w-24">이름</th>
+                <th
+                  className="py-3 px-4 text-left w-12 cursor-pointer hover:bg-gray-200 transition-colors group"
+                  onClick={() => handleSort("adminId")}
+                >
+                  <div className="flex items-center">
+                    ID {renderSortIcon("adminId")}
+                  </div>
+                </th>
+                <th
+                  className="py-3 px-4 text-left w-24 cursor-pointer hover:bg-gray-200 transition-colors group"
+                  onClick={() => handleSort("name")}
+                >
+                  <div className="flex items-center">
+                    이름 {renderSortIcon("name")}
+                  </div>
+                </th>
+
                 <th className="py-3 px-4 text-left w-32">진료과명</th>
                 <th className="py-3 px-4 text-left w-28">면허번호</th>
                 <th className="py-3 px-4 text-left w-24">연락처</th>
-                <th className="py-3 px-4 text-left w-24">입사일</th>
-                <th className="py-3 px-4 text-left w-20">재직 상태</th>
+
+                <th
+                  className="py-3 px-4 text-left w-24 cursor-pointer hover:bg-gray-200 transition-colors group"
+                  onClick={() => handleSort("hiredDate")}
+                >
+                  <div className="flex items-center">
+                    입사일 {renderSortIcon("hiredDate")}
+                  </div>
+                </th>
+
+                <th
+                  className="py-3 px-4 text-left w-20 cursor-pointer hover:bg-gray-200 transition-colors group"
+                  onClick={() => handleSort("status")}
+                >
+                  <div className="flex items-center">
+                    재직 상태 {renderSortIcon("status")}
+                  </div>
+                </th>
+
                 <th className="py-3 px-4 text-center w-24">관리</th>
               </tr>
             </thead>
@@ -284,7 +372,7 @@ const DoctorList = () => {
                 </tr>
               ))}
 
-              {filtered.length === 0 && (
+              {processedData.length === 0 && (
                 <tr>
                   <td
                     colSpan="9"
@@ -299,7 +387,7 @@ const DoctorList = () => {
         </div>
 
         {/* 페이지네이션 UI */}
-        {filtered.length > 0 && (
+        {processedData.length > 0 && (
           <div className="flex justify-center items-center space-x-2 mt-6">
             <button
               onClick={() => handlePageChange(currentPage - 1)}
@@ -344,14 +432,12 @@ const DoctorList = () => {
         )}
       </main>
 
-      {/* 상세 정보 모달 */}
       <AdminDetailModal
         isOpen={!!selectedAdminId}
         onClose={() => setSelectedAdminId(null)}
         adminId={selectedAdminId}
       />
 
-      {/* 삭제 확인 모달 */}
       {deletingAdmin && (
         <ConfirmModal
           message={`'${deletingAdmin.name}' 의사 정보(직원 계정)를 정말로 삭제하시겠습니까?`}
@@ -360,7 +446,6 @@ const DoctorList = () => {
         />
       )}
 
-      {/* 알림 모달 */}
       {message && (
         <InfoModal
           message={message.text}
