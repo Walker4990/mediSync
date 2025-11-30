@@ -77,10 +77,9 @@ export default function LoginModal() {
       const naverLoginUrl = `https://nid.naver.com/oauth2.0/authorize?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&state=${state}`;
       window.location.href = naverLoginUrl;
     } else if (provider == "kakao") {
-      const clientId = "9ddcb566b2cec688f9952079e973740a"; // kakao 클라이언트 ID
-      const redirectUri = "http://localhost:8080/api/users/kakao/callback"; // 카카오에 등록한 URL
-      const kakaoLoginUrl = `https://kauth.kakao.com/oauth/authorize?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&state=${state}`;
-      window.location.href = kakaoLoginUrl;
+      const kakaoApiKey = "995feac82707da5c2f69f2b81614024d";
+      const redirectLoginUri = "http://localhost:3000/authLoginKakao";
+      window.location.href = `https://kauth.kakao.com/oauth/authorize?client_id=${kakaoApiKey}&redirect_uri=${redirectLoginUri}&response_type=code`;
     }
   };
 

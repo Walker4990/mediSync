@@ -17,7 +17,6 @@ export default function ModalProvider({ children }) {
 
     // 로그인 모달 닫기 (LoginModal 내부에서 setTimeout 대신 여기서 바로 호출)
     setIsLoginModalOpen(false);
-
     // 리디렉션 로직 실행
     const finalPath = redirectPath && redirectPath !== "/" ? redirectPath : "/";
     navigate(finalPath, { replace: true });

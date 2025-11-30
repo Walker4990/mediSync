@@ -57,6 +57,7 @@ import DrugInspection from "./pages/admin/DrugInspection";
 import AdminRefundPage from "./pages/admin/AdminRefundPage";
 import UnpaidManagePage from "./pages/admin/UnPaidManagePage";
 import UnpaidAlert from "./component/UnpaidAlert";
+import AuthLoginKakao from "./component/AuthLoginKakao";
 const token = localStorage.getItem("token");
 if (token) {
   axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
@@ -117,6 +118,7 @@ function AppContent() {
           {/*유저페이지*/}
           <Route element={<UserLayout />}>
             <Route path="/" element={<UserHome />} />/
+            <Route path="/authLoginKakao" element={<AuthLoginKakao />} />
             <Route path="/findAccount" element={<FindAccount />} />/
             <Route path="/auth/callback" element={<OAuthCallback />} />
             <Route path="/oauth/redirect" element={<OAuthRedirectHandler />} />

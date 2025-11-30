@@ -54,6 +54,7 @@ export default function Navbar() {
       (response) => response, // 정상 응답은 그대로 반환
       (error) => {
         // 401(인증 실패) 또는 403(권한 없음) 에러 감지
+        alert(error.response.status);
         if (
           error.response &&
           (error.response.status === 401 || error.response.status === 403)
