@@ -4,6 +4,7 @@ export default function DrugDisposeAll({
   setSelectedDrugDispose,
   setDisposeQty,
   drugList,
+  fetchDrugList,
 }) {
   const [search, setSearch] = useState("");
   //검색 필터
@@ -61,9 +62,13 @@ export default function DrugDisposeAll({
                   <span className="font-medium">위치:</span> {drug.location}
                 </p>
 
-                <p className="col-span-2">
+                <p className="">
                   <span className="font-medium">보험사:</span>{" "}
-                  {drug.insurerName || "-"}
+                  {drug.supplier || "-"}
+                </p>
+                <p className="">
+                  <span className="font-medium">유통기한:</span>
+                  {drug.expirationDate || "-"}
                 </p>
 
                 <p className="col-span-2 text-xs text-gray-400 mt-1">

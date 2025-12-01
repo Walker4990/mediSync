@@ -63,7 +63,7 @@ export default function DrugDisposeAll({
         );
         alert("폐기 처리가 완료되었습니다.(폐기 수량 : " + quantity + "개)");
         setSelectedDrugDispose(null);
-        fetchDrugList();
+        await fetchDrugList();
       } catch (err) {
         console.log("폐기 실패", err);
       }

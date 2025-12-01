@@ -100,7 +100,7 @@ public class DrugCheckService {
         return res;
     }
 
-    @Transactional
+
     public int updateinspectionDrugByDrugCode(String drugCode, int quantity, String memo){
 
         Map<String,Object> params = new HashMap<>();
