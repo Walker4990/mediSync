@@ -79,7 +79,12 @@
         SELECT drug_code AS drugCode,
         drug_name AS drugName,
         unit,
-        unit_price AS unitPrice
+        unit_price AS unitPrice,
+        location,
+        quantity,
+        supplier,
+        expiration_date,
+        drug_code
         FROM drug
         WHERE (drug_name LIKE CONCAT('%', #{keyword}, '%') OR drug_code LIKE CONCAT('%', #{keyword}, '%'))
         AND unit != '주사'
@@ -104,17 +109,15 @@
         d.drug_code,
         d.drug_name,
         d.unit_price,
-        COALESCE(i.quantity, 0) AS quantity,
-        COALESCE(i.location, '-') AS location,
-        i.expiry_date AS expiration_date,
-        i.supplier AS supplier,
-        i.updated_at AS updated_at,
+        COALESCE(d.quantity, 0) AS quantity,
+        COALESCE(d.location, '-') AS location,
+        d.expiration_date,
+        d.supplier,
+        d.location,
         COALESCE(ins.insurer_code, '-') AS insurer_code,
         COALESCE(ins.insurer_name, '-') AS insurer_name,
         d.created_at
         FROM drug d
-        LEFT JOIN inventory_item i
-        ON TRIM(d.drug_name) = TRIM(i.item_name)
         LEFT JOIN insurer ins
         ON d.insurance_code = ins.insurer_code
         LIMIT #{size} OFFSET #{offset}

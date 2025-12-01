@@ -42,6 +42,7 @@ public class DrugCheckDTO {
     private String status;
     private int quantity;
     private String note;
+    private String memo;
 
     //등록용
     private String drugCode;

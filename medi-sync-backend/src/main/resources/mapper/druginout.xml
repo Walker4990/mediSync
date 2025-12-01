@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.mediSync.project.drug.mapper.DrugInOutMapper">
+
+   <update id="plusDrugInIut" parameterType="drugcheckdto">
+       update drug
+       set quantity = quantity + #{quantity}
+       where drug_code = #{drugCode}
+   </update>
+
+    <update id="minusDrugInIut" parameterType="drugcheckdto">
+        update drug
+        set quantity = quantity - #{quantity}
+        where drug_code = #{drugCode}
+    </update>
+
+</mapper>

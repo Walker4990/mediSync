@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 export default function DrugDisposeInspect({
-  fetchDrugList,
   setSelectedDrug,
   filter,
   inspectionList,
-  setInspectionList,
   fetchInspectionList,
 }) {
   //검사 모달 리스트 가져오기
