@@ -8,6 +8,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
+import java.util.Map;
 
 @Mapper
 public interface PatientMapper {
@@ -17,7 +18,7 @@ public interface PatientMapper {
     List<MedicalRecord> getPatientRecords(Long patientId, @Param("offset") int offset, @Param("size") int size);
     List<Prescription> getPatientPrescriptions(Long patientId, @Param("offset") int offset, @Param("size") int size);
     Patient getPatientDetail(Long patientId);
-    List<Patient> selectInpatient();
+    List<Map<String, Object>> selectInpatient();
     List<Prescription> findByPatientId(Long patientId);
     void updatePatientAdmissionStatus(Long patientId, String admissionStatus);
     void updatePatientRoom(Long patientId, Long roomId);

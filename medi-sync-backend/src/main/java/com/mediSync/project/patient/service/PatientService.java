@@ -1,17 +1,21 @@
 package com.mediSync.project.patient.service;
 
+import com.mediSync.project.insurance.mapper.ClaimMapper;
 import com.mediSync.project.medical.mapper.MedicalRecordMapper;
 import com.mediSync.project.notification.mapper.NotificationMapper;
 import com.mediSync.project.patient.dto.PatientDTO;
 import com.mediSync.project.patient.mapper.PatientMapper;
 import com.mediSync.project.medical.vo.MedicalRecord;
+import com.mediSync.project.patient.mapper.ReservationMapper;
 import com.mediSync.project.patient.vo.Patient;
 import com.mediSync.project.patient.vo.PatientAccount;
 import com.mediSync.project.medical.vo.Prescription;
+import com.mediSync.project.test.mapper.TestReservationMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -21,6 +25,9 @@ public class PatientService {
     private final PatientMapper patientMapper;
     private final NotificationMapper notificationMapper;
     private final MedicalRecordMapper medicalRecordMapper;
+    private final ReservationMapper reservationMapper;
+    private final TestReservationMapper testReservationMapper;
+    private final ClaimMapper claimMapper;
 
     @Transactional
     public int register(Patient patient) {
@@ -81,12 +88,21 @@ public class PatientService {
         return patientMapper.getPatientDetail(patientId);
     }
 
-    public List<Patient> selectInpatient() {
+    public List<Map<String, Object>> selectInpatient() {
         return patientMapper.selectInpatient();
     }
 
     public List<Prescription> findByPatientId(Long patientId) {
         return  patientMapper.findByPatientId(patientId);
+    }
+
+    public Map<String, Object> patientDashBoard(Long patientId) {
+        Map<String, Object> map = new HashMap<>();
+        map.put("todayReservation", reservationMapper.countTodayReservations(patientId));
+        map.put("todayTests", testReservationMapper.countTodayTests(patientId));
+        map.put("claimStatus", claimMapper.latestClamStatus(patientId));
+
+        return map;
     }
 }
 

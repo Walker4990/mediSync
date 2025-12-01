@@ -24,7 +24,7 @@ export default function RegisterModal() {
   const [message, setMessage] = useState("");
   const [passwordMatchError, setPasswordMatchError] = useState("");
 
-  // ✅ 아이디 중복 확인 관련 상태
+  // 아이디 중복 확인 관련 상태
   const [idCheckMessage, setIdCheckMessage] = useState("");
   const [isIdAvailable, setIsIdAvailable] = useState(null);
   const [isCheckingId, setIsCheckingId] = useState(false);
@@ -48,6 +48,25 @@ export default function RegisterModal() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+
+    let newValue = value;
+
+    // 휴대폰 번호 자동 포맷팅
+    if (name === "phone") {
+      const onlyNums = value.replace(/[^0-9]/g, ""); // 숫자만 추출
+      // 하이픈 자동 삽입
+      if (onlyNums.length <= 3) {
+        newValue = onlyNums;
+      } else if (onlyNums.length <= 7) {
+        newValue = `${onlyNums.slice(0, 3)}-${onlyNums.slice(3)}`;
+      } else {
+        newValue = `${onlyNums.slice(0, 3)}-${onlyNums.slice(
+          3,
+          7
+        )}-${onlyNums.slice(7, 11)}`;
+      }
+    }
+
     const newForm = { ...form, [name]: value };
     setForm(newForm);
 
@@ -73,7 +92,7 @@ export default function RegisterModal() {
     }
   };
 
-  // ✅ 아이디 중복 확인 함수
+  // 아이디 중복 확인 함수
   const handleCheckLoginId = async () => {
     if (!form.loginId.trim()) {
       setIdCheckMessage("⚠️ 아이디를 입력해주세요.");
@@ -108,6 +127,15 @@ export default function RegisterModal() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // 휴대폰 번호 정규식 검사
+    const phoneRegex = /^010-\d{4}-\d{4}$/;
+    if (!phoneRegex.test(form.phone)) {
+      alert(
+        "⚠️ 휴대폰 번호를 올바른 형식으로 입력해주세요. (예: 010-1234-5678)"
+      );
+      return;
+    }
 
     if (passwordMatchError) {
       alert("⚠️ 비밀번호 일치 여부를 확인해 주세요.");
@@ -250,7 +278,7 @@ export default function RegisterModal() {
                 value={form.phone}
                 onChange={handleChange}
                 className={inputStyle}
-                placeholder="숫자만 입력 (예: 01012345678)"
+                placeholder="휴대폰번호 입력 (예: 010-1234-5678)"
                 required
               />
             </label>

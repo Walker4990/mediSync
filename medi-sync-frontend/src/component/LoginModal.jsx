@@ -50,7 +50,8 @@ export default function LoginModal() {
 
       if (res.data.success) {
         localStorage.setItem("token", res.data.token);
-        // handleLoginSuccess();
+        localStorage.setItem("user_data", JSON.stringify(res.data.user));
+        localStorage.setItem("loginTime", new Date().getTime().toString());
         handleLoginSuccess(res.data.token);
         onClose();
         alert("로그인 성공!");

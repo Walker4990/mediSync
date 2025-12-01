@@ -74,7 +74,6 @@ export default function PrescriptionInpatientPage() {
                         <th className="p-2 border">진단명</th>
                         <th className="p-2 border">담당의</th>
                         <th className="p-2 border">입원일</th>
-                        <th className="p-2 border">상태</th>
                         <th className="p-2 border">처방</th>
                     </tr>
                     </thead>
@@ -86,25 +85,11 @@ export default function PrescriptionInpatientPage() {
                             <td className="p-2 border">{p.roomNo || "-"}</td>
                             <td className="p-2 border">{p.nurseName || "-"}</td>
                             <td className="p-2 border">{p.diagnosis || "-"}</td>
-                            <td className="p-2 border">{p.doctorName || "-"}</td>
+                            <td className="p-2 border">{p.adminName || "-"}</td>
                             <td className="p-2 border">
-                                {p.admissionDate ? p.admissionDate.substring(0, 10) : "-"}
+                                {p.admittedAt ? p.admittedAt.substring(0, 10) : "-"}
                             </td>
-                            <td
-                                className={`p-2 border text-center font-medium ${
-                                    p.roomStatus === "FULL"
-                                        ? "text-red-600"
-                                        : p.roomStatus === "AVAILABLE"
-                                            ? "text-green-600"
-                                            : "text-gray-500"
-                                }`}
-                            >
-                                {p.roomStatus === "FULL"
-                                    ? "만실"
-                                    : p.roomStatus === "AVAILABLE"
-                                        ? "가능"
-                                        : "점검중"}
-                            </td>
+
                             <td className="p-2 border text-center">
                                 <button
                                     onClick={() => {

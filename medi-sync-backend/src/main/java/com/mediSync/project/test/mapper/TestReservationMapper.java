@@ -36,4 +36,5 @@ public interface TestReservationMapper {
                                              @Param("offset") int offset,
                                              @Param("size") int size);
     int countByGroup(@Param("group") String group);
+    int countTodayTests(Long patientId);
 }

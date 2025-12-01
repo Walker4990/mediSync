@@ -30,8 +30,10 @@ public class ClaimController {
     }
     // 환자별 청구 내역 조회
     @GetMapping("/{patientId}/claims")
-    public ResponseEntity<?> getClaimHistory(@PathVariable Long patientId) {
-        return ResponseEntity.ok(claimService.selectClaimHistoryByPatient(patientId));
+    public ResponseEntity<?> getClaimHistory(@PathVariable Long patientId,
+                                             @RequestParam(defaultValue = "1") int page,
+                                             @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(claimService.selectClaimHistoryByPatient(patientId, page, size));
     }
 
     /** 보험금 청구 등록 */

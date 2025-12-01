@@ -75,12 +75,17 @@ public class PatientController {
         return ResponseEntity.ok(patient);
     }
     @GetMapping("/inpatients")
-    public List<Patient> selectInpatient() {
+    public List<Map<String, Object>> selectInpatient() {
         return patientService.selectInpatient();
     }
 
     @GetMapping("/history/{patientId}")
     public List<Prescription> findByPatientId(@PathVariable("patientId") Long patientId) {
         return patientService.findByPatientId(patientId);
+    }
+
+    @GetMapping("/dashboard/{patientId}")
+    public Map<String, Object> patientDashboard(@PathVariable("patientId") Long patientId) {
+        return patientService.patientDashBoard(patientId);
     }
 }

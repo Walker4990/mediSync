@@ -1,9 +1,9 @@
-import { useEffect, useState } from "react";
+import {useEffect, useState} from "react";
 import axios from "axios";
 import AdminHeader from "../../component/AdminHeader";
 import PatientDetailModal from "../../component/PatientDetailModal";
 import SockJS from "sockjs-client";
-import { Client } from "@stomp/stompjs";
+import {Client} from "@stomp/stompjs";
 
 export default function AdmissionPage() {
     const [rooms, setRooms] = useState([]);
@@ -46,11 +46,17 @@ export default function AdmissionPage() {
     }, []);
 
 
-    // ✅ 병실 목록 조회
     const fetchRooms = async () => {
         try {
             const res = await axios.get("http://192.168.0.24:8080/api/rooms/list");
             setRooms(res.data);
+
+            // 🔥 선택한 병실이 있다면 최신 데이터로 다시 세팅
+            if (selectedRoom) {
+                const updated = res.data.find(r => r.roomId === selectedRoom.roomId);
+                if (updated) setSelectedRoom(updated);
+            }
+
         } catch (err) {
             console.error("❌ 병실 목록 조회 실패:", err);
         }
@@ -83,6 +89,7 @@ export default function AdmissionPage() {
     const handleSelectRoom = async (room) => {
         setSelectedRoom(room);
         setLoadingPatients(true);
+        setFilteredAdmissions([]);
         try {
             const res = await axios.get(`http://192.168.0.24:8080/api/admission/room/${room.roomId}`);
             setFilteredAdmissions(res.data);
@@ -171,7 +178,7 @@ export default function AdmissionPage() {
 
     return (
         <div className="font-pretendard bg-gray-50 min-h-screen">
-            <AdminHeader />
+            <AdminHeader/>
             <div className="max-w-6xl mx-auto py-10 space-y-8">
                 <h1 className="text-2xl font-bold mb-4 text-gray-800">🏥 병실 현황</h1>
 
@@ -229,7 +236,7 @@ export default function AdmissionPage() {
                                     <div className="w-full bg-gray-200 rounded-full h-3">
                                         <div
                                             className={`${color} h-3 rounded-full`}
-                                            style={{ width: `${ratio}%` }}
+                                            style={{width: `${ratio}%`}}
                                         ></div>
                                     </div>
                                     <p className="text-gray-500 text-sm mt-2">
@@ -288,7 +295,7 @@ export default function AdmissionPage() {
                                         </td>
 
                                         <td className="p-3">
-                                            {(a.status === "ADMITTED" || a.status === "SCHEDULED") &&(
+                                            {(a.status === "ADMITTED" || a.status === "SCHEDULED") && (
                                                 <>
                                                     <button
                                                         onClick={() => handleDischarge(a.admissionId)}
@@ -367,7 +374,7 @@ export default function AdmissionPage() {
                         >
                             ✕
                         </button>
-                        <PatientDetailModal patient={{ patientId: selectedPatient }} />
+                        <PatientDetailModal patient={{patientId: selectedPatient}}/>
                     </div>
                 </div>
             )}
