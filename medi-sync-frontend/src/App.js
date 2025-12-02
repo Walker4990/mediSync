@@ -118,10 +118,7 @@ function AppContent() {
           {/*유저페이지*/}
           <Route element={<UserLayout />}>
             <Route path="/" element={<UserHome />} />/
-            <Route path="/authLoginKakao" element={<AuthLoginKakao />} />
             <Route path="/findAccount" element={<FindAccount />} />/
-            <Route path="/auth/callback" element={<OAuthCallback />} />
-            <Route path="/oauth/redirect" element={<OAuthRedirectHandler />} />
             <Route path="/user/mypage" element={<MyPage />} />
             <Route path="/user/pre-form" element={<PreExamForm />} />
             <Route path="/user/consult" element={<MedicalConsult />} />
@@ -134,6 +131,10 @@ function AppContent() {
               element={<PatientInsurancePage />}
             />
           </Route>
+          <Route path="/authLoginKakao" element={<AuthLoginKakao />} />
+          <Route path="/auth/callback" element={<OAuthCallback />} />
+          <Route path="/oauth/redirect" element={<OAuthRedirectHandler />} />
+
           <Route path="/unpaid-alert" element={<UnpaidAlert />} />
           <Route path="/user/mypage/payment" element={<PaymentPage />} />
 
@@ -146,7 +147,18 @@ function AppContent() {
           ></Route>
         </Routes>
       </ModalProvider>
-      <ToastContainer position="top-right" autoClose={6000} theme="colored" />
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={true}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+      />
     </>
   );
 }

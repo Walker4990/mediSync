@@ -1,8 +1,9 @@
-import React, { useState, useContext, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { X } from "lucide-react";
 import useModal from "./ModalContext";
+import { toast } from "react-toastify";
 
 const socialStyles = `
     .naver-bg { background-color: #03c75a; }
@@ -19,7 +20,7 @@ export default function LoginModal() {
 
   const [loginId, setLoginId] = useState("");
   const [password, setPassword] = useState("");
-  const [message, setMessage] = useState("");
+  // const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false); // 중복 요청 방지
   const navigate = useNavigate();
 
@@ -30,7 +31,7 @@ export default function LoginModal() {
     if (isOpen) {
       setLoginId("");
       setPassword("");
-      setMessage("");
+      //setMessage("");
     }
   }, [isOpen]);
 
@@ -40,7 +41,7 @@ export default function LoginModal() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-    setMessage("");
+    //setMessage("");
 
     try {
       const res = await axios.post(API_URI, {
@@ -52,20 +53,18 @@ export default function LoginModal() {
         localStorage.setItem("token", res.data.token);
         localStorage.setItem("user_data", JSON.stringify(res.data.user));
         localStorage.setItem("loginTime", new Date().getTime().toString());
+        toast.success("로그인 성공!");
         handleLoginSuccess(res.data.token);
-        onClose();
-        alert("로그인 성공!");
       } else {
-        setMessage(res.data.message || "로그인 실패");
+        toast.error(res.data.message || "아이디 또는 비밀번호를 확인해주세요.");
       }
     } catch (err) {
-      setMessage("서버 오류로 로그인 실패");
+      toast.error("서버 연결에 실패했습니다. 관리자에게 문의하세요.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // OAuth2 로그인 함수 (미구현)
   const handleSocialLogin = (provider) => {
     const state = "RANDOM_UNIQUE_STRING";
     sessionStorage.setItem("oauth_state", state);
@@ -163,11 +162,11 @@ export default function LoginModal() {
           </button>
         </form>
         {/* 메시지 박스 */}
-        {message && (
+        {/* {message && (
           <div className="mt-4 p-3 bg-indigo-50 text-indigo-700 border border-indigo-200 rounded-lg text-sm">
             {message}
           </div>
-        )}
+        )} */}
         {/* 구분선 */}
         <div className="relative flex justify-center items-center my-6">
           <div className="absolute inset-0 flex items-center">

@@ -237,11 +237,13 @@ public class UserAccountController {
         //String socialLoginId = "KAKAO_" + System.currentTimeMillis();
         String socialLoginId = "KAKAO_" + user.getName();
         UserAccount check = userAccountService.selectUserByLoginId(socialLoginId);
+
+        UserAccount memberToLogin;
         System.out.println("-------------");
         System.out.println(check);
         System.out.println("------------- KAKAO");
 
-        if(check==null) {
+        if(check == null) {
             user.setLoginId(socialLoginId);
             user.setPassword(passwordEncoder.encode(socialLoginId)); // 소셜 사용자는 임시/랜덤 비밀번호 저장
             user.setEmail(socialLoginId + "@kakao.com");
@@ -250,13 +252,18 @@ public class UserAccountController {
 
             try {
                 userAccountService.userInsert(user);
+                memberToLogin = user;
             } catch (DuplicateKeyException e) {
+                memberToLogin = userAccountService.selectUserByLoginId(socialLoginId);
                 // 이메일 등이 중복될 수 있으나, 여기서는 ID 기반이므로 무시하거나 로그 남김
             }
+        }   else {
+            // 기존 회원 로그인
+            memberToLogin = check;
         }
 
         // 4. JWT 토큰 발급
-        String token = jwtUtil.generateToken(user.getLoginId(), user.getUserId());
+        String token = jwtUtil.generateToken(memberToLogin.getLoginId(), memberToLogin.getUserId());
 
         System.out.println("--------- token");
         System.out.println(token);
