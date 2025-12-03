@@ -25,7 +25,7 @@ public class Drug {
     private LocalDateTime createdAt;
     private String insuranceCode;
     //private String insurerCode;
-    //private String insurerName;
+    private String insurerName;
     private String unit;
 
     private String location;

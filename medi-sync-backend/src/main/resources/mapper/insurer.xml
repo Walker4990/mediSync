@@ -37,4 +37,12 @@
         ORDER BY insurer_code ASC
     </select>
 
+    <select id="selectAllInsuranceName" resultType="String">
+        select insurer_name from insurer
+    </select>
+    <select id="selectAllInsuranceCodeByName" parameterType="String" resultType="String">
+        select insurer_code from insurer
+        where insurer_name = #{name}
+    </select>
+
 </mapper>

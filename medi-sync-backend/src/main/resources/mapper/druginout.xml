@@ -5,16 +5,28 @@
 
 <mapper namespace="com.mediSync.project.drug.mapper.DrugInOutMapper">
 
-   <update id="plusDrugInIut" parameterType="drugcheckdto">
+    <select id="getLotNo" resultType="String">
+        select lot_no from drug_purchase
+    </select>
+    <select id="getDrugCodes" resultType="String">
+        select drug_code from drug
+    </select>
+
+   <update id="plusDrugInIut" parameterType="drugpurchase">
        update drug
        set quantity = quantity + #{quantity}
        where drug_code = #{drugCode}
    </update>
 
-    <update id="minusDrugInIut" parameterType="drugcheckdto">
+    <update id="minusDrugInIut" parameterType="drugpurchase">
         update drug
         set quantity = quantity - #{quantity}
         where drug_code = #{drugCode}
     </update>
 
+
+    <insert id="insertDurgPurchase" parameterType="drugpurchase">
+        insert into drug_purchase(drug_code, quantity, purchase_price,lot_no, expiration_date, location)
+        values(#{drugCode}, #{quantity}, #{purchasePrice}, #{lotNo}, #{expirationDate}, #{location})
+    </insert>
 </mapper>

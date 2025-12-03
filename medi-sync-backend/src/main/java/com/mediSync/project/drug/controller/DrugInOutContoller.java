@@ -6,6 +6,7 @@ import com.mediSync.project.drug.service.DrugInOutService;
 import com.mediSync.project.drug.service.DrugService;
 import com.mediSync.project.drug.vo.Drug;
 import com.mediSync.project.drug.vo.DrugCheck;
+import com.mediSync.project.drug.vo.DrugPurchase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,12 +26,38 @@ public class DrugInOutContoller {
     }
     @GetMapping("/search/{keyword}")
     public List<Drug> getDrugInfoByKeyword(@PathVariable String keyword){
-        return drugService.searchDrugsByKeyword(keyword);
+        return drugService.searchDrugsByKeywordIncludeInjection(keyword);
+    }
+
+    @GetMapping("/lotNo")
+    public List<String> getLotNo(){
+        return drugInOutService.getLotNo();
+    }
+
+    @GetMapping("/drugCode")
+    public List<String>getDrugCodes(){
+        return drugInOutService.getDrugCodes();
+    }
+
+    @GetMapping("/insurance")
+    public List<String>getInsuranceName(){
+        return drugService.getInsuranceName();
     }
 
     @PostMapping("/insert")
-    public int insertDrugInfo(@RequestBody DrugCheckDTO drug){
+    public int insertDrugInfo(@RequestBody DrugPurchase drug){
 
-        return drugInOutService.plusDrugInIut(drug);
+        System.out.println("약 정보 : "+drug);
+        int res = drugInOutService.plusDrugInIut(drug);
+        return res;
     }
+
+    @PostMapping("/new")
+    public int insertDrugInfoAndPurchase(@RequestBody DrugDTO drug){
+        System.out.println("들어온 약 정보 : "+ drug);
+        drugInOutService.insertDrugInfoAndPurchase(drug);
+        return 0;
+    }
+
+
 }

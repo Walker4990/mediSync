@@ -32,6 +32,10 @@ public class DrugService {
     public List<DrugDTO> selectAllDrug() {
         return drugMapper.selectAllDrug();
     }
+
+    public List<String>getInsuranceName(){
+        return insurerMapper.selectAllInsuranceName();
+    }
     public Drug selectDrugByDrugCode(String drugCode){
         return drugMapper.selectDrugByDrugCode(drugCode);
     }
@@ -90,6 +94,15 @@ public class DrugService {
         }
         return drugMapper.searchDrugsByKeyword(keyword.trim());
     }
+
+    // 약 자동 완성 검색
+    public List<Drug> searchDrugsByKeywordIncludeInjection(String keyword) {
+        if (keyword == null || keyword.trim().isEmpty()) {
+            return List.of();
+        }
+        return drugMapper.searchDrugsByKeywordIncludeInjection(keyword.trim());
+    }
+
     // 주사 자동 완성 검색
     public List<Drug> searchInjectionByKeyword(String keyword) {
         if (keyword == null || keyword.trim().isEmpty()) return List.of();

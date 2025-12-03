@@ -6,24 +6,66 @@ export default function DrugInOutState() {
   const TEST_URL = "http://localhost:8080/api/inout";
   const URL = "http://192.168.0.24:3306/api/inout";
 
-  const [mode, setMode] = useState("");
+  //화면용
+  const [mode, setMode] = useState("existing");
+  //검색용
   const [search, setSearch] = useState("");
   const [searchList, setSearchList] = useState([]);
+
+  //select 용
+  const UNIT_OPTIONS = ["정", "주사", "액상", "캡슐"];
+
+  //모달용
   const [selectedDrug, setSelectedDrug] = useState(null);
+
+  //입고 등록용
   const [inQty, setInQty] = useState(0);
   const [memo, setMemo] = useState("");
+  const [location, setLocation] = useState("");
+  const [lotNo, setLotNo] = useState("");
+  const [purchasePrice, setPurchasePrice] = useState("");
+  const [expirationDate, setExpirationDate] = useState("");
+
+  //로트번호 존재 여부
+  const [lotNoList, setLotNoList] = useState([]);
+  const [isInLotNo, setIsInLotNo] = useState(null);
+
+  const [codeList, setCodeList] = useState([]);
+  const [isInCode, setIsInCode] = useState(null);
+
+  const [insuranceList, setInsuranceList] = useState([]);
+  //등록버튼 여부
+  const [isButtonOpen, setIsButtonOpen] = useState(true);
+
+  //약품 등록 용
   const [newDrug, setNewDrug] = useState({
     drugName: "",
     drugCode: "",
     insuranceCode: "",
     unitPrice: "",
+    purchasePrice: "",
+    unit: "",
     expirationDate: "",
     location: "",
     quantity: "",
+    lotNo: "",
   });
+  const requiredFields = [
+    "drugName",
+    "drugCode",
+    "insuranceCode",
+    "unitPrice",
+    "purchasePrice",
+    "expirationDate",
+    "location",
+    "supplier",
+    "quantity",
+    "unit",
+    "lotNo",
+  ];
 
   /*검색*/
-  const handleSearch = async (keyword) => {
+  const handleSearch = async (keyword = "") => {
     setSearch(keyword);
 
     if (keyword.trim() === "") {
@@ -41,27 +83,77 @@ export default function DrugInOutState() {
 
   /*입고 등록 */
   const handleInsert = async () => {
-    if (!selectedDrug || inQty <= 0) return alert("입고 수량을 입력해주세요.");
+    // 1) 기본 선택 확인
+    if (!selectedDrug) return alert("입고할 약품을 먼저 선택해주세요.");
+
+    if (!selectedDrug || inQty <= 0)
+      return alert("입고 수량을 올바르게 입력해주세요.");
+    // 3) 단가 검증
+    if (!purchasePrice || Number(purchasePrice) <= 0)
+      return alert("입고 단가를 올바르게 입력해주세요.");
+
+    // 4) 로트번호 검증
+    if (!lotNo || lotNo.trim() === "") return alert("로트번호를 입력해주세요.");
+
+    // 5) 로트번호 중복 체크 여부 (isInLotNo가 true면 중복)
+    if (isInLotNo === true)
+      return alert(
+        "이미 존재하는 로트번호입니다. 다른 로트번호를 입력해주세요."
+      );
+    // 6) 유통기한 검증
+    if (!expirationDate || expirationDate.trim() === "")
+      return alert("유통기한을 선택해주세요.");
+
+    // 7) 입고 위치
+    if (!location || location.trim() === "")
+      return alert("입고 위치를 입력해주세요.");
 
     try {
       await axios.post(`${TEST_URL}/insert`, {
         drugCode: selectedDrug.drugCode,
         quantity: inQty,
         memo,
+        location: location,
+        lotNo: lotNo,
+        purchasePrice: purchasePrice,
+        expirationDate: expirationDate,
       });
 
       alert("입고 등록이 완료되었습니다.");
       setSelectedDrug(null);
       setMemo("");
       setInQty(0);
+      setLocation("");
+      setExpirationDate("");
+      setPurchasePrice("");
+      setIsInLotNo("");
       await handleSearch();
     } catch (err) {
       console.error("입고 등록 실패", err);
     }
   };
   const handleNewDrugInsert = async () => {
+    for (const field of requiredFields) {
+      if (!newDrug[field] || newDrug[field].trim?.() === "") {
+        alert("모든 필드를 입력해주세요.");
+        return;
+      }
+    }
     try {
       await axios.post(`${TEST_URL}/new`, newDrug);
+      alert("등록이 완료되었습니다.");
+      setNewDrug({
+        drugName: "",
+        drugCode: "",
+        insuranceCode: "",
+        unitPrice: "",
+        purchasePrice: "",
+        unit: "",
+        expirationDate: "",
+        location: "",
+        quantity: "",
+        lotNo: "",
+      });
     } catch (err) {
       console.error("신규 등록 실패", err);
     }
@@ -76,14 +168,96 @@ export default function DrugInOutState() {
       console.error("처음 약품 리스트 가져오기 실패", err);
     }
   };
+
   useEffect(() => {
+    async function fetchInsuranceList() {
+      try {
+        const res = await axios.get(`${TEST_URL}/insurance`);
+        setInsuranceList(res.data);
+        console.log("보험 정보 : ", res.data);
+      } catch (err) {
+        console.error("보험정보 불러오기 실패", err);
+      }
+    }
+    fetchInsuranceList();
+  }, []);
+
+  const fetchLotNo = async () => {
+    try {
+      const res = await axios.get(`${TEST_URL}/lotNo`);
+      setLotNoList(res.data);
+    } catch (err) {
+      console.error("lot번호 가져오기 실패", err);
+    }
+  };
+
+  const fetchDrugCode = async () => {
+    try {
+      const res = await axios.get(`${TEST_URL}/drugCode`);
+      setCodeList(res.data);
+    } catch (err) {
+      console.error("drugCode 가져오기 실패", err);
+    }
+  };
+  const handleLotNoChange = (value) => {
+    setNewDrug((prev) => ({
+      ...prev,
+      lotNo: value,
+    }));
+    console.log("로트번호: ", value);
+  };
+
+  const handleCodeChange = (value) => {
+    setNewDrug((prev) => ({
+      ...prev,
+      drugCode: value,
+    }));
+    console.log("코드: ", value);
+  };
+
+  useEffect(() => {
+    // 필드 체크
+    const allFilled = requiredFields.every(
+      (field) => newDrug[field] && newDrug[field].trim?.() !== ""
+    );
+
+    setIsButtonOpen(allFilled);
+  }, [newDrug]); // newDrug가 바뀔 때마다 체크
+
+  useEffect(() => {
+    if (!newDrug.lotNo) {
+      setIsInLotNo(false);
+      return;
+    }
+    setIsInLotNo(lotNoList.includes(newDrug.lotNo));
+  }, [newDrug.lotNo, lotNoList]);
+
+  useEffect(() => {
+    if (!newDrug.drugCode) {
+      setIsInCode(false);
+      return;
+    }
+    setIsInCode(codeList.includes(newDrug.drugCode));
+  }, [newDrug.drugCode, codeList]);
+
+  useEffect(() => {
+    if (!lotNo) {
+      setIsInLotNo(false);
+      return;
+    }
+    setIsInLotNo(lotNoList.includes(lotNo));
+  }, [lotNo, lotNoList]);
+
+  useEffect(() => {
+    fetchDrugCode();
     fetchSearchList();
+    fetchLotNo();
   }, []);
 
   return (
     <div className="bg-gray-50 min-h-screen font-pretendard">
       <AdminHeader />
-      <main className="max-w-7xl mx-auto pt-24 px-8">
+      <main className="max-w-7xl mx-auto pt-10 px-8">
         <div className="max-w-5xl mx-auto">
           {/*전체 페이지 */}
           <div className="bg-white p-6 rounded-2xl shadow-lg mt-6">
@@ -163,6 +337,10 @@ export default function DrugInOutState() {
                       setSelectedDrug(null);
                       setMemo("");
                       setInQty(0);
+                      setLocation("");
+                      setExpirationDate("");
+                      setPurchasePrice("");
+                      setIsInLotNo("");
                     }}
                     className="absolute top-3 right-3 text-gray-500 hover:text-black text-xl"
                   >
@@ -188,6 +366,72 @@ export default function DrugInOutState() {
                       <span className="font-medium">위치 : </span>
                       {selectedDrug.location}
                     </p>
+                  </div>
+                  {/*입고 위치 */}
+                  <div className="mt-4">
+                    <label className="font-medium text-gray-700">
+                      입고 위치
+                    </label>
+
+                    <input
+                      type="text"
+                      value={location ?? ""}
+                      onChange={(e) => setLocation(e.target.value)}
+                      className="mt-2 w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-400 outline-none"
+                    />
+                  </div>
+
+                  {/*로트 번호 */}
+                  <div className="mt-4">
+                    <label className="font-medium text-gray-700">
+                      로트 번호 (LOT)
+                    </label>
+                    <input
+                      type="text"
+                      value={lotNo}
+                      onChange={(e) => {
+                        setLotNo(e.target.value);
+                      }}
+                      placeholder="예: A1B2C3"
+                      className="mt-2 w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-400 outline-none"
+                    />
+                    {lotNo !== "" &&
+                      (isInLotNo ? (
+                        <p className="text-red-600 text-sm mt-1 font-medium">
+                          이미 존재하는 로트번호입니다.
+                        </p>
+                      ) : (
+                        <p className="text-green-600 text-sm mt-1 font-medium">
+                          사용 가능한 로트번호입니다.
+                        </p>
+                      ))}
+                  </div>
+
+                  {/*단가(구매가) */}
+                  <div className="mt-4">
+                    <label className="font-medium text-gray-700">
+                      입고 단가(원가)
+                    </label>
+                    <input
+                      type="number"
+                      value={purchasePrice}
+                      onChange={(e) => setPurchasePrice(e.target.value)}
+                      min={0}
+                      placeholder="예: 1500"
+                      className="mt-2 w-full p-3 border rounded-lg focus:ring-2 forcus:ring-blue-400 outline-none"
+                    />
+                  </div>
+                  {/*유통기한 */}
+                  <div className="mt-4">
+                    <label className="font-medium text-gray-700">
+                      유통기한
+                    </label>
+                    <input
+                      type="date"
+                      value={expirationDate}
+                      onChange={(e) => setExpirationDate(e.target.value)}
+                      className="mt-2 w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-400 outline-none"
+                    />
                   </div>
 
                   {/*수량 입력 */}
@@ -246,6 +490,25 @@ export default function DrugInOutState() {
                       className="w-full p-3 border mt-2 rounded-lg"
                     />
                   </div>
+                  <div>
+                    <label className="font-medium text-gray-700">
+                      제형(unit)
+                    </label>
+                    <select
+                      className="w-full p-3 border mt-2 rounded-lg"
+                      value={newDrug.unit}
+                      onChange={(e) =>
+                        setNewDrug({ ...newDrug, unit: e.target.value })
+                      }
+                    >
+                      <option value="">제형 선택</option>
+                      {UNIT_OPTIONS.map((u) => (
+                        <option key={u} value={u}>
+                          {u}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
 
                   <div>
                     <label className="font-medium text-gray-700">
@@ -255,19 +518,66 @@ export default function DrugInOutState() {
                       type="text"
                       className="w-full p-3 border mt-2 rounded-lg"
                       value={newDrug.drugCode}
-                      onChange={(e) =>
-                        setNewDrug({ ...newDrug, drugCode: e.target.value })
-                      }
+                      onChange={(e) => handleCodeChange(e.target.value)}
                       placeholder="예:DR001"
+                    />
+                    {newDrug.drugCode?.trim() !== "" &&
+                    newDrug.drugCode !== null ? (
+                      isInCode ? (
+                        <p className="text-red-600 text-sm mt-1 font-medium">
+                          이미 존재하는 코드번호입니다.
+                        </p>
+                      ) : (
+                        <p className="text-green-600 text-sm mt-1 font-medium">
+                          사용 가능한 코드번호입니다.
+                        </p>
+                      )
+                    ) : null}
+                  </div>
+                  <div>
+                    <label className="font-medium text-gray-700">
+                      로트번호
+                    </label>
+                    <input
+                      type="text"
+                      className="w-full p-3 border mt-2 rounded-lg"
+                      value={newDrug.lotNo}
+                      onChange={(e) => {
+                        handleLotNoChange(e.target.value);
+                      }}
+                      placeholder="예 : A1B1C1"
+                    />
+                    {newDrug.lotNo?.trim() !== "" && newDrug.lotNo !== null ? (
+                      isInLotNo ? (
+                        <p className="text-red-600 text-sm mt-1 font-medium">
+                          이미 존재하는 로트번호입니다.
+                        </p>
+                      ) : (
+                        <p className="text-green-600 text-sm mt-1 font-medium">
+                          사용 가능한 로트번호입니다.
+                        </p>
+                      )
+                    ) : null}
+                  </div>
+                  <div>
+                    <label className="font-medium text-gray-700">제약사</label>
+                    <input
+                      type="text"
+                      className="w-full p-3 border mt-2 rounded-lg"
+                      value={newDrug.supplier}
+                      onChange={(e) =>
+                        setNewDrug({
+                          ...newDrug,
+                          supplier: e.target.value,
+                        })
+                      }
+                      placeholder="예 : 한진제약"
                     />
                   </div>
 
                   <div>
-                    <label className="font-medium text-gray-700">
-                      보험 코드
-                    </label>
-                    <input
-                      type="text"
+                    <label className="font-medium text-gray-700">보험</label>
+                    <select
                       className="w-full p-3 border mt-2 rounded-lg"
                       value={newDrug.insuranceCode}
                       onChange={(e) =>
@@ -276,21 +586,45 @@ export default function DrugInOutState() {
                           insuranceCode: e.target.value,
                         })
                       }
-                      placeholder="예 : INS005"
-                    />
+                    >
+                      <option value="">보험선택</option>
+                      {insuranceList.map((ins) => (
+                        <option key={ins} value={ins}>
+                          {ins}
+                        </option>
+                      ))}
+                    </select>
                   </div>
 
                   <div>
                     <label className="font-medium text-gray-700">가격</label>
                     <input
                       type="number"
-                      min={0}
+                      min={1}
                       className="w-full p-3 border mt-2 rounded-lg"
                       value={newDrug.unitPrice}
                       onChange={(e) =>
                         setNewDrug({ ...newDrug, unitPrice: e.target.value })
                       }
                       placeholder="예: 1500"
+                    />
+                  </div>
+                  <div>
+                    <label className="font-medium text-gray-700">
+                      입고 단가(원가)
+                    </label>
+                    <input
+                      type="number"
+                      className="w-full p-3 border mt-2 rounded-lg"
+                      value={newDrug.purchasePrice}
+                      onChange={(e) =>
+                        setNewDrug({
+                          ...newDrug,
+                          purchasePrice: e.target.value,
+                        })
+                      }
+                      placeholder="예: 1200"
+                      min={1}
                     />
                   </div>
 
@@ -318,6 +652,7 @@ export default function DrugInOutState() {
                     <input
                       type="text"
                       value={newDrug.location}
+                      className="w-full p-3 border mt-2 rounded-lg"
                       onChange={(e) =>
                         setNewDrug({ ...newDrug, location: e.target.value })
                       }
@@ -342,7 +677,12 @@ export default function DrugInOutState() {
                 <div className="flex justify-end">
                   <button
                     onClick={handleNewDrugInsert}
-                    className="bg-green-600 text-white px-5 py-2 rounded-xl shadow hover:bg-green-700"
+                    disabled={!isButtonOpen}
+                    className={`px-5 py-2 rounded-xl shadow text-white ${
+                      isButtonOpen
+                        ? "bg-green-600 hover:bg-green-700"
+                        : "bg-gray-400 cursor-not-allowed"
+                    }`}
                   >
                     신규 약품 등록
                   </button>

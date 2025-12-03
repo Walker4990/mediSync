@@ -24,8 +24,8 @@
 
     <!-- 약품등록 -->
     <insert id="insertDrug" parameterType="drug">
-        INSERT INTO drug (drug_code, drug_name, unit, unit_price, quantity, expiration_date, insurance_code, supplier, inventory_id, created_at)
-        VALUES (#{drugCode}, #{drugName}, #{unit}, #{unitPrice}, #{quantity}, #{expirationDate}, #{insuranceCode}, #{supplier}, #{inventoryId}, now())
+        INSERT INTO drug (drug_code, drug_name, unit, unit_price, quantity, expiration_date, insurance_code, supplier, created_at,location,min_stock)
+        VALUES (#{drugCode}, #{drugName}, #{unit}, #{unitPrice}, #{quantity}, #{expirationDate}, #{insuranceCode}, #{supplier}, now(),#{location},5)
     </insert>
 
     <select id="selectDrugByDrugCode" parameterType="string" resultType="drug">
@@ -91,6 +91,25 @@
         ORDER BY drug_name
         LIMIT 20
     </select>
+
+
+    <!--  자동완성 검색 (약품명 or 코드) -->
+    <select id="searchDrugsByKeywordIncludeInjection" parameterType="string" resultType="drug">
+        SELECT drug_code AS drugCode,
+        drug_name AS drugName,
+        unit,
+        unit_price AS unitPrice,
+        location,
+        quantity,
+        supplier,
+        expiration_date,
+        drug_code
+        FROM drug
+        WHERE (drug_name LIKE CONCAT('%', #{keyword}, '%') OR drug_code LIKE CONCAT('%', #{keyword}, '%'))
+        ORDER BY drug_name
+    </select>
+
+
     <!-- 주사검색 -->
     <select id="searchInjectionByKeyword" parameterType="string" resultType="drug">
         SELECT drug_code AS drugCode,

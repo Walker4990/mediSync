@@ -18,6 +18,7 @@ public interface InsurerMapper {
                       @Param("contact") String contact
     );
     List<Map<String, Object>> findAll();
-
+    List<String> selectAllInsuranceName();
     List<Insurer> getInsurerCode();
+    String selectAllInsuranceCodeByName(String name);
 }
