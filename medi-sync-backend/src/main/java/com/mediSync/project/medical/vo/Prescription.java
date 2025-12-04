@@ -21,7 +21,7 @@ public class Prescription {
     // 약 처방
     private String drugCode;
     private String drugName;
-    private int dosage;
+    private double dosage;
     private int duration;
 
     // 검사 처방

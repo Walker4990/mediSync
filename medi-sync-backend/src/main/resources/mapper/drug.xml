@@ -84,7 +84,7 @@
         location,
         quantity AS quantity,
         supplier,
-        expiration_date,
+        expiration_date
         FROM drug
         WHERE (drug_name LIKE CONCAT('%', #{keyword}, '%') OR drug_code LIKE CONCAT('%', #{keyword}, '%'))
         AND unit != '주사'

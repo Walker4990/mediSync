@@ -342,6 +342,7 @@ export default function MedicalRecordPage() {
         } catch (err) {
           console.warn("⚠️ 처방전 자동 발행 실패:", err);
         }
+
         console.log("✅ 등록 응답:", res.data);
         const recordRes = await axios.get(
           `http://192.168.0.24:8080/api/records/patient/${form.patientId}`
@@ -351,6 +352,8 @@ export default function MedicalRecordPage() {
         setNewPrescriptions([
           { drugName: "", dosage: "", duration: "", type: "DRUG" },
         ]);
+        setIsShort(false);
+        setShortageList([]);
         window.location.reload();
       } else {
         alert("등록 실패: " + (res.data.message || ""));
@@ -416,8 +419,12 @@ export default function MedicalRecordPage() {
       { drugName: "", dosage: "", duration: "", type: "DRUG" },
     ]);
 
-  const removePrescriptionRow = (i) =>
+  const removePrescriptionRow = (i, type) => {
     setNewPrescriptions(newPrescriptions.filter((_, idx) => idx !== i));
+    if (type === "DRUG") {
+      setShortageList(shortageList.filter((_, idx) => idx !== i));
+    }
+  };
 
   const handleSurgeryReserve = (record) => {
     if (!record) return;
@@ -496,13 +503,14 @@ export default function MedicalRecordPage() {
     const myQty = newPrescriptions[i].quantity;
     const need = newPrescriptions[i].dosage;
     const day = newPrescriptions[i].duration || 1;
+    if (!myQty || !need) return;
 
     console.log(i, "번쨰 리스트값들", myQty, need, day);
     const totalNeed = (need || 0) * (day || 1);
     if (myQty < totalNeed) {
-      console.log("약 개수 부족");
+      console.log("약 개수 부족", myQty, totalNeed);
     } else {
-      console.log("약 개수 충분");
+      console.log("약 개수 충분", myQty, totalNeed);
     }
     const isCurrentShort = myQty < totalNeed;
     setShortageList((prev) => {
@@ -771,7 +779,11 @@ export default function MedicalRecordPage() {
                       name="drugName"
                       placeholder="약품명 검색"
                       value={p.drugName}
-                      onChange={(e) => handlePrescriptionChange(i, e)}
+                      onChange={(e) => {
+                        handlePrescriptionChange(i, e);
+                        setActiveIndex(i);
+                      }}
+                      onFocus={() => setActiveIndex(i)}
                       className="border p-2 rounded w-full"
                       autoComplete="off"
                     />
@@ -900,6 +912,7 @@ export default function MedicalRecordPage() {
                                   updated[i].injectionName = detail.drugName;
                                   updated[i].unit = detail.unit;
                                   updated[i].unitPrice = detail.unitPrice;
+                                  updated[i].drugCode = detail.drugCode;
                                   setNewPrescriptions(updated);
                                   setDrugSuggestions([]);
                                 } catch (err) {
@@ -1054,7 +1067,7 @@ export default function MedicalRecordPage() {
               {newPrescriptions.length > 1 && (
                 <button
                   type="button"
-                  onClick={() => removePrescriptionRow(i)}
+                  onClick={() => removePrescriptionRow(i, p.type)}
                   className="text-red-500 font-bold ml-2"
                 >
                   ✕
