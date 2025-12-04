@@ -120,7 +120,7 @@ function AppContent() {
             <Route path="/" element={<UserHome />} />/
             <Route path="/findAccount" element={<FindAccount />} />/
             <Route path="/user/mypage" element={<MyPage />} />
-            <Route path="/user/pre-form" element={<PreExamForm />} />
+            <Route path="/user/pre-exam" element={<PreExamForm />} />
             <Route path="/user/consult" element={<MedicalConsult />} />
             <Route path="/user/reservation" element={<Reservation />} />
             <Route path="/user/insurance" element={<Insurance />} />
