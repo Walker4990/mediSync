@@ -76,15 +76,15 @@
     </delete>
     <!--  자동완성 검색 (약품명 or 코드) -->
     <select id="searchDrugsByKeyword" parameterType="string" resultType="drug">
-        SELECT drug_code AS drugCode,
+        SELECT
+        drug_code AS drugCode,
         drug_name AS drugName,
         unit,
         unit_price AS unitPrice,
         location,
-        quantity,
+        quantity AS quantity,
         supplier,
         expiration_date,
-        drug_code
         FROM drug
         WHERE (drug_name LIKE CONCAT('%', #{keyword}, '%') OR drug_code LIKE CONCAT('%', #{keyword}, '%'))
         AND unit != '주사'
@@ -115,7 +115,8 @@
         SELECT drug_code AS drugCode,
         drug_name AS drugName,
         unit,
-        unit_price AS unitPrice
+        unit_price AS unitPrice,
+        quantity
         FROM drug
         WHERE (drug_name LIKE CONCAT('%', #{keyword}, '%') OR drug_code LIKE CONCAT('%', #{keyword}, '%'))
         AND unit = '주사'
@@ -146,4 +147,28 @@
         SELECT COUNT(*) FROM drug
     </select>
 
+    <update id="decreaseQuantityByInven" parameterType="map">
+        UPDATE drug SET quantity = quantity - #{usedQty}
+        WHERE drug_name = #{itemName}
+        AND quantity >= #{usedQty}
+    </update>
+
+    <select id="getDrugPurchaseOrderByDate" parameterType="String" resultType="drugpurchase">
+        SELECT * FROM drug_purchase
+        where drug_code = #{drugCode}
+        AND quantity > 0
+        ORDER BY expiration_date ASC
+    </select>
+
+    <update id="updateLotQuantity" parameterType="map">
+        update drug_purchase
+        set
+        quantity = #{remain}
+        where purchase_id = #{purchaseId}
+    </update>
+
+    <delete id="deleteLot" parameterType="int">
+        delete from drug_purchase
+        where purchase_id = #{purchaseId}
+    </delete>
 </mapper>

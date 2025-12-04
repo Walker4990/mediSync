@@ -1,5 +1,6 @@
 package com.mediSync.project.medical.controller;
 
+import com.mediSync.project.medical.dto.MedicalRecordDTO;
 import com.mediSync.project.medical.service.MedicalRecordService;
 import com.mediSync.project.medical.vo.MedicalRecord;
 import lombok.RequiredArgsConstructor;
@@ -43,6 +44,8 @@ public class MedicalRecordController {
 
     @PostMapping
     public ResponseEntity<Map<String, Object>> insertRecord(@RequestBody MedicalRecord mr) {
+
+        System.out.println("들어온 값 : "+ mr);
         int result = medicalRecordService.insertRecord(mr);
 
         Map<String, Object> map = new HashMap<>();
