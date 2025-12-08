@@ -9,9 +9,14 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.File;
+import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
@@ -20,7 +25,6 @@ public class PrescriptionController {
 
     private final PrescriptionService prescriptionService;
     private final MedicalRecordMapper medicalRecordMapper;
-
     @GetMapping
     public List<Prescription> selectPrescriptions(){
         return prescriptionService.selectPrescriptions();
@@ -38,23 +42,70 @@ public class PrescriptionController {
     }
 
     @GetMapping("/pdf/{recordId}")
-    public ResponseEntity<byte[]> generatePrescriptionPdf(@PathVariable Long recordId) {
-        byte[] pdfData = prescriptionService.generatePrescriptionPdf(recordId);
-        MedicalRecord record = medicalRecordMapper.selectRecordById(recordId); // ✅ 환자 정보 조회
+    public ResponseEntity<?> requestPrescriptionPdf(@PathVariable Long recordId) {
 
-        // ✅ 파일명: yyyy-MM-dd_이름_처방전.pdf
-        String today = java.time.LocalDate.now().toString();
-        String rawFileName = today + "_" + record.getPatientName() + "_처방전.pdf";
-        String fileName = URLEncoder.encode(rawFileName, StandardCharsets.UTF_8);
+        String jobId = UUID.randomUUID().toString();
 
-        // ✅ 헤더 설정
-        HttpHeaders headers = new HttpHeaders();
-        headers.add(HttpHeaders.CONTENT_TYPE, "application/pdf");
-        headers.add(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + fileName + "\"");
+        prescriptionService.initJob(jobId);
+        prescriptionService.generatePdfAsync(jobId, recordId);
 
-        return ResponseEntity.ok()
-                .headers(headers)
-                .body(pdfData);
+        return ResponseEntity.ok(Map.of(
+                "jobId", jobId,
+                "status", "PENDING"
+        ));
+    }
+
+    // =============================
+    // PDF 생성 상태 조회
+    // =============================
+    @GetMapping("/pdf/status/{jobId}")
+    public ResponseEntity<?> getPdfStatus(@PathVariable String jobId) {
+
+        Map<String, Object> status = prescriptionService.getJobStatus(jobId);
+
+        if (status == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        return ResponseEntity.ok(status);
+    }
+
+    @GetMapping("/pdf/download/{jobId}")
+    public ResponseEntity<byte[]> downloadPdf(@PathVariable String jobId) {
+
+        // 서비스에서 상태 조회
+        Map<String, Object> status = prescriptionService.getJobStatus(jobId);
+
+        if (status == null || !"COMPLETED".equals(status.get("status"))) {
+            return ResponseEntity.status(404).body(null);
+        }
+
+        // 실제 파일 찾기
+        // 윈도우 개발환경 기준
+        File dir = new File("C:/temp/pdfs/");
+        File[] matches = dir.listFiles((d, name) -> name.startsWith(jobId + "_"));
+
+        if (matches == null || matches.length == 0) {
+            return ResponseEntity.status(404).body(null);
+        }
+
+        File pdfFile = matches[0];
+
+        try {
+            byte[] bytes = Files.readAllBytes(pdfFile.toPath());
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.add(HttpHeaders.CONTENT_TYPE, "application/pdf");
+            headers.add(HttpHeaders.CONTENT_DISPOSITION,
+                    "attachment; filename=\"" + pdfFile.getName() + "\"");
+
+            return ResponseEntity.ok()
+                    .headers(headers)
+                    .body(bytes);
+
+        } catch (IOException e) {
+            return ResponseEntity.status(500).body(null);
+        }
     }
 
     // ✅ 입원환자 처방 내역 조회

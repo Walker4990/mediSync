@@ -5,9 +5,13 @@
 
 <mapper namespace="com.mediSync.project.test.mapper.TestScheduleMapper">
     <!-- 검사 예약 존재 여부 -->
-    <select id="findByCodeAndDate" parameterType="map" resultType="com.mediSync.project.test.vo.TestSchedule">
-        SELECT * FROM test_schedule
-        WHERE test_code = #{testCode} AND test_date = #{testDate} AND test_time LIKE CONCAT(#{testTime}, '%')
+    <select id="findByCodeAndDate" resultType="com.mediSync.project.test.vo.TestSchedule">
+        SELECT *
+        FROM test_schedule
+        WHERE test_code = #{testCode}
+        AND test_date = #{testDate}
+        AND test_time = #{testTime}
+        LIMIT 1
     </select>
 
     <!-- 예약 신규 생성 -->
@@ -28,6 +32,7 @@
 
     <!-- 예약 슬롯 확보 -->
     <update id="reserveSlot" parameterType="map">
+        <![CDATA[
         UPDATE test_schedule
         SET reserved = reserved + 1,
         status = CASE
@@ -38,7 +43,7 @@
         WHERE test_code = #{testCode}
         AND test_date = #{testDate}
         AND test_time = #{testTime}
-        AND reserved &lt; capacity
+        AND reserved < capacity]]>
     </update>
 
     <update id="updateTestSchedule" parameterType="testSchedule">

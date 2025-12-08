@@ -314,12 +314,26 @@ export default function MedicalRecordPage() {
                 alert("진료 및 처방 등록 완료");
 
                 try {
-                    const recordId = res.data.recordId; // 백엔드에서 recordId 리턴해야 함
-                    if (recordId) {
-                        window.open(`http://192.168.0.24:8080/api/prescriptions/pdf/${recordId}`, "_blank");
-                    }
+                    const pdfRes = await axios.get(
+                        `http://192.168.0.24:8080/api/prescriptions/pdf/${recordId}`
+                    );
+
+                    const jobId = pdfRes.data.jobId;
+
+                    // 1초마다 상태 확인
+                    const interval = setInterval(async () => {
+                        const statusRes = await axios.get(
+                            `http://192.168.0.24:8080/api/prescriptions/pdf/status/${jobId}`
+                        );
+
+                        if (statusRes.data.status === "COMPLETED") {
+                            clearInterval(interval);
+                            const url = statusRes.data.downloadUrl;
+                            window.open(`http://192.168.0.24:8080${url}`, "_blank");
+                        }
+                    }, 1000);
                 } catch (err) {
-                    console.warn("⚠️ 처방전 자동 발행 실패:", err);
+                    console.warn("⚠️ 비동기 처방전 발행 실패:", err);
                 }
                 console.log("✅ 등록 응답:", res.data);
                 const recordRes = await axios.get(
@@ -993,12 +1007,28 @@ export default function MedicalRecordPage() {
                                             size={20}
                                             className="mx-auto text-blue-600 hover:text-blue-800 transition-colors"
                                             title="처방전 다운로드"
-                                            onClick={(e) => {
-                                                e.stopPropagation(); // 행 클릭 이벤트 방지
-                                                window.open(
-                                                    `http://192.168.0.24:8080/api/prescriptions/pdf/${r.recordId}`,
-                                                    "_blank"
-                                                );
+                                            onClick={async (e) => {
+                                                e.stopPropagation();
+                                                try {
+                                                    const pdfRes = await axios.get(
+                                                        `http://192.168.0.24:8080/api/prescriptions/pdf/${r.recordId}`
+                                                    );
+                                                    const jobId = pdfRes.data.jobId;
+
+                                                    const interval = setInterval(async () => {
+                                                        const statusRes = await axios.get(
+                                                            `http://192.168.0.24:8080/api/prescriptions/pdf/status/${jobId}`
+                                                        );
+
+                                                        if (statusRes.data.status === "COMPLETED") {
+                                                            clearInterval(interval);
+                                                            const url = statusRes.data.downloadUrl;
+                                                            window.open(`http://192.168.0.24:8080${url}`, "_blank");
+                                                        }
+                                                    }, 1000);
+                                                } catch (err) {
+                                                    console.warn("PDF 발행 실패:", err);
+                                                }
                                             }}
                                         />
                                     </td>

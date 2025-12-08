@@ -190,7 +190,7 @@
         SELECT
         p.patient_id AS patientId,
         p.name AS patientName,
-        SUM(f.amount) AS unpaidTotal,
+        COALESCE(SUM(f.amount), 0) AS unpaidTotal,
         count(tx_id) AS countTx
         FROM finance_transaction f
         JOIN patient p ON p.patient_id = f.patient_id
@@ -202,7 +202,7 @@
         ORDER BY unpaidTotal DESC
     </select>
 
-    <select id="getUnpaidDetails" resultType="map">
+    <select id="getUnpaidDetails" resultType="finance">
         SELECT
         f.tx_id AS txId,
         f.description AS description,

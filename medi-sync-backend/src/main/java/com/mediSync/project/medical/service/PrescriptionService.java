@@ -6,19 +6,26 @@ import com.mediSync.project.medical.vo.MedicalRecord;
 import com.mediSync.project.medical.vo.Prescription;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import com.itextpdf.text.*;
 import com.itextpdf.text.pdf.*;
 import java.io.ByteArrayOutputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 @Service
 @RequiredArgsConstructor
 public class PrescriptionService {
     private final PrescriptionMapper prescriptionMapper;
     private final MedicalRecordMapper medicalRecordMapper;
+    private final RedisTemplate<String, Object> redisTemplate;
 
     public int insertPrescription(Prescription prescription) {
         return prescriptionMapper.insertPrescription(prescription);
@@ -31,6 +38,58 @@ public class PrescriptionService {
     public List<Prescription> selectPrescriptionsById(Long recordId) {
         return prescriptionMapper.selectPrescriptionByPatientId(recordId);
     }
+
+    // jobId 초기 상태 생성
+    public void initJob(String jobId) {
+        redisTemplate.opsForValue().set("pdf:" + jobId, "PENDING", 30, TimeUnit.MINUTES);
+    }
+
+    // PDF 생성 비동기 처리
+    @Async
+    public void generatePdfAsync(String jobId, Long recordId) {
+        try {
+            // 1) 기존 PDF 생성
+            byte[] pdfData = generatePrescriptionPdf(recordId);   // ★ 수정된 부분
+
+            // 2) 파일명 생성
+            MedicalRecord record = medicalRecordMapper.selectRecordById(recordId);
+            String today = LocalDate.now().toString();
+            String fileName = today + "_" + record.getPatientName() + "_처방전.pdf";
+
+            // 3) 실제 파일 저장
+            String filePath = "C:/temp/pdfs/" + jobId + "_" + fileName;   // ← 윈도우 개발환경이면 이 경로 추천
+            Files.write(Paths.get(filePath), pdfData);
+
+            // 4) 생성 완료 상태 저장
+            String downloadUrl = "/api/prescriptions/pdf/download/" + jobId;
+
+            redisTemplate.opsForValue().set(
+                    "pdf:" + jobId,
+                    "COMPLETED:" + downloadUrl,
+                    30, TimeUnit.MINUTES
+            );
+
+        } catch (Exception e) {
+            redisTemplate.opsForValue().set("pdf:" + jobId, "FAILED", 30, TimeUnit.MINUTES);
+        }
+    }
+
+
+    // 상태 조회 공용 메서드
+    public Map<String, Object> getJobStatus(String jobId) {
+
+        String value = (String) redisTemplate.opsForValue().get("pdf:" + jobId);
+
+        if (value == null) return null;
+
+        if (value.startsWith("COMPLETED:")) {
+            String url = value.split(":", 2)[1];
+            return Map.of("status", "COMPLETED", "downloadUrl", url);
+        }
+
+        return Map.of("status", value); // PENDING or FAILED
+    }
+
 
     public byte[] generatePrescriptionPdf(Long recordId) {
         MedicalRecord record = medicalRecordMapper.selectRecordById(recordId);

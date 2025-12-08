@@ -23,17 +23,32 @@ public class TestScheduleController {
         return ResponseEntity.ok(Map.of("available", available));
     }
     @PostMapping("/reserve")
-    public ResponseEntity<Map<String, Object>> reserveSlot(@RequestBody Map<String, Object> request) {
-        String testCode = (String) request.get("testCode");
-        LocalDate testDate = LocalDate.parse((String) request.get("testDate"));
-        String testTime = (String) request.get("testTime");
-        int result = testScheduleService.reserveSlot(testCode, testDate, testTime);
+    public ResponseEntity<?> reserveSlot(@RequestBody Map<String, String> body) {
 
-        Map<String, Object> res = new HashMap<>();
-        res.put("success", result > 0);
-        res.put("message", result > 0 ? "예약 성공" : "예약 실패 (정원 초과)");
-        return ResponseEntity.ok(res);
+        int result = testScheduleService.reserveSlot(body.get("testCode"),
+                LocalDate.parse(body.get("testDate")),
+                body.get("testTime"));
+
+        if (result == -1) {
+            return ResponseEntity.ok(Map.of(
+                    "success", false,
+                    "message", "동시 요청이 많아 잠시 후 다시 시도해주세요 (락 경합)"
+            ));
+        }
+
+        if (result == 0) {
+            return ResponseEntity.ok(Map.of(
+                    "success", false,
+                    "message", "예약 실패 (정원 초과)"
+            ));
+        }
+
+        return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", "예약 성공"
+        ));
     }
+
     @PutMapping("/{scheduleId}")
     public ResponseEntity<?> updateTestSchedule(@PathVariable Long scheduleId, @RequestBody TestSchedule schedule) {
         schedule.setScheduleId(scheduleId);

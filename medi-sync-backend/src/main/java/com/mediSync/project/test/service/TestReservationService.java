@@ -24,6 +24,8 @@ public class TestReservationService {
     public int insertTestReservation(TestReservation tr){
         return testReservationMapper.insertTestReservation(tr);
     }
+
+
     @Transactional
     public int updateTestReservation(TestReservation tr) {
         // 기존 예약 정보 조회
