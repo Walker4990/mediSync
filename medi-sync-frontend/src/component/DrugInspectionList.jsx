@@ -8,7 +8,7 @@ export default function DrugInspectionList({ filter, onSelectDrug }) {
 
   const fetchDrugData = async () => {
     try {
-      const res = await axios.get(`${TEST_URL}`);
+      const res = await axios.get(`${TEST_URL}/${filter}`);
       setDrugInfo(res.data);
     } catch (err) {
       console.error("약품 조회 실패", err);
@@ -17,7 +17,7 @@ export default function DrugInspectionList({ filter, onSelectDrug }) {
 
   useEffect(() => {
     fetchDrugData();
-  }, []);
+  }, [filter]);
 
   const filtered =
     filter === "all" ? drugInfo : drugInfo.filter((d) => d.isChecked === null);

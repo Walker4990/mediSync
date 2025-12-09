@@ -19,8 +19,8 @@ public class DrugCheckService {
 
     private final DrugCheckMapper drugCheckMapper;
 
-    public List<DrugCheckDTO> getNotCheckedDTO(){
-        List<DrugCheckDTO> list = drugCheckMapper.getDrugCheckDTONotChecked();
+    public List<DrugCheckDTO> getAllCheckedDTO(){
+        List<DrugCheckDTO> list = drugCheckMapper.getDrugCheckDTOAll();
         List<String>drugCode = drugCheckMapper.getDrugCodeByDrugCheck();
 
 
@@ -30,6 +30,23 @@ public class DrugCheckService {
                 .filter(d -> !checkedSet.contains(d.getDrugCode()))
                 .collect(Collectors.toList());
     }
+
+    public List<DrugCheckDTO> getNotCheckedDTO(){
+        List<DrugCheckDTO> list = drugCheckMapper.getDrugCheckDTONotChecked();
+        List<String>drugCode = drugCheckMapper.getDrugCodeByDrugCheck();
+
+
+        Set<String> checkedSet = new HashSet<>(drugCode);
+
+        return list.stream()
+                .filter(d -> !checkedSet.contains(d.getDrugCode()))
+                .collect(Collectors.toList());
+    }
+
+
+
+
+
 
     @Transactional
     public int registerInspection(DrugCheckDTO dto){
@@ -52,8 +69,8 @@ public class DrugCheckService {
         }
         return 0;
     }
-    public List<DrugCheckDTO>getCheckedDrug(long checkId){
-        return drugCheckMapper.getCheckedDrug(checkId);
+    public List<DrugCheckDTO>getCheckedDrug(long purchaseId){
+        return drugCheckMapper.getCheckedDrug(purchaseId);
     }
 
     public List<DrugCheckDTO>getAllCheckedDrug(){

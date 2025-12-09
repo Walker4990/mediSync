@@ -12,12 +12,13 @@ import java.util.Map;
 
 @Mapper
 public interface DrugCheckMapper {
+    List<DrugCheckDTO> getDrugCheckDTOAll();
     List<DrugCheckDTO> getDrugCheckDTONotChecked();
     int getTotalQuantityByDrugCode(String drugCode);
     int registerInspection(DrugCheckDTO dto);
     int registerCheckDetail(Map<String, Object> param);
     List<String> getDrugCodeByDrugCheck();
-    List<DrugCheckDTO>getCheckedDrug(long checkId);
+    List<DrugCheckDTO>getCheckedDrug(long purchaseId);
     List<DrugCheckDTO>getAllCheckedDrug();
     DrugCheckDetail getDetailInfoByDetailId(long detailId);
     int updateDetailCheck(long detailId);

@@ -5,7 +5,7 @@
 
 <mapper namespace="com.mediSync.project.drug.mapper.DrugCheckMapper">
 
-    <select id="getDrugCheckDTONotChecked" resultType="drugcheckdto">
+    <select id="getDrugCheckDTOAll" resultType="drugcheckdto">
         SELECT
             d.drug_code AS drugCode,
             d.drug_name AS drugName,
@@ -18,8 +18,28 @@
             dc.is_checked AS isChecked
         FROM drug d
         LEFT join drug_check dc on d.drug_code = dc.drug_code
-
     </select>
+
+    <select id="getDrugCheckDTONotChecked" resultType="drugcheckdto">
+        <![CDATA[SELECT
+        d.drug_code AS drugCode,
+        d.drug_name AS drugName,
+        d.unit_price As unitPrice,
+        COALESCE(d.quantity, 0) AS totalQuantity,
+        COALESCE(d.location, '-') AS location,
+        d.expiration_date AS expirationDate,
+        d.supplier AS supplier,
+        d.min_stock AS minStock,
+        dc.is_checked AS isChecked
+        FROM drug d
+        LEFT JOIN drug_check dc
+        ON d.drug_code = dc.drug_code
+        AND dc.check_date >= DATE_FORMAT(CURDATE(), '%Y-%m-01')
+        AND dc.check_date <= LAST_DAY(CURDATE())
+        WHERE dc.check_date IS NULL;
+        ]]>
+    </select>
+
     <select id="getTotalQuantityByDrugCode" parameterType="String" resultType="int">
         SELECT quantity FROM drug WHERE drug_code = #{drugCode}
     </select>
@@ -33,8 +53,8 @@
     </select>
     <insert id="registerInspection" parameterType="drugcheckdto"
             useGeneratedKeys="true" keyProperty="checkId">
-        insert into drug_check(drug_code, check_date,total_quantity)
-        values(#{drugCode},CURDATE(),#{totalQuantity})
+        insert into drug_check(drug_code, check_date,total_quantity,purchase_id)
+        values(#{drugCode},CURDATE(),#{totalQuantity},#{purchaseId})
     </insert>
 
     <insert id="registerCheckDetail" parameterType="map">
@@ -63,12 +83,12 @@
         join drug_check dc on dcd.check_id = dc.check_id
         join drug d on d.drug_code = dc.drug_code
         join drug_purchase dp on dp.drug_code = dc.drug_code
-        WHERE dcd.check_id = #{checkId}
+        WHERE dcd.purchase_id = #{purchaseId}
         ORDER BY FIELD(dcd.status, 'PASS', 'WARNING', 'DISPOSE')
     </select>
 
     <select id="getAllCheckedDrug" resultType="drugcheckdto">
-        SELECT
+        select
         d.drug_name,
         d.unit,
         d.unit_price,
@@ -77,11 +97,13 @@
         dp.purchase_id,
         dp.location,
         dp.quantity AS totalQuantity
-        FROM drug_check dc
+        from
+        drug_check dc
         JOIN drug d
         ON dc.drug_code = d.drug_code
-        LEFT JOIN drug_purchase dp
-        ON d.drug_code = dp.drug_code;
+        JOIN drug_purchase dp
+        ON dc.drug_code = dp.drug_code
+        AND  dc.purchase_id = dp.purchase_id
     </select>
 
     <select id="getDetailInfoByDetailId" parameterType="long">

@@ -29,6 +29,14 @@ public class DrugCheckController {
         return drugCheckService.getNotCheckedDTO();
     }
 
+    @GetMapping("/{filter}")
+    public List<DrugCheckDTO> getDrugDTOInfoByFilter(@PathVariable String filter){
+        if(filter == null || filter.equals("all")){
+            return drugCheckService.getAllCheckedDTO();
+        }
+        return drugCheckService.getNotCheckedDTO();
+    }
+
     @PostMapping("/register")
     public ResponseEntity<String> registerIncpection(@RequestBody DrugCheckDTO dto){
         System.out.println("약품 코드 : "+ dto.getDrugCode());
@@ -44,10 +52,10 @@ public class DrugCheckController {
     public List<DrugCheckDTO>getAllCheckedDrug(){
         return drugCheckService.getAllCheckedDrug();
     }
-    @GetMapping("/month/detail/{checkId}")
-    public List<DrugCheckDTO>getCheckedDrugByCheckId(@PathVariable long checkId){
+    @GetMapping("/month/detail/{purchaseId}")
+    public List<DrugCheckDTO>getCheckedDrugByCheckId(@PathVariable long purchaseId){
 
-        List<DrugCheckDTO> list = drugCheckService.getCheckedDrug(checkId);
+        List<DrugCheckDTO> list = drugCheckService.getCheckedDrug(purchaseId);
         System.out.println("검사 상세 리스트 : "+ list);
         return list;
     }

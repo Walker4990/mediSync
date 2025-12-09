@@ -282,7 +282,7 @@ export default function DrugInOutState() {
                     : "bg-gray-200 text-gray-700"
                 }`}
               >
-                신규 약품 목록
+                신규 약품 등록
               </button>
             </div>
             {mode === "existing" && (
