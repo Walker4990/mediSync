@@ -192,7 +192,11 @@ export default function DrugInspectionCheckModal({
                         <button
                           className="px-3 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600 shadow"
                           onClick={() =>
-                            disposDrug(r.detailId, r.quantity, r.purchaseId)
+                            disposDrug(
+                              r.detailId,
+                              r.quantity,
+                              selectedDrug.purchaseId
+                            )
                           }
                         >
                           폐기

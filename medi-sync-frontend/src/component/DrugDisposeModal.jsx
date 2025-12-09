@@ -89,9 +89,20 @@ export default function DrugDisposeAll({
 
     if (window.confirm("정말 폐기 하시겠습니까? (수량 : " + quantity + "개)")) {
       try {
-        const qurchaseId = selectedLocation.purchaseId;
+        const purchaseId = selectedLocation.purchaseId;
+        if (!drugCode || !purchaseId || !memo || !quantity) {
+          console.error("🚨 URL 파라미터 중 하나가 비어 있습니다:", {
+            drugCode,
+            purchaseId,
+            memo,
+            quantity,
+          });
+          alert("필수 값이 비어 있습니다.");
+          return;
+        }
+
         const res = await axios.put(
-          `http://localhost:8080/api/inspection/drug/${drugCode}/${quantity}/${memo}/${qurchaseId}`
+          `http://localhost:8080/api/inspection/drug/${drugCode}/${quantity}/${memo}/${purchaseId}`
         );
         alert("폐기 처리가 완료되었습니다.(폐기 수량 : " + quantity + "개)");
         setSelectedDrugDispose(null);

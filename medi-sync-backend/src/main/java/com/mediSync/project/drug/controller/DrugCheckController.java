@@ -83,7 +83,6 @@ public class DrugCheckController {
         System.out.println("폐기 기록 순서 : " +sort+ " 코드 : " +  drugCode );
         List<DrugLogDTO> list =  drugCheckService.getDrugLog(sort,drugCode,size,offset);
         System.out.println("약품 로그 : "+ list);
-        System.out.println(list.get(0));
         return list;
     }
 

@@ -150,6 +150,8 @@ export default function DrugDeadline() {
               fetchDisposedList={fetchDisposedList}
               sortOrder={sortOrder}
               setSortOrder={setSortOrder}
+              selectedDrugDeadline={selectedDrugDeadline}
+              setSelectedDrugDeadline={setSelectedDrugDeadline}
               page={page}
               setPage={setPage}
             />

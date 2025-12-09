@@ -5,12 +5,12 @@ export default function DrugDisposedPage({
   drugLog,
   fetchDisposedList,
   sortOrder,
+  setSelectedDrugDeadline,
+  selectedDrugDeadline,
   setSortOrder,
   page,
   setPage,
 }) {
-  const [selectedDrugDeadline, setSelectedDrugDeadline] = useState("");
-
   return (
     <div className="bg-white shadow-lg rounded-xl p-6 col-span-2 h-[650px] flex-col overflow-y-auto">
       {/*헤더 */}
