@@ -5,6 +5,7 @@ import com.mediSync.project.drug.dto.DrugLogDTO;
 import com.mediSync.project.drug.service.DrugCheckService;
 import com.mediSync.project.drug.vo.DrugCheckDetail;
 import com.mediSync.project.drug.vo.DrugLog;
+import com.mediSync.project.drug.vo.DrugPurchase;
 import lombok.RequiredArgsConstructor;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.http.ResponseEntity;
@@ -51,9 +52,9 @@ public class DrugCheckController {
         return list;
     }
 
-    @PutMapping("/dispose/{detailId}/{quantity}")
-    public int updateDrugDispose(@PathVariable long detailId,@PathVariable int quantity){
-        drugCheckService.updateDrugDispose(detailId,quantity);
+    @PutMapping("/dispose/{detailId}/{quantity}/{purchaseId}")
+    public int updateDrugDispose(@PathVariable long detailId,@PathVariable int quantity, @PathVariable int purchaseId){
+        drugCheckService.updateDrugDispose(detailId,quantity,purchaseId);
         return 0;
     }
     @PutMapping("/check/{detailId}")
@@ -62,10 +63,11 @@ public class DrugCheckController {
         return 0;
     }
 
-    @PutMapping("/drug/{drugCode}/{quantity}/{memo}")
-    public int inspectionDrug(@PathVariable String drugCode, @PathVariable int quantity, @PathVariable String memo){
+    @PutMapping("/drug/{drugCode}/{quantity}/{memo}/{qurchaseId}")
+    public int inspectionDrug(@PathVariable String drugCode, @PathVariable int quantity, @PathVariable String memo,
+                              @PathVariable int qurchaseId){
         System.out.println("코드 : "+ drugCode + " 수량 : " + quantity + " 메모 : "+ memo);
-        drugCheckService.updateinspectionDrugByDrugCode(drugCode,quantity,memo);
+        drugCheckService.updateinspectionDrugByDrugCode(drugCode,quantity,memo,qurchaseId);
 
         return 0;
     }
@@ -81,7 +83,13 @@ public class DrugCheckController {
         System.out.println("폐기 기록 순서 : " +sort+ " 코드 : " +  drugCode );
         List<DrugLogDTO> list =  drugCheckService.getDrugLog(sort,drugCode,size,offset);
         System.out.println("약품 로그 : "+ list);
+        System.out.println(list.get(0));
         return list;
+    }
+
+    @GetMapping("/drug/location/{drugCode}")
+    public List<DrugPurchase> getDrugLocationInfo(@PathVariable String drugCode){
+        return drugCheckService.getAllDrugLocation(drugCode);
     }
 
 }

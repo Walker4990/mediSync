@@ -45,6 +45,7 @@ export default function DrugDisposeInspect({
         drugName: base.drugName,
         location: base.location,
         expirationDate: base.expirationDate,
+        purchaseId: base.purchaseId,
         results, // 3줄 모두 저장
         canDispose,
       };

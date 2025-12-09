@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
+import { a } from "framer-motion/client";
 
 export default function DrugDisposeAll({
   selectedDrugDispose,
@@ -12,6 +13,8 @@ export default function DrugDisposeAll({
   const [disposeMemo, setDisposeMemo] = useState("");
   let holdTimeout = useRef(null);
   let holdInterval = useRef(null);
+  const [allLocation, setAllLocation] = useState([]);
+  const [selectedLocation, setSelectedLocation] = useState(null);
 
   const startHold = (type) => {
     if (!selectedDrugDispose) return;
@@ -49,17 +52,46 @@ export default function DrugDisposeAll({
     holdInterval.current = null;
   };
 
+  const fetchDrugLocation = async () => {
+    try {
+      console.log("약 코드 : ", selectedDrugDispose.drugCode);
+      const res = await axios.get(
+        `http://localhost:8080/api/inspection/drug/location/${selectedDrugDispose.drugCode}`
+      );
+      setAllLocation(res.data);
+
+      console.log("약 주소 리스트 : ", res.data);
+    } catch (err) {
+      console.error("주소 목록 가져오기 실패", err);
+    }
+  };
+
+  useEffect(() => {
+    if (!selectedDrugDispose) return;
+    fetchDrugLocation(selectedDrugDispose.drugCode);
+  }, [selectedDrugDispose]);
+
   //폐기 등록
   const inspectionDrug = async (drugCode, quantity, memo) => {
     if (quantity <= 0) {
       alert("폐기 수량은 최소 1개 이상 입니다.");
       return;
     }
+    if (!selectedLocation) {
+      alert("폐기할 위치를 선택해주세요.");
+      return;
+    }
+    if (disposeQty > selectedLocation.quantity) {
+      alert(
+        `해당 위치의 보유량(${selectedLocation.quantity}개) 보다 많은 수량을 폐기할 수 없습니다.`
+      );
+    }
 
     if (window.confirm("정말 폐기 하시겠습니까? (수량 : " + quantity + "개)")) {
       try {
+        const qurchaseId = selectedLocation.purchaseId;
         const res = await axios.put(
-          `http://localhost:8080/api/inspection/drug/${drugCode}/${quantity}/${memo}`
+          `http://localhost:8080/api/inspection/drug/${drugCode}/${quantity}/${memo}/${qurchaseId}`
         );
         alert("폐기 처리가 완료되었습니다.(폐기 수량 : " + quantity + "개)");
         setSelectedDrugDispose(null);
@@ -177,7 +209,27 @@ export default function DrugDisposeAll({
         </div>
         {/* 메모 입력 */}
         <div className="mt-6">
-          <label className="text-gray-700 font-medium">메모 (선택)</label>
+          <select
+            value={selectedLocation?.purchaseId || ""}
+            onChange={(e) => {
+              const loc = allLocation.find(
+                (l) => l.purchaseId == e.target.value
+              );
+              setSelectedLocation(loc);
+            }}
+            className="border border-gray-300 rounded-lg text-sm bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+          >
+            <option value="" className="text-gray-200 text-sm">
+              주소를 선택해주세요.
+            </option>
+            {allLocation.map((loc) => (
+              <option key={loc.purchaseId} value={loc.purchaseId}>
+                {loc.location} (보유 : {loc.quantity}개)
+              </option>
+            ))}
+          </select>
+
+          <label className="text-gray-700 font-medium"> 메모 (선택)</label>
           <textarea
             value={disposeMemo}
             onChange={(e) => setDisposeMemo(e.target.value)}

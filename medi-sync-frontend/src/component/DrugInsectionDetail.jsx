@@ -4,7 +4,7 @@ export default function DrugInsectionDetail({ drug }) {
       <h2 className="text-xl font-semibold mb-4">{drug.drugName} 상세정보</h2>
       <div className="mb-5 grid grid-cols-2 gap-4 text-gray-600">
         <div>
-          <p>약품 코드 : {drug.drugCoded}</p>
+          <p>약품 코드 : {drug.drugCode}</p>
           <p>제약사 : {drug.supplier}</p>
           <p>수량 : {drug.totalQuantity}</p>
         </div>

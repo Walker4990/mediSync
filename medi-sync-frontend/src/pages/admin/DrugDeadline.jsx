@@ -142,11 +142,11 @@ export default function DrugDeadline() {
               fetchInspectionList={fetchInspectionList}
             />
           )}
-          {/*폐기 페이지 */}
+          {/*폐기 기록 페이지 */}
           {filter == "disposed" && (
             <DrugDisposedPage
               drugList={drugList}
-              drugLog={drugList}
+              drugLog={drugLog}
               fetchDisposedList={fetchDisposedList}
               sortOrder={sortOrder}
               setSortOrder={setSortOrder}

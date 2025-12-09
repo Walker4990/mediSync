@@ -5,6 +5,9 @@ export default function DrugInspectionForm({ selectedDrug, onFinish }) {
   const API_URL = "http://192.168.0.24:8080/api/inspection";
   const TEST_URL = "http://localhost:8080/api/inspection";
 
+  const [allLocation, setAllLocation] = useState([]);
+  const [selectedLocation, setSelectedLocation] = useState(null);
+
   const [details, setDetails] = useState([
     { status: "PASS", label: "정상 (PASS)", quantity: 0, note: "" },
     { status: "WARNING", label: "이상 (WARNING)", quantity: 0, note: "" },
@@ -24,8 +27,35 @@ export default function DrugInspectionForm({ selectedDrug, onFinish }) {
     setDetails(clone);
   };
 
+  const fetchDrugLocation = async () => {
+    try {
+      console.log("약 코드 : ", selectedDrug.drugCode);
+      const res = await axios.get(
+        `http://localhost:8080/api/inspection/drug/location/${selectedDrug.drugCode}`
+      );
+      setAllLocation(res.data);
+
+      console.log("약 주소 리스트 : ", res.data);
+    } catch (err) {
+      console.error("주소 목록 가져오기 실패", err);
+    }
+  };
+
+  useEffect(() => {
+    if (!selectedDrug) return;
+    fetchDrugLocation(selectedDrug.drugCode);
+  }, [selectedDrug]);
+
   const submitInspection = async () => {
-    if (totalChecked !== selectedDrug.totalQuantity) {
+    console.log("총 검사 수량 : ", totalChecked);
+
+    console.log("selectedLocation:", selectedLocation, typeof selectedLocation);
+    if (!selectedLocation) {
+      alert("주소를 선택해주세요.");
+      return;
+    }
+
+    if (totalChecked !== selectedLocation.quantity) {
       alert("총 검사 수량이 실제 재고와 일치해야 합니다.");
       return;
     }
@@ -40,6 +70,7 @@ export default function DrugInspectionForm({ selectedDrug, onFinish }) {
     try {
       const res = await axios.post(`${TEST_URL}/register`, {
         drugCode: selectedDrug.drugCode,
+        purchaseId: selectedLocation.purchaseId,
         inspections: details,
       });
 
@@ -54,6 +85,27 @@ export default function DrugInspectionForm({ selectedDrug, onFinish }) {
   return (
     <>
       <h3 className="font-medium mb-2">검사 결과 입력</h3>
+
+      <select
+        value={selectedLocation?.purchaseId || ""}
+        onChange={(e) => {
+          const loc = allLocation.find((l) => l.purchaseId == e.target.value);
+          setSelectedLocation(loc);
+        }}
+        className="border border-gray-300 rounded-lg text-sm bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+      >
+        <option value="" className="text-gray-500 text-sm">
+          주소를 선택해주세요.
+        </option>
+
+        {allLocation.map((loc) => (
+          <option key={loc.purchaseId} value={loc.purchaseId}>
+            {loc.location} (보유 : {loc.quantity}개)
+          </option>
+        ))}
+      </select>
+      <br />
+      <br />
       {details.map((d, idx) => (
         <div
           key={idx}

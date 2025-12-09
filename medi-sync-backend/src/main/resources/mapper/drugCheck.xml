@@ -38,8 +38,8 @@
     </insert>
 
     <insert id="registerCheckDetail" parameterType="map">
-        insert into drug_check_detail(check_id, status,quantity, note)
-        values(#{checkId},#{status},#{quantity},#{note})
+        insert into drug_check_detail(check_id, status,quantity, note,purchase_id)
+        values(#{checkId},#{status},#{quantity},#{note},#{purchaseId})
     </insert>
 
     <select id="getCheckedDrug" parameterType="long" resultType="drugcheckdto">
@@ -52,30 +52,36 @@
         dcd.is_checked,
         d.drug_name,
         d.expiration_date,
-        d.location,
+        dp.location,
+        dp.purchase_id,
         d.unit,
         d.supplier,
         d.insurance_code,
         d.min_stock,
-        d.quantity as totalQuantity
+        dp.quantity as totalQuantity
         FROM drug_check_detail dcd
         join drug_check dc on dcd.check_id = dc.check_id
         join drug d on d.drug_code = dc.drug_code
+        join drug_purchase dp on dp.drug_code = dc.drug_code
         WHERE dcd.check_id = #{checkId}
         ORDER BY FIELD(dcd.status, 'PASS', 'WARNING', 'DISPOSE')
     </select>
 
     <select id="getAllCheckedDrug" resultType="drugcheckdto">
-        select
+        SELECT
         d.drug_name,
         d.unit,
         d.unit_price,
         dc.check_id,
         d.supplier,
-        d.quantity as totalQuantity,
-        d.location
-        from drug_check dc
-        join drug d on dc.drug_code = d.drug_code
+        dp.purchase_id,
+        dp.location,
+        dp.quantity AS totalQuantity
+        FROM drug_check dc
+        JOIN drug d
+        ON dc.drug_code = d.drug_code
+        LEFT JOIN drug_purchase dp
+        ON d.drug_code = dp.drug_code;
     </select>
 
     <select id="getDetailInfoByDetailId" parameterType="long">
@@ -95,11 +101,24 @@
     </select>
 
 
-    <update id="updateDrugDispose">
-        update drug
-        set quantity = quantity -  #{quantity}
-        where drug_code = #{drugCode}
+    <update id="updateDrugDispose" parameterType="String">
+        update drug d
+        left join(
+        select drug_code, sum(quantity) as total_qty
+        from drug_purchase
+        group by drug_code
+        ) p on d.drug_code = p.drug_code
+        set d.quantity = coalesce(p.total_qty,0)
+        where d.drug_code = #{drugCode}
     </update>
+
+    <update id="updateDrugPurchaseDispose">
+        update drug_purchase
+        set quantity = quantity -  #{quantity}
+        where purchase_id = #{purchaseId}
+    </update>
+
+
 
     <insert id="insertDrugLog" parameterType="druglog">
     insert into drug_log(drug_code, type, quantity, before_stock,after_stock, memo)
@@ -108,8 +127,16 @@
 
     <select id="getDrugLog" resultType="druglogdto">
         SELECT
-        dl.*,
-        d.drug_name
+        dl.log_id     AS logId,
+        dl.drug_code  AS drugCode,
+        dl.type       AS type,
+        dl.quantity   AS quantity,
+        dl.before_stock AS beforeStock,
+        dl.after_stock  AS afterStock,
+        dl.memo       AS memo,
+        dl.created_at AS createdAt,
+        dl.created_by AS createdBy,
+        d.drug_name   AS drugName
         FROM drug_log dl
         join drug d on d.drug_code = dl.drug_code
 
@@ -129,5 +156,20 @@
         OFFSET #{offset}
     </select>
 
+    <select id="getAllDrugLocation" resultType="drugpurchase" parameterType="String">
+        select * from drug_purchase
+        where drug_code = #{drugCode}
+    </select>
+
+    <select id="getPurchaseInfoByPurchaseId" parameterType="int">
+        select * from drug_purchase where purchase_id = #{purchaseId}
+    </select>
+
+
+
+    <delete id="deleteDrugPurchase" parameterType="int">
+        delete from drug_purchase
+        where purchase_id  = #{purchaseId}
+    </delete>
 
 </mapper>

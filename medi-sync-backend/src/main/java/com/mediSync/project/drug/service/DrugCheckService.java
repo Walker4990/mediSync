@@ -5,6 +5,7 @@ import com.mediSync.project.drug.dto.DrugLogDTO;
 import com.mediSync.project.drug.mapper.DrugCheckMapper;
 import com.mediSync.project.drug.vo.DrugCheckDetail;
 import com.mediSync.project.drug.vo.DrugLog;
+import com.mediSync.project.drug.vo.DrugPurchase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -45,6 +46,7 @@ public class DrugCheckService {
             param.put("status",d.getStatus());
             param.put("quantity", d.getQuantity());
             param.put("note",d.getNote());
+            param.put("purchaseId", dto.getPurchaseId());
 
             int res = drugCheckMapper.registerCheckDetail(param);
         }
@@ -58,8 +60,9 @@ public class DrugCheckService {
         return drugCheckMapper.getAllCheckedDrug();
     }
 
+    //약품 검사
     @Transactional
-    public int updateDrugDispose(long detailId, int quantity){
+    public int updateDrugDispose(long detailId, int quantity,int purchaseId){
         System.out.println("아이디 : " + detailId + "수량 : " + quantity);
 
 
@@ -85,8 +88,23 @@ public class DrugCheckService {
         Map<String,Object> params = new HashMap<>();
         params.put("drugCode", code);   // String
         params.put("quantity", quantity);   // int
+        params.put("purchaseId", purchaseId);
 
-        int res1 = drugCheckMapper.updateDrugDispose(params);
+
+        //purchase 변경
+        //purchaseId로 quantity 가져와서 값이 같으면 delete
+        DrugPurchase dp = drugCheckMapper.getPurchaseInfoByPurchaseId(purchaseId);
+
+        if(dp.getQuantity() > quantity){
+            //update
+            drugCheckMapper.updateDrugPurchaseDispose(params);
+        }else{
+            //delete
+            drugCheckMapper.deleteDrugPurchase(purchaseId);
+        }
+
+        //drug 테이블 반영
+        int res1 = drugCheckMapper.updateDrugDispose(code);
         System.out.println("변경 결과 : "+ res1);
 
         //로그 남기기
@@ -101,12 +119,13 @@ public class DrugCheckService {
     }
 
 
-    public int updateinspectionDrugByDrugCode(String drugCode, int quantity, String memo){
+    //폐기 등록
+    public int updateinspectionDrugByDrugCode(String drugCode, int quantity, String memo, int purchaseId){
 
         Map<String,Object> params = new HashMap<>();
         params.put("drugCode", drugCode);   // String
         params.put("quantity", quantity);   // int
-
+        params.put("purchaseId", purchaseId);
         DrugLog log = new DrugLog();
 
         //기존 개수 가져오기
@@ -119,7 +138,9 @@ public class DrugCheckService {
         log.setDrugCode(drugCode);
         log.setType("DISPOSE");
         //폐기하기
-        drugCheckMapper.updateDrugDispose(params);
+        drugCheckMapper.updateDrugPurchaseDispose(params);
+        //약 개수 업데이트
+        drugCheckMapper.updateDrugDispose(drugCode);
         //로그 남기기
         int res2 = drugCheckMapper.insertDrugLog(log);
         System.out.println("로그 생성 결과 : "+ res2);
@@ -137,6 +158,10 @@ public class DrugCheckService {
         params.put("offset",offset);
         return drugCheckMapper.getDrugLog(params);
 
+    }
+
+    public List<DrugPurchase>getAllDrugLocation(String drugCode){
+        return drugCheckMapper.getAllDrugLocation(drugCode);
     }
 
 }

@@ -4,6 +4,7 @@ import com.mediSync.project.drug.dto.DrugCheckDTO;
 import com.mediSync.project.drug.dto.DrugLogDTO;
 import com.mediSync.project.drug.vo.DrugCheckDetail;
 import com.mediSync.project.drug.vo.DrugLog;
+import com.mediSync.project.drug.vo.DrugPurchase;
 import org.apache.ibatis.annotations.Mapper;
 
 import java.util.List;
@@ -21,7 +22,11 @@ public interface DrugCheckMapper {
     DrugCheckDetail getDetailInfoByDetailId(long detailId);
     int updateDetailCheck(long detailId);
     String getDrugCodeByDetailId(long detailId);
-    int updateDrugDispose(Map<String, Object> params);
+    int updateDrugDispose(String drugCode);
+    int updateDrugPurchaseDispose(Map<String, Object> params);
     int insertDrugLog(DrugLog log);
     List<DrugLogDTO> getDrugLog(Map<String,Object> params);
+    List<DrugPurchase>getAllDrugLocation(String drugCode);
+    DrugPurchase getPurchaseInfoByPurchaseId(int purchaseId);
+    int deleteDrugPurchase(int purchase_id);
 }

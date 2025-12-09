@@ -32,10 +32,10 @@ export default function DrugInspectionCheckModal({
   };
 
   //검사한거 폐기처리하기
-  const disposDrug = async (detailId, quantity) => {
+  const disposDrug = async (detailId, quantity, purchaseId) => {
     try {
       const res = await axios.put(
-        `http://localhost:8080/api/inspection/dispose/${detailId}/${quantity}`
+        `http://localhost:8080/api/inspection/dispose/${detailId}/${quantity}/${purchaseId}`
       );
       await fetchInspectionList();
       await fetchDrugList();
@@ -106,6 +106,10 @@ export default function DrugInspectionCheckModal({
             <p>
               <span className="font-semibold">보험 코드:</span>{" "}
               {selectedDrug.insuranceCode}
+            </p>
+            <p>
+              <span className="font-semibold">장소 코드:</span>{" "}
+              {selectedDrug.purchaseId}
             </p>
           </div>
 
@@ -187,7 +191,9 @@ export default function DrugInspectionCheckModal({
                       <div className="flex gap-3 justify-end">
                         <button
                           className="px-3 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600 shadow"
-                          onClick={() => disposDrug(r.detailId, r.quantity)}
+                          onClick={() =>
+                            disposDrug(r.detailId, r.quantity, r.purchaseId)
+                          }
                         >
                           폐기
                         </button>
