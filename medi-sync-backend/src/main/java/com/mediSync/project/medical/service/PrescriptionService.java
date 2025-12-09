@@ -70,6 +70,7 @@ public class PrescriptionService {
             );
 
         } catch (Exception e) {
+            e.printStackTrace();  // ★ 반드시 추가
             redisTemplate.opsForValue().set("pdf:" + jobId, "FAILED", 30, TimeUnit.MINUTES);
         }
     }

@@ -315,7 +315,7 @@ export default function MedicalRecordPage() {
 
                 try {
                     const pdfRes = await axios.get(
-                        `http://192.168.0.24:8080/api/prescriptions/pdf/${recordId}`
+                        `http://192.168.0.24:8080/api/prescriptions/pdf/${selectedRecord}`
                     );
 
                     const jobId = pdfRes.data.jobId;
@@ -1009,16 +1009,32 @@ export default function MedicalRecordPage() {
                                             title="처방전 다운로드"
                                             onClick={async (e) => {
                                                 e.stopPropagation();
+                                                console.log("📌 PDF 요청 recordId: ", r.recordId);
                                                 try {
+                                                    const token = localStorage.getItem("token");
+
                                                     const pdfRes = await axios.get(
-                                                        `http://192.168.0.24:8080/api/prescriptions/pdf/${r.recordId}`
+                                                        `http://192.168.0.24:8080/api/prescriptions/pdf/${r.recordId}`,
+                                                        {
+                                                            headers: {
+                                                                Authorization: `Bearer ${token}`,
+                                                            },
+                                                        }
                                                     );
                                                     const jobId = pdfRes.data.jobId;
 
                                                     const interval = setInterval(async () => {
+                                                        const token = localStorage.getItem("token");
+
                                                         const statusRes = await axios.get(
-                                                            `http://192.168.0.24:8080/api/prescriptions/pdf/status/${jobId}`
+                                                            `http://192.168.0.24:8080/api/prescriptions/pdf/status/${jobId}`,
+                                                            {
+                                                                headers: {
+                                                                    Authorization: `Bearer ${token}`,
+                                                                },
+                                                            }
                                                         );
+
 
                                                         if (statusRes.data.status === "COMPLETED") {
                                                             clearInterval(interval);

@@ -113,7 +113,7 @@
         r.*,
         p.name AS patientName,
         a.name AS doctorName,
-        dept.dept_name
+        dept.dept_name AS deptName
         FROM medical_record r
         JOIN patient p ON r.patient_id = p.patient_id
         JOIN admin_account a ON r.admin_id = a.admin_id

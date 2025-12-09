@@ -194,22 +194,30 @@ export default function FinanceTransactionPage() {
                         이전
                     </button>
 
-                    {[...Array(totalPages)].map((_, i) => {
-                        const pageNum = i + 1;
-                        return (
-                            <button
-                                key={pageNum}
-                                onClick={() => setPage(pageNum)}
-                                className={`px-3 py-1 rounded ${
-                                    page === pageNum
-                                        ? "bg-emerald-500 text-white"
-                                        : "bg-gray-200 hover:bg-gray-300"
-                                }`}
-                            >
-                                {pageNum}
-                            </button>
-                        );
-                    })}
+                    {/* ⭐ 페이지 번호 10개씩만 표시되는 로직 추가 */}
+                    {(() => {
+                        const maxButtons = 10;
+                        const startPage = Math.floor((page - 1) / maxButtons) * maxButtons + 1;
+                        const endPage = Math.min(startPage + maxButtons - 1, totalPages);
+
+                        return [...Array(endPage - startPage + 1)].map((_, i) => {
+                            const pageNum = startPage + i;
+
+                            return (
+                                <button
+                                    key={pageNum}
+                                    onClick={() => setPage(pageNum)}
+                                    className={`px-3 py-1 rounded ${
+                                        page === pageNum
+                                            ? "bg-emerald-500 text-white"
+                                            : "bg-gray-200 hover:bg-gray-300"
+                                    }`}
+                                >
+                                    {pageNum}
+                                </button>
+                            );
+                        });
+                    })()}
 
                     <button
                         disabled={page === totalPages}

@@ -25,7 +25,7 @@ export default function ReserveModal({
     const token = localStorage.getItem("admin_token");
     const decoded = token ? jwtDecode(token) : null;
 
-    const adminId = decoded?.adminId || null;
+    const adminId = decoded?.adminId || decoded?.userId || null;
     useEffect(() => {
         if (open && mode === "surgery"){
             axios.get("http://192.168.0.24:8080/api/operation/cost/list")
@@ -157,6 +157,7 @@ export default function ReserveModal({
                     cost: 1000000,
                 };
         console.log("🧩 예약 전 payload:", payload);
+        console.log("🧩 decoded:", decoded);
         try {
             await axios.post(url, payload);
             alert(`✅ ${mode === "test" ? "검사" : "수술"} 예약 완료!`);

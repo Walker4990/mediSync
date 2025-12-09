@@ -18,7 +18,13 @@ export default function FinanceBottomCharts({ deptIncome, deptProfit }) {
                 <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={deptIncome}>
                         <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="deptName" />
+                        <XAxis
+                            dataKey="deptName"
+                            interval={0}
+                            tick={{ fontSize: 9 }}
+                            angle={-30}
+                            textAnchor="end"
+                        />
                         <YAxis />
                         <Tooltip formatter={(v) => v.toLocaleString()} />
                         <Bar dataKey="income" fill="#6366F1" />
@@ -30,7 +36,13 @@ export default function FinanceBottomCharts({ deptIncome, deptProfit }) {
                 <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={deptProfit}>
                         <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="deptName" />
+                        <XAxis
+                            dataKey="deptName"
+                            interval={0}
+                            tick={{ fontSize: 9 }}
+                            angle={-30}
+                            textAnchor="end"
+                        />
                         <YAxis />
                         <Tooltip formatter={(v) => v.toLocaleString()} />
                         <Bar dataKey="netProfit" fill="#14B8A6" />
