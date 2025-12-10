@@ -584,11 +584,7 @@ const MyPage = () => {
       <section className="pt-12 pb-16 bg-gradient-to-l from-white to-sky-100 shadow-inner">
         <div className="max-w-6xl mx-auto px-4 md:px-8">
           <h1 className="text-3xl font-bold text-gray-800">
-            환영합니다,{" "}
-            <span className="text-blue-600">
-              {userName}({userId})
-            </span>{" "}
-            님!
+            환영합니다, <span className="text-blue-600">{userName}</span> 님!
             {socialType && (
               <span
                 className={`text-base font-medium ml-3 px-3 py-1 rounded-full ${
@@ -599,7 +595,7 @@ const MyPage = () => {
                     : "bg-blue-100 text-blue-700"
                 }`}
               >
-                {socialType} 로그인
+                {socialType} 회원
               </span>
             )}
           </h1>

@@ -185,6 +185,7 @@ const TimeModal = ({
   sevenDays,
   setReservedTimes, // 추가
 }) => {
+  const navigate = useNavigate();
   // 1. 상태 관리
   //const sevenDays = useMemo(() => getNextSevenDays(), []);
   //const [selectedDate, setSelectedDate] = useState(sevenDays[0].dateValue);
@@ -238,46 +239,59 @@ const TimeModal = ({
   };
 
   // 예약하기 버튼 클릭 시 이벤트 발생
-    const handleNextStep = async (e) => {
-        if (!selectedTime) {
-            alert("진료 시간을 선택해주세요.");
-            return;
-        }
+  const handleNextStep = async (e) => {
+    if (!selectedTime) {
+      alert("진료 시간을 선택해주세요.");
+      return;
+    }
 
-        const startTime = selectedTime.split("~")[0];
-        const dataToSend = {
-            adminId: selectedDoctor.adminId,
-            reservationDate: `${selectedDate} ${startTime}:00`,
-            type: type ? "ONLINE" : "OFFLINE",
-        };
+    const startTime = selectedTime.split("~")[0];
 
-        const token = localStorage.getItem("token"); // JWT 토큰
-        try {
-            const res = await axios.post(
-                "http://localhost:8080/api/reservation/addReservation",
-                dataToSend,
-                {
-                    headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${token}`,
-                    },
-                }
-            );
-
-            if (res.data === 1) {
-                alert("✅ 예약이 성공적으로 등록되었습니다!");
-                const startTime = selectedTime.split("~")[0];
-                setReservedTimes((prev) => [...prev, startTime]);
-                setSelectedTime(null);
-                onClose();
-            } else {
-                alert("⚠️ 예약 등록에 실패했습니다.");
-            }
-        } catch (err) {
-            console.error("❌ 네트워크 오류:", err);
-            alert("❌ 네트워크 오류: " + err.message);
-        }
+    // 문진표로 넘겨줄 예약 데이터 임시 구성
+    const reservationPayload = {
+      adminId: selectedDoctor.adminId, // 의사 ID
+      doctorName: selectedDoctor.name, // 의사 이름
+      department: selectedDoctor.department, // 과목
+      reservationDate: `${selectedDate} ${startTime}:00`, // 완성된 날짜 문자열
+      type: type ? "ONLINE" : "OFFLINE",
     };
+
+    // 문진표 페이지로 이동
+    navigate("/user/pre-exam", { state: { reservationPayload } });
+
+    // const dataToSend = {
+    //     adminId: selectedDoctor.adminId,
+    //     reservationDate: `${selectedDate} ${startTime}:00`,
+    //     type: type ? "ONLINE" : "OFFLINE",
+    // };
+
+    // const token = localStorage.getItem("token"); // JWT 토큰
+    // try {
+    //     const res = await axios.post(
+    //         "http://localhost:8080/api/reservation/addReservation",
+    //         dataToSend,
+    //         {
+    //             headers: {
+    //                 "Content-Type": "application/json",
+    //                 Authorization: `Bearer ${token}`,
+    //             },
+    //         }
+    //     );
+
+    //     if (res.data === 1) {
+    //         alert("✅ 예약이 성공적으로 등록되었습니다!");
+    //         const startTime = selectedTime.split("~")[0];
+    //         setReservedTimes((prev) => [...prev, startTime]);
+    //         setSelectedTime(null);
+    //         onClose();
+    //     } else {
+    //         alert("⚠️ 예약 등록에 실패했습니다.");
+    //     }
+    // } catch (err) {
+    //     console.error("❌ 네트워크 오류:", err);
+    //     alert("❌ 네트워크 오류: " + err.message);
+    // }
+  };
 
   const handleClose = () => {
     // 모달 종료 시 선택값 초기화

@@ -8,6 +8,9 @@ import {
   ChevronLeft,
   ChevronRight,
   PlusCircle,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
 } from "lucide-react";
 import AdminHeader from "../../component/AdminHeader";
 import AdminDetailModal from "../../component/AdminDetailModal";
@@ -43,6 +46,12 @@ export default function MedicalStaffList() {
   const [editingStaff, setEditingStaff] = useState(null);
   const [deletingStaff, setDeletingStaff] = useState(null);
   const [selectedStaffId, setSelectedStaffId] = useState(null);
+
+  // 정렬 상태 관리
+  const [sortConfig, setSortConfig] = useState({
+    key: null,
+    direction: "ascending",
+  });
 
   // 페이징 상태
   const [currentPage, setCurrentPage] = useState(1);
@@ -124,9 +133,18 @@ export default function MedicalStaffList() {
     }
   };
 
-  // 검색 필터링 (useMemo로 최적화)
-  const filteredStaff = useMemo(() => {
-    return staffList.filter(
+  // 정렬 핸들러
+  const handleSort = (key) => {
+    let direction = "ascending";
+    if (sortConfig.key === key && sortConfig.direction === "ascending") {
+      direction = "descending";
+    }
+    setSortConfig({ key, direction });
+  };
+
+  // 필터링 및 정렬
+  const processedData = useMemo(() => {
+    let data = staffList.filter(
       (s) =>
         (s.name || "").toLowerCase().includes(search.toLowerCase()) ||
         (s.phone || "").includes(search) ||
@@ -134,17 +152,50 @@ export default function MedicalStaffList() {
         (s.licenseNo || "").toLowerCase().includes(search.toLowerCase()) ||
         getPositionLabel(s.position || "").includes(search)
     );
-  }, [staffList, search]);
+
+    if (sortConfig.key) {
+      data.sort((a, b) => {
+        const aValue = a[sortConfig.key] || "";
+        const bValue = b[sortConfig.key] || "";
+
+        // ID는 숫자 비교
+        if (sortConfig.key === "adminId") {
+          if (Number(aValue) < Number(bValue))
+            return sortConfig.direction === "ascending" ? -1 : 1;
+          if (Number(aValue) > Number(bValue))
+            return sortConfig.direction === "ascending" ? 1 : -1;
+          return 0;
+        }
+
+        // 나머지는 문자열 비교
+        if (aValue < bValue)
+          return sortConfig.direction === "ascending" ? -1 : 1;
+        if (aValue > bValue)
+          return sortConfig.direction === "ascending" ? 1 : -1;
+        return 0;
+      });
+    }
+    return data;
+  }, [staffList, search, sortConfig]);
 
   // 페이징 계산
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = filteredStaff.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(filteredStaff.length / itemsPerPage);
+  const currentItems = processedData.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(processedData.length / itemsPerPage);
 
   // 페이지 변경 핸들러
   const handlePageChange = (pageNumber) => {
     setCurrentPage(pageNumber);
+  };
+
+  // 정렬 아이콘
+  const renderSortIcon = (key) => {
+    if (sortConfig.key !== key)
+      return <ArrowUpDown className="w-4 h-4 ml-1 text-gray-400" />;
+    if (sortConfig.direction === "ascending")
+      return <ArrowUp className="w-4 h-4 ml-1 text-blue-600" />;
+    return <ArrowDown className="w-4 h-4 ml-1 text-blue-600" />;
   };
 
   // 뷰 모드에 따라 렌더링할 내용 상이 (등록/수정 모달)
@@ -206,14 +257,55 @@ export default function MedicalStaffList() {
           <table className="w-full bg-white border border-gray-200 rounded-lg shadow-md text-sm">
             <thead className="bg-gray-100 text-gray-800 font-semibold">
               <tr>
-                <th className="py-3 px-4 text-left w-16">ID</th>
-                <th className="py-3 px-4 text-left w-24">이름</th>
-                <th className="py-3 px-4 text-left w-28">직무</th>
+                <th
+                  className="py-3 px-4 text-left w-16 cursor-pointer hover:bg-gray-200 transition-colors group"
+                  onClick={() => handleSort("adminId")}
+                >
+                  <div className="flex items-center">
+                    ID {renderSortIcon("adminId")}
+                  </div>
+                </th>
+
+                <th
+                  className="py-3 px-4 text-left w-24 cursor-pointer hover:bg-gray-200 transition-colors group"
+                  onClick={() => handleSort("name")}
+                >
+                  <div className="flex items-center">
+                    이름 {renderSortIcon("name")}
+                  </div>
+                </th>
+
+                <th
+                  className="py-3 px-4 text-left w-28 cursor-pointer hover:bg-gray-200 transition-colors group"
+                  onClick={() => handleSort("position")}
+                >
+                  <div className="flex items-center">
+                    직무 {renderSortIcon("position")}
+                  </div>
+                </th>
+
                 <th className="py-3 px-4 text-left w-32">소속 진료과</th>
                 <th className="py-3 px-4 text-left w-32">자격번호</th>
                 <th className="py-3 px-4 text-left w-28">연락처</th>
-                <th className="py-3 px-4 text-left w-28">입사일</th>
-                <th className="py-3 px-4 text-left w-28">재직 상태</th>
+
+                <th
+                  className="py-3 px-4 text-left w-28 cursor-pointer hover:bg-gray-200 transition-colors group"
+                  onClick={() => handleSort("hiredDate")}
+                >
+                  <div className="flex items-center">
+                    입사일 {renderSortIcon("hiredDate")}
+                  </div>
+                </th>
+
+                <th
+                  className="py-3 px-4 text-left w-28 cursor-pointer hover:bg-gray-200 transition-colors group"
+                  onClick={() => handleSort("status")}
+                >
+                  <div className="flex items-center">
+                    재직 상태 {renderSortIcon("status")}
+                  </div>
+                </th>
+
                 <th className="py-3 px-4 text-center w-24">관리</th>
               </tr>
             </thead>
@@ -285,7 +377,7 @@ export default function MedicalStaffList() {
                 </tr>
               ))}
 
-              {filteredStaff.length === 0 && (
+              {processedData.length === 0 && (
                 <tr>
                   <td
                     colSpan="10"
@@ -300,7 +392,7 @@ export default function MedicalStaffList() {
         </div>
 
         {/* 페이지네이션 UI */}
-        {filteredStaff.length > 0 && (
+        {processedData.length > 0 && (
           <div className="flex justify-center items-center space-x-2 mt-6">
             {/* 이전 버튼 */}
             <button

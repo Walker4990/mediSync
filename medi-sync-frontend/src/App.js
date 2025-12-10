@@ -57,6 +57,7 @@ import DrugInspection from "./pages/admin/DrugInspection";
 import AdminRefundPage from "./pages/admin/AdminRefundPage";
 import UnpaidManagePage from "./pages/admin/UnPaidManagePage";
 import UnpaidAlert from "./component/UnpaidAlert";
+import AuthLoginKakao from "./component/AuthLoginKakao";
 const token = localStorage.getItem("token");
 if (token) {
   axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
@@ -118,10 +119,8 @@ function AppContent() {
           <Route element={<UserLayout />}>
             <Route path="/" element={<UserHome />} />/
             <Route path="/findAccount" element={<FindAccount />} />/
-            <Route path="/auth/callback" element={<OAuthCallback />} />
-            <Route path="/oauth/redirect" element={<OAuthRedirectHandler />} />
             <Route path="/user/mypage" element={<MyPage />} />
-            <Route path="/user/pre-form" element={<PreExamForm />} />
+            <Route path="/user/pre-exam" element={<PreExamForm />} />
             <Route path="/user/consult" element={<MedicalConsult />} />
             <Route path="/user/reservation" element={<Reservation />} />
             <Route path="/user/insurance" element={<Insurance />} />
@@ -132,6 +131,10 @@ function AppContent() {
               element={<PatientInsurancePage />}
             />
           </Route>
+          <Route path="/authLoginKakao" element={<AuthLoginKakao />} />
+          <Route path="/auth/callback" element={<OAuthCallback />} />
+          <Route path="/oauth/redirect" element={<OAuthRedirectHandler />} />
+
           <Route path="/unpaid-alert" element={<UnpaidAlert />} />
           <Route path="/user/mypage/payment" element={<PaymentPage />} />
 
@@ -144,7 +147,18 @@ function AppContent() {
           ></Route>
         </Routes>
       </ModalProvider>
-      <ToastContainer position="top-right" autoClose={6000} theme="colored" />
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={true}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+      />
     </>
   );
 }

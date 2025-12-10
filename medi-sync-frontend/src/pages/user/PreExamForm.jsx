@@ -1,13 +1,25 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { ClipboardList, User, AlertTriangle, CheckSquare } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
+import axios from "axios";
+import { jwtDecode } from "jwt-decode";
 
 export default function PreExamForm() {
   const [showMedicationInput, setShowMedicationInput] = useState(false);
   const [showAllergyInput, setShowAllergyInput] = useState(false);
-  const navigate = useNavigate();
 
-  // 폼 데이터 상태 (필요에 따라 확장)
+  const navigate = useNavigate();
+  const location = useLocation();
+  const reservationPayload = location.state?.reservationPayload;
+
+  // 예약 정보가 없으면(잘못된 접근) 뒤로 가기
+  useEffect(() => {
+    if (!reservationPayload) {
+      alert("잘못된 접근입니다. 예약 정보를 선택해주세요.");
+      navigate(-1);
+    }
+  }, [reservationPayload, navigate]);
+
   const [formData, setFormData] = useState({
     mainSymptom: "",
     symptomStartDate: "",
@@ -22,12 +34,12 @@ export default function PreExamForm() {
     consent: false,
   });
 
-  // 폼 입력 변경 핸들러 (간단한 예시)
+  // 폼 입력 변경
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
 
     if (type === "checkbox") {
-      // (체크박스 - 다중 선택)
+      // multi-check
       if (name === "medicalHistory") {
         setFormData((prev) => ({
           ...prev,
@@ -36,26 +48,89 @@ export default function PreExamForm() {
             : prev.medicalHistory.filter((item) => item !== value),
         }));
       } else {
-        // (체크박스 - 단일)
+        // single-check
         setFormData((prev) => ({ ...prev, [name]: checked }));
       }
     } else {
-      // (라디오, 텍스트, 텍스트에어리어)
+      // radio, text(area)
       setFormData((prev) => ({ ...prev, [name]: value }));
     }
   };
 
   // 폼 제출 핸들러
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+
     if (!formData.consent) {
       alert("정보 제공 동의에 체크해주세요.");
       return;
     }
-    console.log("제출할 문진표 데이터:", formData);
-    // TODO: 이 곳에서 formData를 서버로 전송 (axios.post 등)
-    alert("사전 문진표가 성공적으로 제출되었습니다.");
-    window.location.href = "/user/consult";
+
+    const token = localStorage.getItem("token");
+    if (!token) {
+      alert("로그인 정보가 없습니다. 다시 로그인해주세요.");
+      return;
+    }
+
+    // 토큰에서 user_id 추출
+    let userId = null;
+    try {
+      const decoded = jwtDecode(token);
+      userId = decoded.userId;
+    } catch (err) {
+      console.error("토큰 디코딩 실패:", err);
+      alert("사용자 정보를 확인할 수 없습니다.");
+      return;
+    }
+
+    try {
+      // 예약 정보에 userId 추가
+      const finalReservationPayload = {
+        ...reservationPayload,
+        userId: userId, // 추출한 userId 추가
+      };
+
+      const reservationRes = await axios.post(
+        "http://localhost:8080/api/reservation/addReservation",
+        finalReservationPayload,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const newReservationId = reservationRes.data.reservationId;
+
+      if (!newReservationId) {
+        throw new Error("예약 생성에 실패했습니다. (ID 없음)");
+      }
+
+      // 문진표 데이터에 userId 및 reservationId 포함
+      const surveyPayload = {
+        reservation_id: newReservationId,
+        user_id: userId, // 여기서 추출한 userId 명시적 전달
+        survey_data: formData,
+      };
+
+      await axios.post(
+        "http://localhost:8080/api/questionnaire/submit",
+        surveyPayload,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      alert("예약 및 문진표 제출이 완료되었습니다!");
+      window.location.href = "/user/consult";
+    } catch (error) {
+      console.error("처리 중 오류 발생:", error);
+      alert("오류가 발생했습니다: " + (error.response?.data || error.message));
+    }
   };
 
   const styles = {
@@ -75,10 +150,8 @@ export default function PreExamForm() {
   };
 
   return (
-    // 전체 페이지 배경 (이미지의 흰색/밝은 회색 테마)
     <div className="bg-gray-50 min-h-screen p-4 font-pretendard">
       <div className="max-w-4xl mx-auto">
-        {/* === 1. 헤더 === */}
         <div className="text-center mb-10">
           <ClipboardList size={48} className="mx-auto text-blue-600" />
           <h1 className="text-3xl font-extrabold text-gray-900 mt-4">
@@ -89,9 +162,9 @@ export default function PreExamForm() {
           </p>
         </div>
 
-        {/* === 2. 문진표 폼 === */}
+        {/* 문진표 폼 */}
         <form onSubmit={handleSubmit} className="space-y-8">
-          {/* --- 1. 주요 증상 --- */}
+          {/* 주요 증상 */}
           <div className={styles.section}>
             <label htmlFor="mainSymptom" className={styles.label}>
               1. 현재 가장 불편한 증상이 무엇인가요?
@@ -107,7 +180,7 @@ export default function PreExamForm() {
             ></textarea>
           </div>
 
-          {/* --- 2. 증상 시작일 --- */}
+          {/* 증상 시작일 */}
           <div className={styles.section}>
             <label htmlFor="symptomStartDate" className={styles.label}>
               2. 증상이 언제부터 시작되었나요?
@@ -123,7 +196,7 @@ export default function PreExamForm() {
             />
           </div>
 
-          {/* --- 3. 과거 병력 (다중 선택) --- */}
+          {/* 과거 병력 (다중 선택) */}
           <div className={styles.section}>
             <label className={styles.label}>
               3. 과거에 진단받은 질환이 있나요? (모두 선택)
@@ -146,7 +219,7 @@ export default function PreExamForm() {
             </div>
           </div>
 
-          {/* --- 4. 복용 중인 약 --- */}
+          {/* 복용 중인 약 */}
           <div className={styles.section}>
             <label className={styles.label}>
               4. 현재 복용 중인 약이 있나요?
@@ -193,7 +266,7 @@ export default function PreExamForm() {
             )}
           </div>
 
-          {/* --- 5. 알레르기 --- */}
+          {/* 알레르기 */}
           <div className={styles.section}>
             <label className={styles.label}>
               5. 약물이나 음식에 알레르기가 있나요?
@@ -240,7 +313,7 @@ export default function PreExamForm() {
             )}
           </div>
 
-          {/* --- 6. 흡연 --- */}
+          {/* 흡연 */}
           <div className={styles.section}>
             <label className={styles.label}>6. 현재 흡연 중이신가요?</label>
             <div className={styles.radioGroup}>
@@ -261,7 +334,7 @@ export default function PreExamForm() {
             </div>
           </div>
 
-          {/* --- 7. 음주 --- */}
+          {/* 음주 */}
           <div className={styles.section}>
             <label className={styles.label}>7. 평소 음주를 하시나요?</label>
             <div className={styles.radioGroup}>
@@ -282,7 +355,7 @@ export default function PreExamForm() {
             </div>
           </div>
 
-          {/* --- 8. (여성) 임신/출산 --- */}
+          {/* 임신/출산 */}
           <div className={styles.section}>
             <label className={styles.label}>
               8. (여성만 해당) 현재 임신 또는 수유 중이신가요?
@@ -303,7 +376,7 @@ export default function PreExamForm() {
             </div>
           </div>
 
-          {/* --- 9. 건강검진 --- */}
+          {/* 건강검진 */}
           <div className={styles.section}>
             <label className={styles.label}>
               9. 최근 1년 이내 건강검진을 받으신 적이 있나요?
@@ -332,7 +405,7 @@ export default function PreExamForm() {
             </div>
           </div>
 
-          {/* --- 10. 정보 제공 동의 --- */}
+          {/* 정보 제공 동의 */}
           <div className={`${styles.section} bg-blue-50 border-blue-200`}>
             <div className="flex items-start space-x-3">
               <CheckSquare size={20} className="text-blue-700 mt-1" />
@@ -361,7 +434,7 @@ export default function PreExamForm() {
             </div>
           </div>
 
-          {/* === 3. 제출 버튼 === */}
+          {/* 제출 버튼 */}
           <div className="mt-10 grid grid-cols-1 md:grid-cols-2 gap-4">
             <button
               type="button"

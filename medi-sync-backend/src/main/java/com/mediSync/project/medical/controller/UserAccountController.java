@@ -67,7 +67,7 @@ public class UserAccountController {
 
     // naver 로그인 테스트
     @GetMapping("/naver/callback")
-    public ResponseEntity<?> handleNaverCallback(@RequestParam String code, @RequestParam String state) {
+    public ResponseEntity<?> handleNaverCallback(@RequestParam(name="code") String code, @RequestParam(name="state") String state) {
         // 1. 네이버 Access Token 발급
         String accessToken;
         try {
@@ -231,61 +231,65 @@ public class UserAccountController {
         // token
     }
 
-    @GetMapping("/kakao/callback")
-    public ResponseEntity<?> handleKakaoCallback(@RequestParam String code, @RequestParam String state) {
+    @PostMapping("/kakao/callback")
+    public ResponseEntity<?> handleKakaoCallback(@RequestBody UserAccount user) {
 
-        // 1. 카카오 Access Token 발급
-        String accessToken;
-        try {
-            accessToken = getKakaoAccessToken(code, state);
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("success", false, "message", "카카오 토큰 발급 실패: " + e.getMessage()));
-        }
+        //String socialLoginId = "KAKAO_" + System.currentTimeMillis();
+        String socialLoginId = "KAKAO_" + user.getName();
+        UserAccount check = userAccountService.selectUserByLoginId(socialLoginId);
 
-        // 2. 카카오 사용자 프로필 조회
-        KakaoUserProfile kakaoProfile = getKakaoUserProfile(accessToken);
+        UserAccount memberToLogin;
+        System.out.println("-------------");
+        System.out.println(check);
+        System.out.println("------------- KAKAO");
 
-        // 💡 카카오 고유 ID
-        String socialLoginId = "KAKAO_" + kakaoProfile.getId();
-
-        // 3. 서비스 로그인/회원가입 처리
-        UserAccount user = userAccountService.selectUserByLoginId(socialLoginId);
-
-        if (user == null) {
-            // 소셜 회원가입 로직
-            UserAccount newUser = new UserAccount();
-            newUser.setLoginId(socialLoginId);
-            newUser.setPassword(passwordEncoder.encode(socialLoginId)); // 소셜 사용자는 임시/랜덤 비밀번호 저장
-            newUser.setName(kakaoProfile.getKakaoAccount().getProfile().getNickname());
-            newUser.setEmail(kakaoProfile.getKakaoAccount().getEmail());
-            newUser.setPhone("000-0000-0000"); // 필수 필드이므로 임시값 또는 추가 입력 필요
-            newUser.setSocial("KAKAO"); // 소셜 로그인 사용자임을 표시
+        if(check == null) {
+            user.setLoginId(socialLoginId);
+            user.setPassword(passwordEncoder.encode(socialLoginId)); // 소셜 사용자는 임시/랜덤 비밀번호 저장
+            user.setEmail(socialLoginId + "@kakao.com");
+            user.setPhone("000-0000-0000"); // 필수 필드이므로 임시값 또는 추가 입력 필요
+            user.setSocial("KAKAO"); // 소셜 로그인 사용자임을 표시
 
             try {
-                userAccountService.userInsert(newUser);
-                user = newUser; // 새로 가입된 사용자 객체 사용
+                userAccountService.userInsert(user);
+                memberToLogin = user;
             } catch (DuplicateKeyException e) {
+                memberToLogin = userAccountService.selectUserByLoginId(socialLoginId);
                 // 이메일 등이 중복될 수 있으나, 여기서는 ID 기반이므로 무시하거나 로그 남김
             }
+        }   else {
+            // 기존 회원 로그인
+            memberToLogin = check;
         }
 
         // 4. JWT 토큰 발급
-        String jwtToken = jwtUtil.generateToken(user.getLoginId(), user.getUserId());
+        String token = jwtUtil.generateToken(memberToLogin.getLoginId(), memberToLogin.getUserId());
 
+        System.out.println("--------- token");
+        System.out.println(token);
+        System.out.println("--------------------");
+
+        return ResponseEntity.ok(Map.of(
+                "success", true,
+                "token", token,
+                "user", user,
+                "message", "로그인 성공"
+        ));
         // 5. 클라이언트(React)로 리다이렉트 및 토큰 전달
         // **프론트엔드에서 토큰을 처리할 경로**를 설정해야 합니다. (예: /oauth/redirect)
         // 이 리다이렉트는 브라우저를 클라이언트로 이동시키고, URL 파라미터를 통해 토큰을 전달합니다.
-        String frontendRedirectUrl = "http://localhost:3000/oauth/redirect?token=" + jwtToken + "&login=success";
+        //String frontendRedirectUrl = "http://localhost:3000/oauth/redirect?token=" + jwtToken + "&login=success";
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setLocation(URI.create(frontendRedirectUrl));
+        //HttpHeaders headers = new HttpHeaders();
+        //headers.setLocation(URI.create(frontendRedirectUrl));
 
         // HTTP 302 Found 응답으로 클라이언트 브라우저를 리다이렉트
-        return new ResponseEntity<>(headers, HttpStatus.FOUND);
+        //return new ResponseEntity<>(headers, HttpStatus.FOUND);
+
     }
 
     public String getKakaoAccessToken(String code, String state) {
+        System.out.println("----> getKakaoAccessToken");
         RestTemplate restTemplate = new RestTemplate();
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
@@ -454,7 +458,7 @@ public class UserAccountController {
 
     // 수정
     @PatchMapping("/{userId}/edit")
-    public ResponseEntity<String> updateUser(@PathVariable Long userId, @RequestBody UserAccount vo) {
+    public ResponseEntity<String> updateUser(@PathVariable(name="userId") Long userId, @RequestBody UserAccount vo) {
         vo.setUserId(userId);
         UserAccount currentUser = userAccountService.userSelectOne(userId);
         int rowsAffected = userAccountService.userUpdate(vo);

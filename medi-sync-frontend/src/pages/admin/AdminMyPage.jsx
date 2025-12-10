@@ -90,25 +90,27 @@ const AdminMyPage = () => {
   useEffect(() => {
     const fetchAdminData = async () => {
       setLoading(true);
-      const storedData = localStorage.getItem("admin_data");
+      try {
+        const response = await axios.get(API_URL);
+        const data = response.data;
 
-      let data = null;
+        setAdmin(data);
+        setFormData(data || {});
 
-      if (storedData) {
-        data = JSON.parse(storedData);
-      } else {
-        try {
-          const response = await axios.get(API_URL);
-          data = response.data;
-          localStorage.setItem("admin_data", JSON.stringify(data));
-        } catch (error) {
-          console.error("데이터 로드 오류:", error);
+        // 로컬 스토리지에도 업데이트하여 동기화
+        localStorage.setItem("admin_data", JSON.stringify(data));
+      } catch (error) {
+        console.error("데이터 로드 오류:", error);
+
+        const storedData = localStorage.getItem("admin_data");
+        if (storedData) {
+          const data = JSON.parse(storedData);
+          setAdmin(data);
+          setFormData(data || {});
         }
+      } finally {
+        setLoading(false);
       }
-
-      setAdmin(data);
-      setFormData(data || {});
-      setLoading(false);
     };
 
     fetchAdminData();

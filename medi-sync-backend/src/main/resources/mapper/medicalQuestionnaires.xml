@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.mediSync.project.patient.mapper.QuestionnaireMapper">
+
+    <insert id="insertQuestionnaire" parameterType="com.mediSync.project.patient.dto.QuestionnaireDTO">
+        INSERT INTO medical_questionnaires (
+        user_id,
+        reservation_id,
+        survey_data,
+        created_at
+        ) VALUES (
+        #{userId},
+        #{reservationId},
+        #{surveyData, typeHandler=com.mediSync.project.common.handler.JsonTypeHandler},
+        NOW()
+        )
+    </insert>
+
+    <resultMap id="QuestionnaireResultMap" type="com.mediSync.project.patient.dto.QuestionnaireDTO">
+        <id property="questionId" column="question_id"/>
+        <result property="userId" column="user_id"/>
+        <result property="reservationId" column="reservation_id"/>
+        <result property="surveyData" column="survey_data"
+                typeHandler="com.mediSync.project.common.handler.JsonTypeHandler"/>
+    </resultMap>
+
+    <select id="getQuestionnaireByReservationId" resultMap="QuestionnaireResultMap">
+        SELECT * FROM medical_questionnaires
+        LEFT JOIN reservation USING (reservation_id)
+        WHERE reservation_id = #{reservationId}
+    </select>
+
+</mapper>
