@@ -2,6 +2,7 @@ package com.mediSync.project.patient.controller;
 
 import com.mediSync.project.insurance.service.ClaimOrchestrator;
 import com.mediSync.project.medical.vo.UserAccount;
+import com.mediSync.project.patient.service.PatientService;
 import com.mediSync.project.patient.service.ReservationService;
 import com.mediSync.project.patient.vo.Reservation;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +24,8 @@ import java.util.stream.Collectors;
 public class ReservationController {
     private final ReservationService reservationService;
     private final ClaimOrchestrator claimOrchestrator;
+    private final PatientService patientService;
+
     //해당 날짜에 잡힌 예약 시간 리스트 가져오기
     @GetMapping("/getReservationList")
     public List<String> getReservationList(@RequestParam String date, @RequestParam Integer admin_id) {
@@ -45,21 +48,22 @@ public class ReservationController {
 
     //병원 예약 하기
     @PostMapping("/addReservation")
-    public int addReservation(
+    public ResponseEntity<?> addReservation(
             @RequestBody Reservation reservation,
             @AuthenticationPrincipal UserAccount userAccount) { // ✅ 로그인 사용자 정보 주입
 
         // JWT에서 인증된 사용자 정보 확인
         if (userAccount != null) {
-            reservation.setPatientId(userAccount.getUserId()); // ✅ patientId 자동 설정
-            System.out.println("✅ JWT 인증된 patientId 자동 주입: " + userAccount.getUserId());
+            Long loggedInUserId = userAccount.getUserId();
+            Long realPatientId = patientService.findPatientIdByUserId(loggedInUserId);
+            reservation.setPatientId(realPatientId); // ✅ 조회한 patientId 주입
         } else {
-            System.err.println("⚠️ 비로그인 상태 요청 (patientId 수동 필요)");
-            return 0; // 또는 예외 처리
+            return ResponseEntity.badRequest().body("로그인이 필요합니다.");
         }
 
         System.out.println("📥 받은 예약 데이터: " + reservation);
-        return reservationService.addReservation(reservation);
+        reservationService.addReservation(reservation);
+        return ResponseEntity.ok(reservation);
     }
 
     //병원 예약 취소하기
@@ -109,11 +113,5 @@ public class ReservationController {
                 "status", status
         ));
     }
-
-
-
-
-
-
 
 }

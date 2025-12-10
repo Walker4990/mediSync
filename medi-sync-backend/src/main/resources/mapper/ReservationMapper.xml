@@ -16,7 +16,7 @@
         ]]>
     </select>
     <!--  예약하기  -->
-    <insert id="addReservation" parameterType="reservation">
+    <insert id="addReservation" parameterType="reservation" useGeneratedKeys="true" keyProperty="reservationId">
         insert into reservation
         (patient_id,admin_id,reservation_date,status,created_at,type)
         values(#{patientId},#{adminId},#{reservationDate}, 'WAIT', now(), #{type})

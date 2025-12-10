@@ -13,21 +13,22 @@
         ) VALUES (
         #{userId},
         #{reservationId},
-        #{surveyData, typeHandler=com.medisync.handler.JsonTypeHandler},
+        #{surveyData, typeHandler=com.mediSync.project.common.handler.JsonTypeHandler},
         NOW()
         )
     </insert>
 
-    <resultMap id="QuestionnaireResultMap" type="com.medisync.dto.QuestionnaireDTO">
+    <resultMap id="QuestionnaireResultMap" type="com.mediSync.project.patient.dto.QuestionnaireDTO">
         <id property="questionId" column="question_id"/>
         <result property="userId" column="user_id"/>
         <result property="reservationId" column="reservation_id"/>
         <result property="surveyData" column="survey_data"
-                typeHandler="com.medisync.handler.JsonTypeHandler"/>
+                typeHandler="com.mediSync.project.common.handler.JsonTypeHandler"/>
     </resultMap>
 
     <select id="getQuestionnaireByReservationId" resultMap="QuestionnaireResultMap">
         SELECT * FROM medical_questionnaires
+        LEFT JOIN reservation USING (reservation_id)
         WHERE reservation_id = #{reservationId}
     </select>
 

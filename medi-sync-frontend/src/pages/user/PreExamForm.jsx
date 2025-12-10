@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { ClipboardList, User, AlertTriangle, CheckSquare } from "lucide-react";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import axios from "axios";
+import { jwtDecode } from "jwt-decode";
 
 export default function PreExamForm() {
   const [showMedicationInput, setShowMedicationInput] = useState(false);
@@ -65,12 +66,33 @@ export default function PreExamForm() {
       return;
     }
 
-    // 예약 정보 저장
-    const token = localStorage.getItem("token"); // JWT 토큰
+    const token = localStorage.getItem("token");
+    if (!token) {
+      alert("로그인 정보가 없습니다. 다시 로그인해주세요.");
+      return;
+    }
+
+    // 토큰에서 user_id 추출
+    let userId = null;
     try {
+      const decoded = jwtDecode(token);
+      userId = decoded.userId;
+    } catch (err) {
+      console.error("토큰 디코딩 실패:", err);
+      alert("사용자 정보를 확인할 수 없습니다.");
+      return;
+    }
+
+    try {
+      // 예약 정보에 userId 추가
+      const finalReservationPayload = {
+        ...reservationPayload,
+        userId: userId, // 추출한 userId 추가
+      };
+
       const reservationRes = await axios.post(
         "http://localhost:8080/api/reservation/addReservation",
-        reservationPayload,
+        finalReservationPayload,
         {
           headers: {
             "Content-Type": "application/json",
@@ -79,17 +101,17 @@ export default function PreExamForm() {
         }
       );
 
-      const newReservationId = reservationRes.data.id || reservationRes.data;
+      const newReservationId = reservationRes.data.reservationId;
 
       if (!newReservationId) {
-        throw new Error("예약 생성에 실패했습니다. (ID 반환 없음)");
+        throw new Error("예약 생성에 실패했습니다. (ID 없음)");
       }
 
-      // 문진표 데이터 저장
+      // 문진표 데이터에 userId 및 reservationId 포함
       const surveyPayload = {
         reservation_id: newReservationId,
-        // user_id: currentUser.userId
-        survey_data: formData, // JSON
+        user_id: userId, // 여기서 추출한 userId 명시적 전달
+        survey_data: formData,
       };
 
       await axios.post(

@@ -40,10 +40,13 @@ public class PatientService {
         return patientMapper.updatePatient(patient);
     }
 
+    public Long findPatientIdByUserId(Long userId) {
+        return patientMapper.findPatientIdByUserId(userId);
+    }
+
     public List<Patient> searchPatient(String keyword){
         return patientMapper.searchPatient(keyword);
     }
-
 
     public Map<String, Object> allPatients(int page, int size, String keyword) {
         int offset = (page - 1) * size;
