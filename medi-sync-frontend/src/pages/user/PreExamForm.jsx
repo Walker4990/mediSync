@@ -91,7 +91,7 @@ export default function PreExamForm() {
       };
 
       const reservationRes = await axios.post(
-        "http://localhost:8080/api/reservation/addReservation",
+        "http://192.168.0.24:8080/api/reservation/addReservation",
         finalReservationPayload,
         {
           headers: {
@@ -100,9 +100,9 @@ export default function PreExamForm() {
           },
         }
       );
-
-      const newReservationId = reservationRes.data.reservationId;
-
+        console.log("📌 reservation response:", reservationRes.data);
+      const newReservationId = reservationRes.data;
+        console.log("📌 newReservationId:", newReservationId);
       if (!newReservationId) {
         throw new Error("예약 생성에 실패했습니다. (ID 없음)");
       }
@@ -115,7 +115,7 @@ export default function PreExamForm() {
       };
 
       await axios.post(
-        "http://localhost:8080/api/questionnaire/submit",
+        "http://192.168.0.24:8080/api/questionnaire/submit",
         surveyPayload,
         {
           headers: {

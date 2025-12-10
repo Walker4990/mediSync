@@ -16,6 +16,9 @@ export default function TestGroupPage({ group, title }) {
     const [page, setPage] = useState(1);
     const [size] = useState(10);
     const [totalPages, setTotalPages] = useState(1);
+    const isEmpty = totalPages === 0;
+    const startPage = isEmpty ? 1 : Math.max(1, page - 5);
+    const endPage = isEmpty ? 1 : Math.min(totalPages, startPage + 9);
 
     // ✅ 그룹별 예약 조회
     const loadReservations = () => {
@@ -225,35 +228,42 @@ export default function TestGroupPage({ group, title }) {
             <div className="flex justify-center mt-6 gap-2">
 
                 <button
-                    disabled={page === 1}
-                    onClick={() => setPage(page - 1)}
+                    disabled={isEmpty || page === 1}
+                    onClick={() => !isEmpty && setPage(page - 1)}
                     className="px-3 py-1 bg-gray-200 rounded disabled:opacity-40"
                 >
                     이전
                 </button>
 
-                {[...Array(totalPages)].map((_, i) => {
-                    const pageNum = i + 1;
+
+                {Array.from({ length: endPage - startPage + 1 }, (_, i) => {
+                    const pageNum = startPage + i;
+
                     return (
                         <button
                             key={pageNum}
-                            onClick={() => setPage(pageNum)}
+                            onClick={() => !isEmpty && setPage(pageNum)}   // ⛔ 내용 없으면 페이지 변경 금지
+                            disabled={isEmpty}                             // 🔥 모든 버튼 disabled
                             className={`
-                    px-3 py-1 rounded
-                    ${page === pageNum
-                                ? "bg-emerald-500 text-white"
-                                : "bg-gray-200 hover:bg-gray-300"
+                px-3 py-1 rounded
+                ${isEmpty
+                                ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                                : page === pageNum
+                                    ? "bg-emerald-500 text-white"
+                                    : "bg-gray-200 hover:bg-gray-300"
                             }
-                `}
+            `}
                         >
                             {pageNum}
                         </button>
                     );
                 })}
 
+
+
                 <button
-                    disabled={page === totalPages}
-                    onClick={() => setPage(page + 1)}
+                    disabled={isEmpty || page === totalPages}
+                    onClick={() => !isEmpty && setPage(page + 1)}
                     className="px-3 py-1 bg-gray-200 rounded disabled:opacity-40"
                 >
                     다음

@@ -163,7 +163,7 @@ export default function AdminChatPage() {
     return (
         <>
             <AdminHeader />
-            <div className="flex justify-center items-start py-6 bg-gray-100 min-h-[calc(100vh-80px)]">
+            <div className="flex justify-center items-start py-20 bg-gray-100 min-h-[calc(100vh-80px)] ">
                 <div className="w-[90%] max-w-[1100px] h-[72vh] bg-white rounded-2xl shadow-md overflow-hidden flex">
                     {/* 좌측: 사용자 목록 (25%) */}
                     <div className="w-1/4 bg-gray-50 border-r flex flex-col">

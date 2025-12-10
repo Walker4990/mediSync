@@ -227,7 +227,7 @@ export default function OperationDetailPage() {
     const safePrescriptions = Array.isArray(prescriptions) ? prescriptions : [];
 
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-gray-50 p-10">
             <AdminHeader />
 
             <div className="max-w-6xl mx-auto p-10 space-y-10">
