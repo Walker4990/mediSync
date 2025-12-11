@@ -59,7 +59,7 @@ public class DrugService {
         drugCheckMapper.updateDrugDispose(drug.getDrugCode());
 
         Drug newDrug = new Drug();
-        
+
         int result = drugMapper.editDrug(newDrug);
         //만약 수량이 수정됐다면 로그 남기기
         if(drug.getQuantity() != origin.getQuantity()){

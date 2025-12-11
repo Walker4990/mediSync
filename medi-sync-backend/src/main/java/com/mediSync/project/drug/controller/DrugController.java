@@ -61,13 +61,13 @@ public class DrugController {
     @PutMapping("/update")
     public ResponseEntity<Map<String, Object>> updateDrug(@RequestBody DrugPurchaseDTO drug) {
         
-
+        System.out.println("수정할 약 정보 : "+ drug);
         //약 정보 업데이트
-        int result = drugService.editDrug(drug);
+        //int result = drugService.editDrug(drug);
         Map<String, Object> map = new HashMap<>();
 
-        map.put("success", result > 0);
-        map.put("message", result > 0 ? "수정 성공!" : "수정 실패");
+        map.put("success", 1 > 0);
+        map.put("message", 1 > 0 ? "수정 성공!" : "수정 실패");
 
 
         return ResponseEntity.ok(map);

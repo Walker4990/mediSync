@@ -40,7 +40,17 @@ export default function DrugModal({ visible, onClose, onSave, editData }) {
 
   useEffect(() => {
     fetchInsurerList();
-  }, []);
+  }, [editData]);
+
+  useEffect(() => {
+    if (locationList.length > 0) {
+      setForm((prev) => ({
+        ...prev,
+        purchaseId: locationList[0].purchaseId,
+        quantity: locationList[0].quantity, // quantity도 같이 자동 업데이트
+      }));
+    }
+  }, [locationList]);
 
   useEffect(() => {
     if (editData) {
@@ -66,7 +76,7 @@ export default function DrugModal({ visible, onClose, onSave, editData }) {
         purchaseId: "",
       });
     }
-  }, [locationList, editData]);
+  }, [editData]);
 
   if (!visible) return null;
 
@@ -86,15 +96,16 @@ export default function DrugModal({ visible, onClose, onSave, editData }) {
     console.log("📤 변환 후 전송할 데이터:", data);
     onSave(data);
     setForm({
-      drugCode: "DR" + crypto.randomUUID().slice(-6).toUpperCase(), // 자동 코드 생성
+      drugCode: null, // 자동 코드 생성
       drugName: "",
-      unitPrice: "",
-      quantity: "",
+      unitPrice: 0,
+      quantity: 0,
       unit: "",
       expirationDate: "",
       insurerCode: "",
       supplier: "",
       location: "",
+      purchaseId: 0,
     });
     setInsurerList([]);
     setLocationList([]);
@@ -102,7 +113,7 @@ export default function DrugModal({ visible, onClose, onSave, editData }) {
   };
 
   const fileds = [
-    { label: "약품 코드 (자동)", name: "drugCode", readOnly: true },
+    { label: "약품 코드", name: "drugCode", readOnly: true },
     { label: "약품명", name: "drugName", type: "text" },
     { label: "단위 (정/캡슐/액상 등)", name: "unit", type: "text" },
     { label: "단가 (원)", name: "unitPrice", type: "number" },
@@ -159,7 +170,8 @@ export default function DrugModal({ visible, onClose, onSave, editData }) {
                       // quantity 자동 업데이트
                       setForm((prev) => ({
                         ...prev,
-                        quantity: selectedLocation.quantity, // ★ 여기 자동 입력!
+                        quantity: selectedLocation.quantity,
+                        purchaseId: selectedLocation.purchaseId, // ★ 여기 자동 입력!
                       }));
                     }
                   }}
@@ -201,7 +213,24 @@ export default function DrugModal({ visible, onClose, onSave, editData }) {
 
         <div className="flex justify-end gap-3 mt-6">
           <button
-            onClick={onClose}
+            onClick={() => {
+              setLocationList([]);
+              setInsurerList([]);
+              setForm({
+                drugCode: null, // 자동 코드 생성
+                drugName: "",
+                unitPrice: "",
+                quantity: 0,
+                unit: 0,
+                expirationDate: "",
+                insurerCode: "",
+                supplier: "",
+                location: "",
+                purchaseId: 0,
+              });
+
+              onClose();
+            }}
             className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-md transition"
           >
             취소

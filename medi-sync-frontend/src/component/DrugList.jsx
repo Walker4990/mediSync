@@ -52,7 +52,8 @@ export default function DrugList() {
       if (skipFields.includes(key)) continue; // 검사 제외
 
       if (
-        value !== "purchaseId" &&
+        key !== "purchaseId" &&
+        key !== "updatedAt" &&
         (value === null || value === undefined || value === "")
       ) {
         console.warn(`⛔ '${key}' 값이 비어있어 저장 중단함.`);
