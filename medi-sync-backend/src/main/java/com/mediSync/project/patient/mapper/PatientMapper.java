@@ -2,7 +2,6 @@ package com.mediSync.project.patient.mapper;
 
 import com.mediSync.project.medical.vo.MedicalRecord;
 import com.mediSync.project.patient.vo.Patient;
-import com.mediSync.project.patient.vo.PatientAccount;
 import com.mediSync.project.medical.vo.Prescription;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -14,6 +13,7 @@ import java.util.Map;
 public interface PatientMapper {
     int insertPatient(Patient patient);
     int updatePatient(Patient patient);
+    Long findPatientIdByUserId(Long userId);
     List<Patient> allPatient(@Param("offset") int offset, @Param("size") int size, @Param("keyword") String keyword);
     List<MedicalRecord> getPatientRecords(Long patientId, @Param("offset") int offset, @Param("size") int size);
     List<Prescription> getPatientPrescriptions(Long patientId, @Param("offset") int offset, @Param("size") int size);

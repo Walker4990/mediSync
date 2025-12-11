@@ -5,12 +5,14 @@ import AdminHeader from "../../component/AdminHeader";
 import TimeSlotModal from "../../component/TimeSlotModal";
 import { AiFillPrinter } from "react-icons/ai";
 import { ToastContainer } from "react-toastify";
+import { FileText } from "lucide-react";
+import PreExamModal from "../../component/PreExamModal";
 import { useNotifications } from "../../context/NotificationContext";
 import SurgeryReserveModal from "../../component/SurgeryReserveModal";
 
 export default function MedicalRecordPage() {
   const [form, setForm] = useState({
-    patientId: "1",
+    patientId: "",
     adminId: "",
     diagnosis: "",
     totalCost: "",
@@ -35,6 +37,9 @@ export default function MedicalRecordPage() {
   const testNotifications = notifications.filter((n) => n.testName);
   const [isShort, setIsShort] = useState(false);
   const [shortageList, setShortageList] = useState({});
+  const [preExamModalOpen, setPreExamModalOpen] = useState(false);
+  const [selectedPreExam, setSelectedPreExam] = useState(null);
+  const [currentPatientName, setCurrentPatientName] = useState("");
 
   // 화면 진입 시 오늘 날짜로 설정
   useEffect(() => {
@@ -71,7 +76,7 @@ export default function MedicalRecordPage() {
   const searchDrug = debounce(async (keyword, type = null) => {
     if (!keyword || keyword.trim() === "") return setDrugSuggestions([]);
     try {
-      const res = await axios.get(`http://localhost:8080/api/drug/search`, {
+      const res = await axios.get(`http://192.168.0.24:8080/api/drug/search`, {
         params: { keyword, type },
       });
       setDrugSuggestions(res.data);
@@ -94,6 +99,27 @@ export default function MedicalRecordPage() {
       setTestSuggestions([]);
     }
   }, 300);
+
+  // 문진표 조회
+  const handlePreExamClick = async (e, reservation) => {
+    e.stopPropagation(); // 행 클릭 이벤트(진료 시작) 방지
+    try {
+      const res = await axios.get(
+        `http://localhost:8080/api/questionnaire/${reservation.reservationId}`
+      );
+
+      if (res.data) {
+        setSelectedPreExam(res.data.surveyData);
+        setCurrentPatientName(reservation.patientName);
+        setPreExamModalOpen(true);
+      } else {
+        alert("작성된 사전 문진표가 없습니다.");
+      }
+    } catch (err) {
+      console.error("문진표 조회 실패:", err);
+      alert("작성된 사전 문진표가 없습니다.");
+    }
+  };
 
   // 초기 데이터 로드
   useEffect(() => {
@@ -289,7 +315,7 @@ export default function MedicalRecordPage() {
       console.log("등록 값 확인 ", payload);
       const URL = "192.168.0.24";
       const res = await axios.post(
-        "http://localhost:8080/api/records",
+        "http://192.168.0.24:8080/api/records",
         payload,
         {
           headers: { "Content-Type": "application/json" },
@@ -342,7 +368,6 @@ export default function MedicalRecordPage() {
         } catch (err) {
           console.warn("⚠️ 처방전 자동 발행 실패:", err);
         }
-
         console.log("✅ 등록 응답:", res.data);
         const recordRes = await axios.get(
           `http://192.168.0.24:8080/api/records/patient/${form.patientId}`
@@ -532,7 +557,7 @@ export default function MedicalRecordPage() {
       </h1>
       {/* 🔍 환자 검색 */}
       <div className="bg-white p-5 rounded-lg shadow mb-6">
-        <h2 className="text-lg font-semibold text-blue-600 mb-3">
+        <h2 className="text-2xl font-bold text-blue-700 mb-6 text-center">
           🔍 환자 검색
         </h2>
 
@@ -593,12 +618,13 @@ export default function MedicalRecordPage() {
           ) : (
             <div className="max-h-[300px] overflow-y-auto">
               <table className="w-full text-sm border-collapse">
-                <thead className="bg-blue-50 text-blue-700">
+                <thead className="bg-blue-50 text-blue-700 text-center sticky top-0 z-10">
                   <tr>
                     <th className="p-2 border-b">시간</th>
                     <th className="p-2 border-b">환자명</th>
                     <th className="p-2 border-b">의사</th>
                     <th className="p-2 border-b">상태</th>
+                    <th className="p-2 border-b">사전문진표</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -612,7 +638,7 @@ export default function MedicalRecordPage() {
                           : "hover:bg-gray-50"
                       }`}
                     >
-                      <td className="p-2 border-b text-gray-700">
+                      <td className="p-2 border-b text-gray-700 text-center">
                         {new Date(r.reservationDate).toLocaleTimeString(
                           "ko-KR",
                           {
@@ -621,13 +647,13 @@ export default function MedicalRecordPage() {
                           }
                         )}
                       </td>
-                      <td className="p-2 border-b font-medium">
+                      <td className="p-2 border-b font-medium text-center">
                         {r.patientName}
                       </td>
-                      <td className="p-2 border-b text-gray-600">
+                      <td className="p-2 border-b text-gray-600 text-center">
                         {r.doctorName}
                       </td>
-                      <td className="p-2 border-b">
+                      <td className="p-2 border-b text-center">
                         <span
                           className={`px-2 py-0.5 rounded text-xs ${
                             r.reservationStatus === "WAIT"
@@ -639,6 +665,16 @@ export default function MedicalRecordPage() {
                         >
                           {r.reservationStatus}
                         </span>
+                      </td>
+                      <td className="p-2 border-b text-center">
+                        <button
+                          type="button"
+                          onClick={(e) => handlePreExamClick(e, r)}
+                          className="text-gray-400 hover:text-blue-600 transition-colors p-1 rounded-full hover:bg-blue-50"
+                          title="사전 문진표 보기"
+                        >
+                          <FileText size={18} />
+                        </button>
                       </td>
                     </tr>
                   ))}
@@ -695,7 +731,6 @@ export default function MedicalRecordPage() {
             <label className="block text-gray-700 mb-1 font-medium">
               진료비 계산
             </label>
-
             <div className="space-y-2 border rounded-lg p-3 bg-gray-50">
               <div className="flex justify-between text-gray-800">
                 <span>총 진료비</span>
@@ -798,7 +833,7 @@ export default function MedicalRecordPage() {
                                 if (isShort) return;
                                 try {
                                   const res = await axios.get(
-                                    `http://localhost:8080/api/drug/${drug.drugCode}`
+                                    `http://192.168.0.24:8080/api/drug/${drug.drugCode}`
                                   );
                                   const detail = res.data;
 
@@ -862,7 +897,7 @@ export default function MedicalRecordPage() {
                       handlePrescriptionChange(i, e);
                       checkShortage(i);
                     }}
-                    className="border p-2 rounded w-40"
+                    className="border p-2 rounded w-20"
                   />
                   <input
                     type="number"
@@ -1383,6 +1418,13 @@ export default function MedicalRecordPage() {
           testName: selectedSurgery?.diagnosis || "수술",
           patientName: selectedSurgery?.patientName,
         }}
+      />
+      {/* 사전 문진 모달 */}
+      <PreExamModal
+        isOpen={preExamModalOpen}
+        onClose={() => setPreExamModalOpen(false)}
+        data={selectedPreExam}
+        patientName={currentPatientName}
       />
     </div>
   );

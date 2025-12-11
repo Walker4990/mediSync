@@ -42,7 +42,6 @@ public class UserAccountService {
             patient.setPhone(vo.getPhone());
             patient.setEmail(vo.getEmail());
             patient.setUserId(vo.getUserId());
-            patient.setResidentNo("-");
             patient.setAddress("미입력");
 
             int patientResult = patientService.register(patient);

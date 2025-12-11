@@ -13,6 +13,13 @@
         (#{name}, #{phone}, #{email}, #{userId}, #{residentNo}, #{address})
     </insert>
 
+    <!-- id로 조회 -->
+    <select id="findPatientIdByUserId" parameterType="Long" resultType="Long">
+        SELECT patient_id
+        FROM patient
+        WHERE user_id = #{userId}
+    </select>
+
     <!-- 환자 정보 수정 -->
     <update id="updatePatient" parameterType="patient">
         UPDATE patient
