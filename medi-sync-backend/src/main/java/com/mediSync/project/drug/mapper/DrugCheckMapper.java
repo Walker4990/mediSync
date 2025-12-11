@@ -18,7 +18,7 @@ public interface DrugCheckMapper {
     int registerInspection(DrugCheckDTO dto);
     int registerCheckDetail(Map<String, Object> param);
     List<String> getDrugCodeByDrugCheck();
-    List<DrugCheckDTO>getCheckedDrug(long purchaseId);
+    List<DrugCheckDTO>getCheckedDrug(long checkId);
     List<DrugCheckDTO>getAllCheckedDrug();
     DrugCheckDetail getDetailInfoByDetailId(long detailId);
     int updateDetailCheck(long detailId);

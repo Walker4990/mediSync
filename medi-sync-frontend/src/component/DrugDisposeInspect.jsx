@@ -7,10 +7,10 @@ export default function DrugDisposeInspect({
   fetchInspectionList,
 }) {
   //검사 모달 리스트 가져오기
-  const fetchDrugDetail = async (purchaseId) => {
+  const fetchDrugDetail = async (checkId) => {
     try {
       const res = await axios.get(
-        `http://localhost:8080/api/inspection/month/detail/${purchaseId}`
+        `http://localhost:8080/api/inspection/month/detail/${checkId}`
       );
 
       const list = res.data; // detailList 그대로 받음
@@ -76,7 +76,7 @@ export default function DrugDisposeInspect({
           {inspectionList.map((item, index) => (
             <li
               key={`${item.checkId}_${index}`}
-              onClick={() => fetchDrugDetail(item.purchaseId)}
+              onClick={() => fetchDrugDetail(item.checkId)}
               className="p-4 bg-white border rounded-xl shadow-sm hover:shadow-md hover:bg-blue-50/50 transition cursor-pointer"
             >
               <div className="flex justify-between items-center">

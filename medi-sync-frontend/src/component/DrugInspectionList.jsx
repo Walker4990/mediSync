@@ -8,7 +8,7 @@ export default function DrugInspectionList({ filter, onSelectDrug }) {
 
   const fetchDrugData = async () => {
     try {
-      const res = await axios.get(`${TEST_URL}/${filter}`);
+      const res = await axios.get(`${TEST_URL}/check/drug/${filter}`);
       setDrugInfo(res.data);
     } catch (err) {
       console.error("약품 조회 실패", err);

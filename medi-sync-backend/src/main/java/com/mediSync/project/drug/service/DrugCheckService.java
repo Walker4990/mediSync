@@ -5,10 +5,12 @@ import com.mediSync.project.drug.dto.DrugLogDTO;
 import com.mediSync.project.drug.mapper.DrugCheckMapper;
 import com.mediSync.project.drug.vo.DrugCheckDetail;
 import com.mediSync.project.drug.vo.DrugLog;
+import com.mediSync.project.drug.vo.DrugPurchase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -31,14 +33,15 @@ public class DrugCheckService {
                 .collect(Collectors.toList());
     }
 
-    @GetMapping("/get/list/{}")
-    public List<DrugCheckDTO> getNotCheckedDrugList(){
+    public List<DrugCheckDTO> getNotCheckedDrugList( String filter){
         List<DrugCheckDTO> list = drugCheckMapper.getDrugCheckDTONotChecked();
         List<String>drugCode = drugCheckMapper.getDrugCodeByDrugCheck();
-
-
+        if(filter.equals("all") || filter == "all"){
+            System.out.println("all");
+            return list;
+        }
         Set<String> checkedSet = new HashSet<>(drugCode);
-
+            System.out.println("all 아님");
         return list.stream()
                 .filter(d -> !checkedSet.contains(d.getDrugCode()))
                 .collect(Collectors.toList());
@@ -61,6 +64,7 @@ public class DrugCheckService {
             param.put("status",d.getStatus());
             param.put("quantity", d.getQuantity());
             param.put("note",d.getNote());
+            param.put("purchaseId", dto.getPurchaseId());
 
             int res = drugCheckMapper.registerCheckDetail(param);
         }
@@ -74,8 +78,12 @@ public class DrugCheckService {
         return drugCheckMapper.getAllCheckedDrug();
     }
 
+    public List<DrugPurchase>getAllDrugLocation(String drugCode){
+        return drugCheckMapper.getAllDrugLocation(drugCode);
+    }
+
     @Transactional
-    public int updateDrugDispose(long detailId, int quantity){
+    public int updateDrugDispose(long detailId, int quantity,int purchaseId){
         System.out.println("아이디 : " + detailId + "수량 : " + quantity);
 
 
@@ -101,8 +109,11 @@ public class DrugCheckService {
         Map<String,Object> params = new HashMap<>();
         params.put("drugCode", code);   // String
         params.put("quantity", quantity);   // int
+        params.put("purchaseId", purchaseId);
 
-        int res1 = drugCheckMapper.updateDrugDispose(params);
+        drugCheckMapper.updateDrugPurchaseDispose(params);
+        //drug 테이블 업데이트
+        int res1 = drugCheckMapper.updateDrugDispose(code);
         System.out.println("변경 결과 : "+ res1);
 
         //로그 남기기
@@ -117,10 +128,10 @@ public class DrugCheckService {
     }
 
     @Transactional
-    public int updateinspectionDrugByDrugCode(String drugCode, int quantity, String memo){
+    public int updateinspectionDrugByDrugCode(String drugCode, int quantity, String memo, int purchaseId){
 
         Map<String,Object> params = new HashMap<>();
-        params.put("drugCode", drugCode);   // String
+        params.put("purchaseId", purchaseId);   // String
         params.put("quantity", quantity);   // int
 
         DrugLog log = new DrugLog();
@@ -134,24 +145,29 @@ public class DrugCheckService {
         log.setMemo(memo);
         log.setDrugCode(drugCode);
         log.setType("DISPOSE");
+
         //폐기하기
-        drugCheckMapper.updateDrugDispose(params);
+        drugCheckMapper.updateDrugPurchaseDispose(params);
+        
+        //drug 테이블에 저장하기
+        int res1 = drugCheckMapper.updateDrugDispose(drugCode);
+
         //로그 남기기
         int res2 = drugCheckMapper.insertDrugLog(log);
         System.out.println("로그 생성 결과 : "+ res2);
         return 0;
     }
 
-    public List<DrugLogDTO> getDrugLog(String sort, String drugCode){
+    public List<DrugLogDTO> getDrugLog(String sort, String drugCode,int size,int offset){
         if (drugCode != null && drugCode.trim().isEmpty()) {
             drugCode = null;
         }
         Map<String,Object> params = new HashMap<>();
         params.put("sort", sort);
-
+        params.put("size", size);
+        params.put("offset",offset);
         params.put("drugCode", drugCode);
         return drugCheckMapper.getDrugLog(params);
 
     }
-
 }

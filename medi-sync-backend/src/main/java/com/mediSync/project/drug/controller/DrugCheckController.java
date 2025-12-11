@@ -13,7 +13,10 @@ import org.springframework.stereotype.Controller;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/api/inspection")
@@ -29,12 +32,9 @@ public class DrugCheckController {
         return drugCheckService.getNotCheckedDTO();
     }
 
-    @GetMapping("/{filter}")
-    public List<DrugCheckDTO> getDrugDTOInfoByFilter(@PathVariable String filter){
-        if(filter == null || filter.equals("all")){
-            return drugCheckService.getAllCheckedDTO();
-        }
-        return drugCheckService.getNotCheckedDTO();
+    @GetMapping("/check/drug/{filter}")
+    public List<DrugCheckDTO> getNotCheckedDrugList(@PathVariable String filter){
+        return drugCheckService.getNotCheckedDrugList(filter);
     }
 
     @PostMapping("/register")
@@ -52,10 +52,10 @@ public class DrugCheckController {
     public List<DrugCheckDTO>getAllCheckedDrug(){
         return drugCheckService.getAllCheckedDrug();
     }
-    @GetMapping("/month/detail/{purchaseId}")
-    public List<DrugCheckDTO>getCheckedDrugByCheckId(@PathVariable long purchaseId){
+    @GetMapping("/month/detail/{checkId}")
+    public List<DrugCheckDTO>getCheckedDrugByCheckId(@PathVariable long checkId){
 
-        List<DrugCheckDTO> list = drugCheckService.getCheckedDrug(purchaseId);
+        List<DrugCheckDTO> list = drugCheckService.getCheckedDrug(checkId);
         System.out.println("검사 상세 리스트 : "+ list);
         return list;
     }
@@ -73,9 +73,9 @@ public class DrugCheckController {
 
     @PutMapping("/drug/{drugCode}/{quantity}/{memo}/{qurchaseId}")
     public int inspectionDrug(@PathVariable String drugCode, @PathVariable int quantity, @PathVariable String memo,
-                              @PathVariable int qurchaseId){
+                              @PathVariable int purchaseId){
         System.out.println("코드 : "+ drugCode + " 수량 : " + quantity + " 메모 : "+ memo);
-        drugCheckService.updateinspectionDrugByDrugCode(drugCode,quantity,memo,qurchaseId);
+        drugCheckService.updateinspectionDrugByDrugCode(drugCode,quantity,memo,purchaseId);
 
         return 0;
     }

@@ -34,9 +34,6 @@
         FROM drug d
         LEFT JOIN drug_check dc
         ON d.drug_code = dc.drug_code
-        AND dc.check_date >= DATE_FORMAT(CURDATE(), '%Y-%m-01')
-        AND dc.check_date <= LAST_DAY(CURDATE())
-        WHERE dc.check_date IS NULL;
         ]]>
     </select>
 
@@ -83,7 +80,7 @@
         join drug_check dc on dcd.check_id = dc.check_id
         join drug d on d.drug_code = dc.drug_code
         join drug_purchase dp on dp.drug_code = dc.drug_code
-        WHERE dcd.purchase_id = #{purchaseId}
+        WHERE dcd.check_id = #{checkId}
         ORDER BY FIELD(dcd.status, 'PASS', 'WARNING', 'DISPOSE')
     </select>
 
