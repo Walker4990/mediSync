@@ -76,7 +76,7 @@ export default function MedicalRecordPage() {
   const searchDrug = debounce(async (keyword, type = null) => {
     if (!keyword || keyword.trim() === "") return setDrugSuggestions([]);
     try {
-      const res = await axios.get(`http://192.168.0.24:8080/api/drug/search`, {
+      const res = await axios.get(`http://localhost:8080/api/drug/search`, {
         params: { keyword, type },
       });
       setDrugSuggestions(res.data);
@@ -88,12 +88,9 @@ export default function MedicalRecordPage() {
   const searchTest = debounce(async (keyword) => {
     if (!keyword || keyword.trim() === "") return setTestSuggestions([]);
     try {
-      const res = await axios.get(
-        `http://192.168.0.24:8080/api/testFee/search`,
-        {
-          params: { keyword },
-        }
-      );
+      const res = await axios.get(`http://localhost:8080/api/testFee/search`, {
+        params: { keyword },
+      });
       setTestSuggestions(res.data);
     } catch {
       setTestSuggestions([]);
@@ -124,7 +121,7 @@ export default function MedicalRecordPage() {
   // 초기 데이터 로드
   useEffect(() => {
     axios
-      .get("http://192.168.0.24:8080/api/doctors")
+      .get("http://localhost:8080/api/doctors")
       .then((res) => setDoctors(res.data));
   }, []);
 
@@ -133,9 +130,7 @@ export default function MedicalRecordPage() {
     if (selectedDate) {
       console.log("📅 예약조회 요청:", selectedDate);
       axios
-        .get(
-          `http://192.168.0.24:8080/api/records/reserved?date=${selectedDate}`
-        )
+        .get(`http://localhost:8080/api/records/reserved?date=${selectedDate}`)
         .then((res) => setReservations(res.data))
         .catch((err) => {
           console.error("❌ 예약 환자 조회 실패:", err);
@@ -154,11 +149,20 @@ export default function MedicalRecordPage() {
         console.warn("⚠️ reservationId 없음:", resv);
         return;
       }
+      if (form.patientId === String(resv.patientId)) {
+        // 이미 선택되어 있으면 해제
+        setForm({ ...form, patientId: "" });
+        console.log("선택 해제");
+      } else {
+        // 새로 선택
+        setForm({ ...form, patientId: String(resv.patientId) });
+        console.log("선택");
+      }
 
       // 상태 변경
       if (resv.reservationStatus === "WAIT") {
         await axios.put(
-          `http://192.168.0.24:8080/api/reservation/${resv.reservationId}/status`,
+          `http://localhost:8080/api/reservation/${resv.reservationId}/status`,
           null,
           { params: { status: "CONSULT" } }
         );
@@ -175,7 +179,7 @@ export default function MedicalRecordPage() {
       // 진료 과별 금액 추가 반영
       try {
         const costRes = await axios.get(
-          `http://192.168.0.24:8080/api/records/cost/preview`,
+          `http://localhost:8080/api/records/cost/preview`,
           { params: { adminId: resv.adminId, patientId: resv.patientId } }
         );
 
@@ -194,7 +198,7 @@ export default function MedicalRecordPage() {
 
       // 진료내역 조회
       const recordRes = await axios.get(
-        `http://192.168.0.24:8080/api/records/patient/${resv.patientId}`
+        `http://localhost:8080/api/records/patient/${resv.patientId}`
       );
       setRecords(recordRes.data || []);
 
@@ -219,7 +223,7 @@ export default function MedicalRecordPage() {
     const fetchCost = async () => {
       try {
         const res = await axios.get(
-          "http://192.168.0.24:8080/api/records/cost/preview",
+          "http://localhost:8080/api/records/cost/preview",
           { params: { adminId: form.adminId, patientId: form.patientId } }
         );
         if (res.data && res.data.totalCost) {
@@ -245,7 +249,7 @@ export default function MedicalRecordPage() {
 
     if (name === "patientId" && value) {
       axios
-        .get(`http://192.168.0.24:8080/api/records/patient/${value}`)
+        .get(`http://localhost:8080/api/records/patient/${value}`)
         .then((res) => setRecords(res.data))
         .catch(() => setRecords([]));
 
@@ -255,7 +259,7 @@ export default function MedicalRecordPage() {
 
     if (name === "adminId" && value) {
       axios
-        .get(`http://192.168.0.24:8080/api/doctors/fee/${value}`)
+        .get(`http://localhost:8080/api/doctors/fee/${value}`)
         .then((res) => {
           const { consultFee, insuranceRate } = res.data;
           setForm((prev) => ({
@@ -315,7 +319,7 @@ export default function MedicalRecordPage() {
       console.log("등록 값 확인 ", payload);
       const URL = "192.168.0.24";
       const res = await axios.post(
-        "http://192.168.0.24:8080/api/records",
+        "http://localhost:8080/api/records",
         payload,
         {
           headers: { "Content-Type": "application/json" },
@@ -326,15 +330,12 @@ export default function MedicalRecordPage() {
         if (p.type === "TEST" && p.testDate && p.testName) {
           if (p.isReserved) continue;
           try {
-            await axios.post(
-              "http://192.168.0.24:8080/api/testSchedule/reserve",
-              {
-                testCode: p.testCode,
-                testDate: p.testDate,
-                testTime: p.testTime,
-                patientId: form.patientId,
-              }
-            );
+            await axios.post("http://localhost:8080/api/testSchedule/reserve", {
+              testCode: p.testCode,
+              testDate: p.testDate,
+              testTime: p.testTime,
+              patientId: form.patientId,
+            });
           } catch (err) {
             console.warn(`❌ 검사 예약 실패 (${p.testName}):`, err);
           }
@@ -346,7 +347,7 @@ export default function MedicalRecordPage() {
         if (form.reservationId) {
           try {
             await axios.put(
-              `http://192.168.0.24:8080/api/reservation/${form.reservationId}/status`,
+              `http://localhost:8080/api/reservation/${form.reservationId}/status`,
               null,
               { params: { status: "DONE" } }
             );
@@ -361,7 +362,7 @@ export default function MedicalRecordPage() {
           const recordId = res.data.recordId; // 백엔드에서 recordId 리턴해야 함
           if (recordId) {
             window.open(
-              `http://192.168.0.24:8080/api/prescriptions/pdf/${recordId}`,
+              `http://localhost:8080/api/prescriptions/pdf/${recordId}`,
               "_blank"
             );
           }
@@ -370,7 +371,7 @@ export default function MedicalRecordPage() {
         }
         console.log("✅ 등록 응답:", res.data);
         const recordRes = await axios.get(
-          `http://192.168.0.24:8080/api/records/patient/${form.patientId}`
+          `http://localhost:8080/api/records/patient/${form.patientId}`
         );
         setRecords(recordRes.data);
         setForm({ ...form, diagnosis: "", totalCost: "" });
@@ -404,7 +405,7 @@ export default function MedicalRecordPage() {
   const handleRecordClick = async (recordId) => {
     setSelectedRecord(recordId);
     const res = await axios.get(
-      `http://192.168.0.24:8080/api/prescriptions/${recordId}`
+      `http://localhost:8080/api/prescriptions/${recordId}`
     );
     setPrescriptions(res.data);
   };
@@ -463,12 +464,9 @@ export default function MedicalRecordPage() {
     }
 
     try {
-      const res = await axios.get(
-        "http://192.168.0.24:8080/api/patients/search",
-        {
-          params: { keyword },
-        }
-      );
+      const res = await axios.get("http://localhost:8080/api/patients/search", {
+        params: { keyword },
+      });
       setPatientSuggestions(res.data);
     } catch (err) {
       console.error("환자 검색 실패:", err);
@@ -494,7 +492,7 @@ export default function MedicalRecordPage() {
       if (recordRes.data && recordRes.data.length > 0) {
         const recordId = recordRes.data[0].recordId;
         const presRes = await axios.get(
-          `http://192.168.0.24:8080/api/prescriptions/${recordId}`
+          `http://localhost:8080/api/prescriptions/${recordId}`
         );
         setPrescriptions(presRes.data || []);
       }
@@ -507,7 +505,7 @@ export default function MedicalRecordPage() {
     if (form.adminId) {
       try {
         const costRes = await axios.get(
-          `http://192.168.0.24:8080/api/records/cost/preview`,
+          `http://localhost:8080/api/records/cost/preview`,
           { params: { adminId: form.adminId, patientId: p.patientId } }
         );
 
@@ -547,6 +545,17 @@ export default function MedicalRecordPage() {
       // 3) 전체용 isShort 업데이트
       setIsShort(anyShort);
     });
+  };
+
+  const handlePatientClick = (r) => {
+    // 이미 선택된 것 → 다시 클릭하면 해제
+    if (form.patientId === String(r.patientId)) {
+      setForm({ ...form, patientId: "" });
+      return;
+    }
+
+    // 새로 선택
+    setForm({ ...form, patientId: String(r.patientId) });
   };
 
   return (
@@ -833,7 +842,7 @@ export default function MedicalRecordPage() {
                                 if (isShort) return;
                                 try {
                                   const res = await axios.get(
-                                    `http://192.168.0.24:8080/api/drug/${drug.drugCode}`
+                                    `http://localhost:8080/api/drug/${drug.drugCode}`
                                   );
                                   const detail = res.data;
 
@@ -939,7 +948,7 @@ export default function MedicalRecordPage() {
                                 if (drug.quantity <= 0) return;
                                 try {
                                   const res = await axios.get(
-                                    `http://192.168.0.24:8080/api/drug/${drug.drugCode}`
+                                    `http://localhost:8080/api/drug/${drug.drugCode}`
                                   );
                                   const detail = res.data;
 
@@ -1032,7 +1041,7 @@ export default function MedicalRecordPage() {
                             key={test.testCode}
                             onClick={async () => {
                               const res = await axios.get(
-                                `http://192.168.0.24:8080/api/testFee/${test.testCode}`
+                                `http://localhost:8080/api/testFee/${test.testCode}`
                               );
                               const detail = res.data;
 
@@ -1187,7 +1196,7 @@ export default function MedicalRecordPage() {
                         onClick={(e) => {
                           e.stopPropagation(); // 행 클릭 이벤트 방지
                           window.open(
-                            `http://192.168.0.24:8080/api/prescriptions/pdf/${r.recordId}`,
+                            `http://localhost:8080/api/prescriptions/pdf/${r.recordId}`,
                             "_blank"
                           );
                         }}
@@ -1295,7 +1304,7 @@ export default function MedicalRecordPage() {
                           <button
                             onClick={() =>
                               window.open(
-                                `http://192.168.0.24:8080/api/testResult/${p.reservationId}/pdf`,
+                                `http://localhost:8080/api/testResult/${p.reservationId}/pdf`,
                                 "_blank"
                               )
                             }
@@ -1359,7 +1368,7 @@ export default function MedicalRecordPage() {
                   <button
                     onClick={() =>
                       window.open(
-                        `http://192.168.0.24:8080/api/testResult/${n.reservationId}/pdf`,
+                        `http://localhost:8080/api/testResult/${n.reservationId}/pdf`,
                         "_blank"
                       )
                     }
