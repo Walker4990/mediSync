@@ -20,7 +20,7 @@
         SET
         current_count = current_count + 1,
         status = CASE
-        WHEN current_count + 1 >= capacity THEN 'FULL'
+        WHEN current_count = capacity THEN 'FULL'
         ELSE 'AVAILABLE'
         END
         WHERE room_id = #{roomId}
