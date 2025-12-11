@@ -2,6 +2,7 @@ package com.mediSync.project.insurance.service;
 
 import com.mediSync.project.insurance.mapper.InsurerMapper;
 import com.mediSync.project.insurance.mapper.PatientInsuranceMapper;
+import com.mediSync.project.insurance.vo.Insurer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -146,6 +147,10 @@ public class InsurerSyncService {
         }
         System.out.printf("✅ [환자 %d] 보험가입 %d건 동기화 완료%n", patientId, inserted);
         return inserted;
+    }
+
+    public List<Insurer> getInsurerCode(){
+        return insurerMapper.getInsurerCode();
     }
 
 }

@@ -140,9 +140,9 @@ public class PrescriptionService {
                 if (!"DRUG".equalsIgnoreCase(p.getType())) continue;
 
                 ColumnText.showTextAligned(text, Element.ALIGN_LEFT, new Phrase(p.getDrugName(), font), 111, y, 0);
-                ColumnText.showTextAligned(text, Element.ALIGN_LEFT, new Phrase(p.getDosage(), font), 276, y, 0);
+                ColumnText.showTextAligned(text, Element.ALIGN_LEFT, new Phrase(String.valueOf(p.getDosage()), font), 276, y, 0);
                 ColumnText.showTextAligned(text, Element.ALIGN_LEFT, new Phrase("3회", font), 330, y, 0);
-                ColumnText.showTextAligned(text, Element.ALIGN_LEFT, new Phrase(p.getDuration(), font), 385, y, 0);
+                ColumnText.showTextAligned(text, Element.ALIGN_LEFT, new Phrase(String.valueOf(p.getDuration()), font), 385, y, 0);
                 ColumnText.showTextAligned(text, Element.ALIGN_LEFT, new Phrase("식후 30분", font), 460, y, 0);
 
                 y -= 18;

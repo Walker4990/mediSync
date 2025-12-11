@@ -57,6 +57,8 @@ import DrugInspection from "./pages/admin/DrugInspection";
 import AdminRefundPage from "./pages/admin/AdminRefundPage";
 import UnpaidManagePage from "./pages/admin/UnPaidManagePage";
 import UnpaidAlert from "./component/UnpaidAlert";
+import DrugInOutState from "./pages/admin/DrugInOutState";
+
 import AuthLoginKakao from "./component/AuthLoginKakao";
 const token = localStorage.getItem("token");
 if (token) {
@@ -92,6 +94,7 @@ function AppContent() {
           <Route path="/admin/drug" element={<DrugPage />} />
           <Route path="/admin/inspection" element={<DrugInspection />} />
           <Route path="/admin/drug/deadline" element={<DrugDeadline />} />
+          <Route path="/admin/drug/inout" element={<DrugInOutState />} />
           <Route
             path="/admin/test/reservation"
             element={<TestReservationPage />}

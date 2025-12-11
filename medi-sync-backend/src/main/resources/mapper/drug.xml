@@ -10,25 +10,22 @@
         d.drug_code,
         d.drug_name,
         d.unit_price,
-        COALESCE(i.quantity, 0) AS quantity,
-        COALESCE(i.location, '-') AS location,
-        i.expiry_date AS expiration_date,
-        i.supplier AS supplier,
-        i.updated_at AS updated_at,
+        COALESCE(d.quantity, 0) AS quantity,
+        COALESCE(d.location, '-') AS location,
+        d.expiration_date,
+        d.supplier AS supplier,
         COALESCE(ins.insurer_code, '-') AS insurer_code,
         COALESCE(ins.insurer_name, '-') AS insurer_name,
         d.created_at
         FROM drug d
-        LEFT JOIN inventory_item i
-        ON TRIM(d.drug_name) = TRIM(i.item_name)
         LEFT JOIN insurer ins
         ON d.insurance_code = ins.insurer_code
     </select>
 
     <!-- 약품등록 -->
     <insert id="insertDrug" parameterType="drug">
-        INSERT INTO drug (drug_code, drug_name, unit, unit_price, quantity, expiration_date, insurance_code, supplier, inventory_id, created_at)
-        VALUES (#{drugCode}, #{drugName}, #{unit}, #{unitPrice}, #{quantity}, #{expirationDate}, #{insuranceCode}, #{supplier}, #{inventoryId}, now())
+        INSERT INTO drug (drug_code, drug_name, unit, unit_price, quantity, expiration_date, insurance_code, supplier, created_at,location,min_stock)
+        VALUES (#{drugCode}, #{drugName}, #{unit}, #{unitPrice}, #{quantity}, #{expirationDate}, #{insuranceCode}, #{supplier}, now(),#{location},5)
     </insert>
 
     <select id="selectDrugByDrugCode" parameterType="string" resultType="drug">
@@ -53,7 +50,8 @@
                quantity=#{quantity},
                expiration_date=#{expirationDate},
                insurance_code=#{insuranceCode},
-               supplier=#{supplier}
+               supplier=#{supplier},
+               location = #{location}
         WHERE drug_code=#{drugCode}
     </update>
 
@@ -78,22 +76,47 @@
     </delete>
     <!--  자동완성 검색 (약품명 or 코드) -->
     <select id="searchDrugsByKeyword" parameterType="string" resultType="drug">
-        SELECT drug_code AS drugCode,
+        SELECT
+        drug_code AS drugCode,
         drug_name AS drugName,
         unit,
-        unit_price AS unitPrice
+        unit_price AS unitPrice,
+        location,
+        quantity AS quantity,
+        supplier,
+        expiration_date
         FROM drug
         WHERE (drug_name LIKE CONCAT('%', #{keyword}, '%') OR drug_code LIKE CONCAT('%', #{keyword}, '%'))
         AND unit != '주사'
         ORDER BY drug_name
         LIMIT 20
     </select>
+
+
+    <!--  자동완성 검색 (약품명 or 코드) -->
+    <select id="searchDrugsByKeywordIncludeInjection" parameterType="string" resultType="drug">
+        SELECT drug_code AS drugCode,
+        drug_name AS drugName,
+        unit,
+        unit_price AS unitPrice,
+        location,
+        quantity,
+        supplier,
+        expiration_date,
+        drug_code
+        FROM drug
+        WHERE (drug_name LIKE CONCAT('%', #{keyword}, '%') OR drug_code LIKE CONCAT('%', #{keyword}, '%'))
+        ORDER BY drug_name
+    </select>
+
+
     <!-- 주사검색 -->
     <select id="searchInjectionByKeyword" parameterType="string" resultType="drug">
         SELECT drug_code AS drugCode,
         drug_name AS drugName,
         unit,
-        unit_price AS unitPrice
+        unit_price AS unitPrice,
+        quantity
         FROM drug
         WHERE (drug_name LIKE CONCAT('%', #{keyword}, '%') OR drug_code LIKE CONCAT('%', #{keyword}, '%'))
         AND unit = '주사'
@@ -106,17 +129,15 @@
         d.drug_code,
         d.drug_name,
         d.unit_price,
-        COALESCE(i.quantity, 0) AS quantity,
-        COALESCE(i.location, '-') AS location,
-        i.expiry_date AS expiration_date,
-        i.supplier AS supplier,
-        i.updated_at AS updated_at,
+        COALESCE(d.quantity, 0) AS quantity,
+        COALESCE(d.location, '-') AS location,
+        d.expiration_date,
+        d.supplier,
+        d.location,
         COALESCE(ins.insurer_code, '-') AS insurer_code,
         COALESCE(ins.insurer_name, '-') AS insurer_name,
         d.created_at
         FROM drug d
-        LEFT JOIN inventory_item i
-        ON TRIM(d.drug_name) = TRIM(i.item_name)
         LEFT JOIN insurer ins
         ON d.insurance_code = ins.insurer_code
         LIMIT #{size} OFFSET #{offset}
@@ -126,4 +147,28 @@
         SELECT COUNT(*) FROM drug
     </select>
 
+    <update id="decreaseQuantityByInven" parameterType="map">
+        UPDATE drug SET quantity = quantity - #{usedQty}
+        WHERE drug_name = #{itemName}
+        AND quantity >= #{usedQty}
+    </update>
+
+    <select id="getDrugPurchaseOrderByDate" parameterType="String" resultType="drugpurchase">
+        SELECT * FROM drug_purchase
+        where drug_code = #{drugCode}
+        AND quantity > 0
+        ORDER BY expiration_date ASC
+    </select>
+
+    <update id="updateLotQuantity" parameterType="map">
+        update drug_purchase
+        set
+        quantity = #{remain}
+        where purchase_id = #{purchaseId}
+    </update>
+
+    <delete id="deleteLot" parameterType="int">
+        delete from drug_purchase
+        where purchase_id = #{purchaseId}
+    </delete>
 </mapper>

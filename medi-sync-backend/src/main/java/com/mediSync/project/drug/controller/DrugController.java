@@ -1,8 +1,10 @@
 package com.mediSync.project.drug.controller;
 
 import com.mediSync.project.drug.dto.DrugDTO;
+import com.mediSync.project.drug.service.DrugCheckService;
 import com.mediSync.project.drug.service.DrugService;
 import com.mediSync.project.drug.vo.Drug;
+import com.mediSync.project.drug.vo.DrugLog;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,6 +19,7 @@ import java.util.Map;
 public class DrugController {
 
     private final DrugService drugService;
+    private final DrugCheckService drugCheckService;
 
     @GetMapping("/all")
     public List<DrugDTO> selectAllDrug() {
@@ -37,6 +40,8 @@ public class DrugController {
 
         return ResponseEntity.ok(result);
     }
+
+
     //  단일 조회용 (GET /api/drug/{drugCode})
     @GetMapping("/{drugCode}")
     public Drug selectDrugByDrugCode(@PathVariable String drugCode) {
@@ -54,10 +59,14 @@ public class DrugController {
     }
     @PutMapping("/update")
     public ResponseEntity<Map<String, Object>> updateDrug(@RequestBody Drug drug) {
+
         int result = drugService.editDrug(drug);
         Map<String, Object> map = new HashMap<>();
+
         map.put("success", result > 0);
         map.put("message", result > 0 ? "수정 성공!" : "수정 실패");
+
+
         return ResponseEntity.ok(map);
     }
     @DeleteMapping("/{drugCode}")

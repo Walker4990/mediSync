@@ -1,5 +1,6 @@
 package com.mediSync.project.medical.mapper;
 
+import com.mediSync.project.medical.dto.MedicalRecordDTO;
 import com.mediSync.project.medical.vo.MedicalRecord;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -36,4 +37,4 @@ public interface MedicalRecordMapper {
     int updateAmounts(@Param("recordId") Long recordId,
                       @Param("insuranceAmount") BigDecimal insuranceAmount,
                       @Param("patientPay") BigDecimal patientPay);
-}
+    }

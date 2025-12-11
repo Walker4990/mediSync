@@ -15,6 +15,7 @@ import java.util.List;
 @Alias("drugcheckdto")
 public class DrugCheckDTO {
     //조회용
+    private int purchaseId;
     private long detailId;
     private long checkId;
     //check
@@ -42,6 +43,7 @@ public class DrugCheckDTO {
     private String status;
     private int quantity;
     private String note;
+    private String memo;
 
     //등록용
     private String drugCode;

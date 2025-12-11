@@ -1,8 +1,15 @@
 package com.mediSync.project.medical.service;
 
+import com.mediSync.project.drug.mapper.DrugCheckMapper;
+import com.mediSync.project.drug.mapper.DrugInOutMapper;
+import com.mediSync.project.drug.mapper.DrugMapper;
 import com.mediSync.project.drug.mapper.InventoryItemMapper;
+import com.mediSync.project.drug.vo.Drug;
+import com.mediSync.project.drug.vo.DrugLog;
+import com.mediSync.project.drug.vo.DrugPurchase;
 import com.mediSync.project.finance.mapper.FinanceTransactionMapper;
 import com.mediSync.project.finance.vo.FinanceTransaction;
+import com.mediSync.project.medical.dto.MedicalRecordDTO;
 import com.mediSync.project.medical.mapper.DoctorMapper;
 import com.mediSync.project.medical.mapper.MedicalRecordMapper;
 import com.mediSync.project.medical.mapper.PrescriptionMapper;
@@ -21,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -38,6 +46,9 @@ public class MedicalRecordService {
     private final TestScheduleMapper testScheduleMapper;
     private final TestReservationMapper testReservationMapper;
     private final ReservationMapper reservationMapper;
+    private final DrugMapper drugMapper;
+    private final DrugInOutMapper drugInOutMapper;
+    private final DrugCheckMapper drugCheckMapper;
 
     // 1. 진료비 계산 (정상)
     public void calculateCost(MedicalRecord mr) {
@@ -47,23 +58,35 @@ public class MedicalRecordService {
             for (Prescription p : mr.getPrescriptions()) {
                 BigDecimal price = BigDecimal.ZERO;
 
-                switch (p.getType()) {
-                    case "DRUG":
-                        if (p.getUnitPrice() != null && p.getDosage() != null && p.getDuration() != null) {
-                            price = p.getUnitPrice()
-                                    .multiply(BigDecimal.valueOf(Double.parseDouble(p.getDosage())))
-                                    .multiply(BigDecimal.valueOf(Double.parseDouble(p.getDuration())));
+                String type = p.getType();
+                BigDecimal unitPrice = p.getUnitPrice();
+
+
+                switch (type) {
+                    case "DRUG": {
+                        double rawDosage = p.getDosage();
+                        int dosage = (int) Math.round(rawDosage);
+                        int duration = (p.getDuration() != 0) ? p.getDuration() : 1;
+
+                        int totalQty = dosage * duration;
+
+                        if (unitPrice != null) {
+                            price = unitPrice.multiply(BigDecimal.valueOf(totalQty));
                         }
                         break;
+                    }
+                    case "INJECTION": {
+                        double dosage = p.getDosage();
+                        int duration = (p.getDuration() !=0 ? p.getDuration() : 1);
+                        double totalQty = dosage * duration;
 
-                    case "INJECTION":
-                        if (p.getUnitPrice() != null && p.getDosage() != null) {
-                            price = p.getUnitPrice()
-                                    .multiply(BigDecimal.valueOf(Double.parseDouble(p.getDosage())));
+                        if (unitPrice != null) {
+                            price = unitPrice
+                                    .multiply(BigDecimal.valueOf(totalQty));
                         }
                         break;
-
-                    case "TEST":
+                    }
+                    case "TEST": {
                         if (p.getTestName() != null) {
                             BigDecimal testFee = testFeeMapper.getTestFeeByName(p.getTestName());
                             if (testFee != null) {
@@ -71,6 +94,7 @@ public class MedicalRecordService {
                             }
                         }
                         break;
+                    }
                 }
 
                 total = total.add(price);
@@ -123,23 +147,75 @@ public class MedicalRecordService {
                 insuranceFt.setStatus("PENDING");
                 financeTransactionMapper.insertFinance(insuranceFt);
 
-                // (2) 약/주사 → 재고 차감
-                if ("DRUG".equalsIgnoreCase(p.getType()) || "INJECTION".equalsIgnoreCase(p.getType())) {
-                    double usedQty = 0;
-                    try {
-                        String numeric = p.getDosage().replaceAll("[^0-9.]", "");
-                        usedQty = Double.parseDouble(numeric);
-                    } catch (Exception e) {
-                        usedQty = 1; // fallback
-                    }
+                // (2) 약 → 재고 차감
+                if ("DRUG".equalsIgnoreCase(p.getType())|| "INJECTION".equalsIgnoreCase(p.getType())) {
+                    int usedQty =1;
+                            if("DRUG".equalsIgnoreCase(p.getType())){
+                                 usedQty= (int) Math.round(p.getDosage()) * p.getDuration();
+                            }else if ("INJECTION".equalsIgnoreCase(p.getType())){
+                                usedQty = (p.getDuration() != 0 ? p.getDuration() : 1);
+                            }
 
+                    //약 재고 차감
+                    System.out.println("사용한 악품 개수 : "+ usedQty);
                     if (usedQty > 0) {
                         String itemName = (p.getDrugName() != null && !p.getDrugName().isEmpty())
                                 ? p.getDrugName()
                                 : p.getInjectionName();
-                        inventoryItemMapper.decreaseQuantityByInven(itemName, usedQty);
+                        //기존 약품 정보
+                        Drug origin = drugMapper.selectDrugByDrugCode(p.getDrugCode());
+
+                        if (origin == null) {
+                            throw new RuntimeException("해당 약품을 찾을 수 없습니다: " + p.getDrugCode());
+                        }
+
+
+                        System.out.println("기존 개수 : " + origin.getQuantity());
+                        drugMapper.decreaseQuantityByInven(itemName, usedQty);
+                        //업데이트된 drug 정보
+                        Drug updated = drugMapper.selectDrugByDrugCode(p.getDrugCode());
+                        System.out.println("바뀐 개수 : " + updated.getQuantity());
+
+                        //drug_purchase 테이블 재고 반영
+                        List<DrugPurchase> pur = drugMapper.getDrugPurchaseOrderByDate(p.getDrugCode());
+                        int remain = usedQty;
+                        
+                        for (DrugPurchase dp : pur){
+                            System.out.println("현재 남은 개수 : "+ remain);
+                            if(remain<=0){
+                                break;
+                            }
+                            int lotQty = dp.getQuantity();
+                            System.out.println("현재 재고 개수 : "+ lotQty);
+                            if(lotQty > remain){
+                                //일부 개수 줄이기
+                                Map<String, Object> params = new HashMap<>();
+                                params.put("purchaseId",dp.getPurchaseId());
+                                params.put("remain", lotQty - remain);
+                                drugMapper.updateLotQuantity(params);
+                                remain = 0;
+                            }
+                            else{
+                                //수량 깎고 삭제
+                                drugMapper.deleteLot(dp.getPurchaseId());
+                                remain -= lotQty;
+                                System.out.println("테이블 삭제");
+                            }
+                        }
+
+                        //로그 남기기
+                        DrugLog log = new DrugLog();
+                        log.setDrugCode(p.getDrugCode());
+                        log.setQuantity((int) Math.round(p.getDosage()));
+                        log.setMemo("약 처방");
+                        log.setType("OUT");
+                        log.setBeforeStock(origin.getQuantity());
+                        log.setAfterStock(updated.getQuantity());
+
+                        drugCheckMapper.insertDrugLog(log);
                     }
                 }
+
 
                 // ✅ (3) 검사(TEST) → 스케줄 & 예약 자동 등록
                 if ("TEST".equalsIgnoreCase(p.getType())) {

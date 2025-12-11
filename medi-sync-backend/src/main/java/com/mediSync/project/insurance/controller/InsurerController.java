@@ -2,6 +2,7 @@ package com.mediSync.project.insurance.controller;
 
 import com.mediSync.project.insurance.mapper.InsurerMapper;
 import com.mediSync.project.insurance.service.InsurerSyncService;
+import com.mediSync.project.insurance.vo.Insurer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -29,5 +30,10 @@ public class InsurerController {
     public ResponseEntity<?> manualSync(){
         int count = insurerSyncService.syncMock();
         return ResponseEntity.ok(Map.of("updated", count));
+    }
+
+    @GetMapping("/code")
+    public List<Insurer> getInsurerCode(){
+        return insurerSyncService.getInsurerCode();
     }
 }
