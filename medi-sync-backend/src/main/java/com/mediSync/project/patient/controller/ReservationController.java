@@ -29,7 +29,6 @@ public class ReservationController {
     //해당 날짜에 잡힌 예약 시간 리스트 가져오기
     @GetMapping("/getReservationList")
     public List<String> getReservationList(@RequestParam String date, @RequestParam Integer admin_id) {
-        System.out.println("날짜 : "+ date + "admin Id : "+admin_id);
 
         Reservation reservation = new Reservation();
         //시간 설정

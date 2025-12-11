@@ -169,13 +169,13 @@ export default function TestGroupPage({ group, title }) {
                 <table className="min-w-full divide-y divide-gray-200 text-sm">
                     <thead className="bg-gray-100 text-gray-700">
                     <tr>
-                        <th className="px-4 py-2 text-left">예약ID</th>
-                        <th className="px-4 py-2 text-left">환자명</th>
-                        <th className="px-4 py-2 text-left">검사명</th>
-                        <th className="px-4 py-2 text-left">검사일자</th>
-                        <th className="px-4 py-2 text-left">시간</th>
-                        <th className="px-4 py-2 text-left">상태</th>
-                        <th className="px-4 py-2 text-left">결과 출력</th>
+                        <th className="px-4 py-2 text-center">예약ID</th>
+                        <th className="px-4 py-2 text-center">환자명</th>
+                        <th className="px-4 py-2 text-center">검사명</th>
+                        <th className="px-4 py-2 text-center">검사일자</th>
+                        <th className="px-4 py-2 text-center">시간</th>
+                        <th className="px-4 py-2 text-center">상태</th>
+                        <th className="px-4 py-2 text-center">결과 출력</th>
                         <th className="px-4 py-2 text-center">관리</th>
                     </tr>
                     </thead>
@@ -183,12 +183,12 @@ export default function TestGroupPage({ group, title }) {
                     {reservations.length > 0 ? (
                         reservations.map((r) => (
                             <tr key={r.reservationId} className="hover:bg-gray-50">
-                                <td className="px-4 py-2">{r.reservationId}</td>
-                                <td className="px-4 py-2">{r.patientName}</td>
-                                <td className="px-4 py-2">{r.testName}</td>
-                                <td className="px-4 py-2">{r.testDate}</td>
-                                <td className="px-4 py-2">{r.testTime}</td>
-                                <td className="px-4 py-2">{r.status}</td>
+                                <td className="px-4 py-2 text-center">{r.reservationId}</td>
+                                <td className="px-4 py-2 text-center">{r.patientName}</td>
+                                <td className="px-4 py-2 text-center">{r.testName}</td>
+                                <td className="px-4 py-2 text-center">{r.testDate}</td>
+                                <td className="px-4 py-2 text-center">{r.testTime}</td>
+                                <td className="px-4 py-2 text-center">{r.status}</td>
                                 <td className="px-4 py-2 text-center align-middle">
                                     <div className="flex justify-center items-center h-full">
                                         <button
@@ -196,7 +196,7 @@ export default function TestGroupPage({ group, title }) {
                                             className="flex items-center justify-center text-emerald-600 hover:text-emerald-800 p-1 rounded-md transition duration-150 ease-in-out"
                                             title="검사 결과 출력"
                                         >
-                                            <FaFileDownload className="w-6 h-6" />
+                                            <FaFileDownload className="w-6 h-6 text-center" />
                                         </button>
                                     </div>
                                 </td>

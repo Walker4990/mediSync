@@ -576,10 +576,7 @@ export default function MedicalRecordPage() {
                                         }`}
                                     >
                                         <td className="p-2 border-b text-gray-700 text-center">
-                                            {new Date(r.reservationDate).toLocaleTimeString("ko-KR", {
-                                                hour: "2-digit",
-                                                minute: "2-digit",
-                                            })}
+                                            {r.reservationDate.substring(11, 16)}
                                         </td>
                                         <td className="p-2 border-b font-medium text-center">{r.patientName}</td>
                                         <td className="p-2 border-b text-gray-600 text-center">{r.doctorName}</td>

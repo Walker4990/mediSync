@@ -30,6 +30,6 @@ public class MedicalRecord {
     private String deptName;
     private Long reservationId;
     private String reservationStatus;
-    private LocalDate reservationDate;
+    private LocalDateTime reservationDate;
 
 }

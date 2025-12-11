@@ -68,10 +68,10 @@ function AppContent() {
   const hideNotification =
     location.pathname.startsWith("/user/medicalDetail") ||
     location.pathname.startsWith("/admin/finance") ||
-      location.pathname.startsWith("/admin")
+      location.pathname === "/admin/home"
   return (
     <>
-      {!hideNotification && <WebSocketListener />}
+        {!hideNotification && <WebSocketListener/>}
       {!hideNotification && <NotificationPanel />}
 
       <ModalProvider>
@@ -80,7 +80,7 @@ function AppContent() {
           <Route path="/payment/success" element={<PaymentSuccess />} />
           <Route path="/payment/fail" element={<PaymentFail />} />
           {/*관리자 페이지*/}
-          <Route path="/admin" element={<Home />} />
+          <Route path="/admin/home" element={<Home />} />
           <Route path="/admin/register" element={<AccountRegiForm />} />
           <Route path="/admin/mypage" element={<AdminMyPage />} />
           <Route path="/admin/patients" element={<PatientList />} />

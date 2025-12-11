@@ -205,6 +205,13 @@ public class AdmissionService {
                     "patientName", a.getPatientName(),
                     "roomNo", a.getRoomNo()
             ));
+            log.info("🌐 WebSocket 발송: {}", Map.of(
+                    "event", "ADMIT",
+                    "patientId", a.getPatientId(),
+                    "patientName", a.getPatientName(),
+                    "roomNo", a.getRoomNo()
+            ));
+
             // 병실 정보 조회
             Room roomInfo = roomMapper.findCostByRoomId(a.getRoomId());
 
@@ -237,6 +244,7 @@ public class AdmissionService {
         });
 
         log.info("🏥 [Scheduler] 입원 수속 완료 ({}명)", scheduledList.size());
+
         } catch(Exception e){
             log.error("❌ Admission update rollback 발생: {}", e.getMessage());
         }

@@ -12,7 +12,7 @@ export default function NotificationPanel() {
                 onClick={() => setOpen(!open)}
                 className="relative p-2 text-gray-700 hover:text-blue-600"
             >
-                <Bell size={22} />
+                <Bell size={22} className="hidden" />
                 {notifications.length > 0 && (
                     <span className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full text-xs px-1">
             {notifications.length}
