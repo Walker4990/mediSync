@@ -1,6 +1,7 @@
 package com.mediSync.project.drug.service;
 
 import com.mediSync.project.drug.dto.DrugDTO;
+import com.mediSync.project.drug.dto.DrugPurchaseDTO;
 import com.mediSync.project.drug.mapper.DrugCheckMapper;
 import com.mediSync.project.drug.mapper.DrugMapper;
 import com.mediSync.project.drug.vo.DrugLog;
@@ -41,7 +42,7 @@ public class DrugService {
     }
 
     @Transactional
-    public int editDrug(Drug drug) {
+    public int editDrug(DrugPurchaseDTO drug) {
 
         //기존 정보 가져오기
         Drug origin = drugMapper.selectDrugByDrugCode(drug.getDrugCode());
@@ -49,9 +50,17 @@ public class DrugService {
         System.out.println("기존 약 정보 : "+ origin);
 
         System.out.println("insurer code :" + drug.getInsuranceCode());
+        //durg_purchase 수정
+        Map<String, Object> params = new HashMap<>();
+        params.put("purchaseId", drug.getPurchaseId());
+        params.put("quantity",drug.getQuantity());
+        drugCheckMapper.updateDrugPurchaseDispose(params);
+        //drug 수정
+        drugCheckMapper.updateDrugDispose(drug.getDrugCode());
 
-        //수정
-        int result = drugMapper.editDrug(drug);
+        Drug newDrug = new Drug();
+        
+        int result = drugMapper.editDrug(newDrug);
         //만약 수량이 수정됐다면 로그 남기기
         if(drug.getQuantity() != origin.getQuantity()){
             DrugLog log = new DrugLog();
@@ -68,7 +77,6 @@ public class DrugService {
                 log.setType("OUT");
             }
             //로그에 들어갈 정보 저장
-
             log.setDrugCode(drug.getDrugCode());
             log.setQuantity(count);
             log.setBeforeStock(origin.getQuantity());

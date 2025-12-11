@@ -51,7 +51,10 @@ export default function DrugList() {
     for (const [key, value] of Object.entries(data)) {
       if (skipFields.includes(key)) continue; // 검사 제외
 
-      if (value === null || value === undefined || value === "") {
+      if (
+        value !== "purchaseId" &&
+        (value === null || value === undefined || value === "")
+      ) {
         console.warn(`⛔ '${key}' 값이 비어있어 저장 중단함.`);
         alert("값이 빈 채로 저장할 수 없습니다.");
         return; // 저장 막기
@@ -60,7 +63,7 @@ export default function DrugList() {
       if (["unitPrice", "quantity"].includes(key)) {
         if (typeof value !== "number" || isNaN(value)) {
           console.warn(`⛔ '${key}' 값이 숫자가 아니라 저장 중단함.`);
-          alert("수량, 가격란에는 숫자를 입력해야합니다.");
+          alert("가격/수량에는 숫자를 입력해야합니다.");
           return;
         }
       }

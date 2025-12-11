@@ -1,6 +1,7 @@
 package com.mediSync.project.insurance.mapper;
 
 import com.mediSync.project.drug.vo.Drug;
+import com.mediSync.project.drug.vo.DrugPurchase;
 import com.mediSync.project.insurance.vo.Insurer;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -21,4 +22,5 @@ public interface InsurerMapper {
     List<String> selectAllInsuranceName();
     List<Insurer> getInsurerCode();
     String selectAllInsuranceCodeByName(String name);
+    List<DrugPurchase>getLocationInfo(String drugCode);
 }

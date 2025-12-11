@@ -9,9 +9,11 @@ export default function DrugModal({ visible, onClose, onSave, editData }) {
     expirationDate: "",
     insurerCode: "",
     supplier: "",
+    purchaseId: "",
   });
   //코드 가져오기
   const [insurerList, setInsurerList] = useState([]);
+  const [locationList, setLocationList] = useState([]);
 
   const fetchInsurerList = async () => {
     try {
@@ -23,24 +25,48 @@ export default function DrugModal({ visible, onClose, onSave, editData }) {
     }
   };
 
+  const fetchLocationList = async () => {
+    try {
+      const drugCode = editData.drugCode;
+      const res = await axios.get(
+        `http://localhost:8080/api/insurer/location/${drugCode}`
+      );
+      setLocationList(res.data);
+      console.log("주소 목록 : ", res.data);
+    } catch (err) {
+      console.log("주소 목록 불러오기 실패", err);
+    }
+  };
+
   useEffect(() => {
     fetchInsurerList();
   }, []);
 
   useEffect(() => {
-    if (editData) setForm(editData);
-    else {
+    if (editData) {
+      setForm(editData);
+      fetchLocationList();
+      if (locationList.length > 0 && editData) {
+        setForm((prev) => ({
+          ...prev,
+          purchaseId: locationList[0].purchaseId,
+        }));
+      }
+    } else {
       setForm({
         drugCode: "DR" + crypto.randomUUID().slice(-6).toUpperCase(), // 자동 코드 생성
         drugName: "",
         unitPrice: "",
         quantity: "",
+        unit: "",
         expirationDate: "",
         insurerCode: "",
         supplier: "",
+        location: "",
+        purchaseId: "",
       });
     }
-  }, [editData]);
+  }, [locationList, editData]);
 
   if (!visible) return null;
 
@@ -59,8 +85,33 @@ export default function DrugModal({ visible, onClose, onSave, editData }) {
 
     console.log("📤 변환 후 전송할 데이터:", data);
     onSave(data);
+    setForm({
+      drugCode: "DR" + crypto.randomUUID().slice(-6).toUpperCase(), // 자동 코드 생성
+      drugName: "",
+      unitPrice: "",
+      quantity: "",
+      unit: "",
+      expirationDate: "",
+      insurerCode: "",
+      supplier: "",
+      location: "",
+    });
+    setInsurerList([]);
+    setLocationList([]);
     onClose();
   };
+
+  const fileds = [
+    { label: "약품 코드 (자동)", name: "drugCode", readOnly: true },
+    { label: "약품명", name: "drugName", type: "text" },
+    { label: "단위 (정/캡슐/액상 등)", name: "unit", type: "text" },
+    { label: "단가 (원)", name: "unitPrice", type: "number" },
+    { label: "재고 변경 장소", name: "location", type: "select" },
+    { label: "재고 수량 변경", name: "quantity", type: "number" },
+    { label: "유통기한", name: "expirationDate", type: "date" },
+    { label: "보험 코드", name: "insuranceCode", type: "select" },
+    { label: "공급처", name: "supplier", type: "text" },
+  ];
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-50">
@@ -68,24 +119,15 @@ export default function DrugModal({ visible, onClose, onSave, editData }) {
         <h2 className="text-xl font-semibold text-gray-800 mb-5 text-center border-b pb-3">
           {editData ? "💊 약품 정보 수정" : "➕ 약품 등록"}
         </h2>
-
-        <div className="space-y-3">
-          {[
-            { label: "약품 코드 (자동)", name: "drugCode", readOnly: true },
-            { label: "약품명", name: "drugName", type: "text" },
-            { label: "단위 (정/캡슐/액상 등)", name: "unit" },
-            { label: "단가 (원)", name: "unitPrice", type: "number" },
-            { label: "재고 수량", name: "quantity", type: "number" },
-            { label: "유통기한", name: "expirationDate", type: "date" },
-            { label: "보험 코드", name: "insuranceCode", type: "select" },
-            { label: "공급처", name: "supplier", type: "text" },
-          ].map((field) => (
-            <div key={field.name}>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+        {/*2열 그리드 */}
+        <div className="grid grid-cols-2 gap-4">
+          {fileds.map((field) => (
+            <div key={field.name} className="flex flex-col">
+              <label className=" text-sm font-medium text-gray-700 mb-1">
                 {field.label}
               </label>
 
-              {field.type === "select" ? (
+              {field.label === "보험 코드" ? (
                 // ⭐ 보험 코드 select
                 <select
                   name={field.name}
@@ -93,12 +135,50 @@ export default function DrugModal({ visible, onClose, onSave, editData }) {
                   onChange={handleChange}
                   className="border border-gray-300 rounded-md w-full p-2 text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none"
                 >
-                  <option value="">보험사 선택</option>
                   {insurerList.map((i) => (
                     <option key={i.insurerCode} value={i.insurerCode}>
                       {i.insurerCode} — {i.insurerName}
                     </option>
                   ))}
+                </select>
+              ) : field.label === "재고 변경 장소" ? (
+                <select
+                  name={field.name}
+                  value={form[field.name] || ""}
+                  onChange={(e) => {
+                    const selectedId = e;
+                    if (!selectedId) return;
+                    handleChange(selectedId);
+
+                    const selectedLocation = locationList.find(
+                      (loc) => loc.purchaseId === Number(e.target.value)
+                    );
+                    console.log("purchase id : ", selectedLocation);
+
+                    if (selectedLocation) {
+                      // quantity 자동 업데이트
+                      setForm((prev) => ({
+                        ...prev,
+                        quantity: selectedLocation.quantity, // ★ 여기 자동 입력!
+                      }));
+                    }
+                  }}
+                  className="border border-gray-300 rounded-md w-full p-2 text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                >
+                  <option value="" disabled>
+                    변경 장소 선택
+                  </option>
+                  {locationList.length > 0 ? (
+                    locationList.map((i) => (
+                      <option key={i.purchaseId} value={i.purchaseId}>
+                        {i.location}
+                      </option>
+                    ))
+                  ) : (
+                    <option key={0} value={0} readOnly>
+                      장소가 존재하지 않습니다.
+                    </option>
+                  )}
                 </select>
               ) : (
                 // 기존 input 유지

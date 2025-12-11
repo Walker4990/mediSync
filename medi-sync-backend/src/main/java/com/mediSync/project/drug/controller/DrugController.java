@@ -1,6 +1,7 @@
 package com.mediSync.project.drug.controller;
 
 import com.mediSync.project.drug.dto.DrugDTO;
+import com.mediSync.project.drug.dto.DrugPurchaseDTO;
 import com.mediSync.project.drug.service.DrugCheckService;
 import com.mediSync.project.drug.service.DrugService;
 import com.mediSync.project.drug.vo.Drug;
@@ -58,8 +59,10 @@ public class DrugController {
         return ResponseEntity.ok(map);
     }
     @PutMapping("/update")
-    public ResponseEntity<Map<String, Object>> updateDrug(@RequestBody Drug drug) {
+    public ResponseEntity<Map<String, Object>> updateDrug(@RequestBody DrugPurchaseDTO drug) {
+        
 
+        //약 정보 업데이트
         int result = drugService.editDrug(drug);
         Map<String, Object> map = new HashMap<>();
 

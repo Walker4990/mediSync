@@ -1,5 +1,6 @@
 package com.mediSync.project.insurance.service;
 
+import com.mediSync.project.drug.vo.DrugPurchase;
 import com.mediSync.project.insurance.mapper.InsurerMapper;
 import com.mediSync.project.insurance.mapper.PatientInsuranceMapper;
 import com.mediSync.project.insurance.vo.Insurer;
@@ -151,6 +152,12 @@ public class InsurerSyncService {
 
     public List<Insurer> getInsurerCode(){
         return insurerMapper.getInsurerCode();
+    }
+
+    public List<DrugPurchase> getLocationInfo(String drugCode){
+        List<DrugPurchase> list = insurerMapper.getLocationInfo(drugCode);
+        System.out.println("약품 주소 목록 : "+ list);
+        return list;
     }
 
 }

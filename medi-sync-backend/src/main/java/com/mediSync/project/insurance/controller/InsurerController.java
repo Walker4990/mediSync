@@ -1,14 +1,12 @@
 package com.mediSync.project.insurance.controller;
 
+import com.mediSync.project.drug.vo.DrugPurchase;
 import com.mediSync.project.insurance.mapper.InsurerMapper;
 import com.mediSync.project.insurance.service.InsurerSyncService;
 import com.mediSync.project.insurance.vo.Insurer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
@@ -35,5 +33,10 @@ public class InsurerController {
     @GetMapping("/code")
     public List<Insurer> getInsurerCode(){
         return insurerSyncService.getInsurerCode();
+    }
+
+    @GetMapping("/location/{drugCode}")
+    public List<DrugPurchase> getLocationInfo(@PathVariable String drugCode){
+        return insurerSyncService.getLocationInfo(drugCode);
     }
 }

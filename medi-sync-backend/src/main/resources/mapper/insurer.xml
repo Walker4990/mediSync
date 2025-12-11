@@ -45,4 +45,13 @@
         where insurer_name = #{name}
     </select>
 
+    <select id="getLocationInfo" parameterType="String">
+        select
+        purchase_id,
+        location,
+        quantity
+        from drug_purchase
+        where drug_code = #{drugCode}
+    </select>
+
 </mapper>

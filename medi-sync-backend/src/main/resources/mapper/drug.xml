@@ -129,6 +129,7 @@
         d.drug_code AS drugCode,
         d.drug_name AS drugName,
         d.unit_price AS unitPrice,
+        d.unit,
         COALESCE(d.quantity, 0) AS quantity,
         COALESCE(d.location, '-') AS location,
         d.expiration_date AS expirationDate,
