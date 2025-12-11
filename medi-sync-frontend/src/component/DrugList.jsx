@@ -26,7 +26,7 @@ export default function DrugList() {
   const fetchData = async () => {
     try {
       const res = await getDrugsPaged(page, size);
-
+      console.log("약품 목록 : ", res.data);
       setDrugs(res.data.items);
       setFilteredDrugs(res.data.items);
       setTotalPages(res.data.totalPages);

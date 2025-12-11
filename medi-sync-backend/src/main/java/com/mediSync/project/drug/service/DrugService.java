@@ -111,7 +111,9 @@ public class DrugService {
     public Map<String, Object> getPagedDrugs (int page, int size){
         int offset = (page - 1) * size;
 
+
         List<Drug> list = drugMapper.selectPaged(offset, size);
+        System.out.println("약 리스트 : "+ list);
         int totalCount = drugMapper.countAll();
 
         int totalPages = (int) Math.ceil((double)totalCount / size);

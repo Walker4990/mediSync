@@ -11,4 +11,4 @@ export const addDrug = (data) =>
 export const updateDrug = (data) => axios.put(`${TEST_URL}/update`, data);
 export const deleteDrug = (code) => axios.delete(`${TEST_URL}/${code}`);
 export const getDrugsPaged = (page, size) =>
-  axios.get(`${API_URL}/page?page=${page}&size=${size}`);
+  axios.get(`${TEST_URL}/page?page=${page}&size=${size}`);

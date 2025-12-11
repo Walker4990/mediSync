@@ -126,17 +126,16 @@
 
     <select id="selectPaged" resultType="drug">
         SELECT
-        d.drug_code,
-        d.drug_name,
-        d.unit_price,
+        d.drug_code AS drugCode,
+        d.drug_name AS drugName,
+        d.unit_price AS unitPrice,
         COALESCE(d.quantity, 0) AS quantity,
         COALESCE(d.location, '-') AS location,
-        d.expiration_date,
-        d.supplier,
-        d.location,
-        COALESCE(ins.insurer_code, '-') AS insurer_code,
-        COALESCE(ins.insurer_name, '-') AS insurer_name,
-        d.created_at
+        d.expiration_date AS expirationDate,
+        d.supplier AS supplier,
+        COALESCE(ins.insurer_code, '-') AS insuranceCode,
+        COALESCE(ins.insurer_name, '-') AS insurerName,
+        d.created_at as createdAt
         FROM drug d
         LEFT JOIN insurer ins
         ON d.insurance_code = ins.insurer_code
