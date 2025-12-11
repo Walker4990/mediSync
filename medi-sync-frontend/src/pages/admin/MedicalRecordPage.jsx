@@ -149,15 +149,8 @@ export default function MedicalRecordPage() {
         console.warn("⚠️ reservationId 없음:", resv);
         return;
       }
-      if (form.patientId === String(resv.patientId)) {
-        // 이미 선택되어 있으면 해제
-        setForm({ ...form, patientId: "" });
-        console.log("선택 해제");
-      } else {
-        // 새로 선택
-        setForm({ ...form, patientId: String(resv.patientId) });
-        console.log("선택");
-      }
+
+      const isSelected = form.patientId === String(resv.patientId);
 
       // 상태 변경
       if (resv.reservationStatus === "WAIT") {
@@ -918,6 +911,7 @@ export default function MedicalRecordPage() {
                       checkShortage(i);
                     }}
                     className="border p-2 rounded w-20"
+                    min={1}
                   />
                 </>
               )}
