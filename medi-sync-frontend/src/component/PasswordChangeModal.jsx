@@ -7,7 +7,7 @@ const PasswordChangeModal = ({ isOpen, onClose, adminId }) => {
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const ADMIN_API_URL = "http://localhost:8080/api/admins";
+  const ADMIN_API_URL = "http://192.168.0.24:8080/api/admins";
 
   const resetForm = () => {
     setNewPassword("");
@@ -70,7 +70,7 @@ const PasswordChangeModal = ({ isOpen, onClose, adminId }) => {
     <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex justify-center items-center z-50">
       <div className="bg-white rounded-lg shadow-2xl p-6 w-full max-w-md mx-4">
         <h2 className="text-2xl font-bold text-gray-800 mb-4 border-b pb-2">
-          비밀번호 변경 (ID: {adminId})
+          비밀번호 변경
         </h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>

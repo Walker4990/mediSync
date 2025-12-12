@@ -4,8 +4,8 @@ import { format } from "date-fns";
 import { Loader2 } from "lucide-react"; // 로딩 아이콘 추가
 
 // API 기본 URL
-const API_BASE_URL = "http://localhost:8080/api/admins/staffs";
-const DEPT_API_URL = "http://localhost:8080/api/departments";
+const API_BASE_URL = "http://192.168.0.24:8080/api/admins/staffs";
+const DEPT_API_URL = "http://192.168.0.24:8080/api/departments";
 
 // 직무(Position) 옵션
 export const POSITION_OPTIONS = [

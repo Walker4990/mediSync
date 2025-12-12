@@ -237,9 +237,9 @@ const AdminMyPage = () => {
       <main className="max-w-7xl mx-auto pt-24 px-8 pb-12">
         <h1 className="text-4xl font-bold text-blue-600 mb-8 border-b pb-4">
           마이페이지
-          <span className="text-gray-500 text-2xl font-semibold ml-3">
+          {/* <span className="text-gray-500 text-2xl font-semibold ml-3">
             (ID: {admin?.adminId || "N/A"})
-          </span>
+          </span> */}
         </h1>
 
         <div className="flex flex-col md:flex-row gap-8">

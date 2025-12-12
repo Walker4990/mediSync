@@ -24,7 +24,7 @@ const FindIdForm = () => {
     try {
       // 백엔드에서는 name과 phone을 받아 일치하는 사용자의 아이디를 반환
       const response = await axios.post(
-        "http://localhost:8080/api/users/find-id",
+        "http://192.168.0.24:8080/api/users/find-id",
         { name, phone }
       );
       setMessage(`회원님의 아이디는 [${response.data.loginId}] 입니다.`);
@@ -105,7 +105,7 @@ const ResetPasswordForm = () => {
     try {
       // 백엔드에서는 이 3가지 정보로 본인 확인 후, 가입된 이메일로 임시 비번 발송
       const response = await axios.post(
-        "http://localhost:8080/api/users/temp-password",
+        "http://192.168.0.24:8080/api/users/temp-password",
         {
           loginId,
           name,

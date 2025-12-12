@@ -102,7 +102,7 @@ export default function MedicalRecordPage() {
     e.stopPropagation(); // 행 클릭 이벤트(진료 시작) 방지
     try {
       const res = await axios.get(
-        `http://localhost:8080/api/questionnaire/${reservation.reservationId}`
+        `http://192.168.0.24:8080/api/questionnaire/${reservation.reservationId}`
       );
 
       if (res.data) {
@@ -121,7 +121,7 @@ export default function MedicalRecordPage() {
   // 초기 데이터 로드
   useEffect(() => {
     axios
-      .get("http://localhost:8080/api/doctors")
+      .get("http://192.168.0.24:8080/api/doctors")
       .then((res) => setDoctors(res.data));
   }, []);
 
@@ -130,7 +130,9 @@ export default function MedicalRecordPage() {
     if (selectedDate) {
       console.log("📅 예약조회 요청:", selectedDate);
       axios
-        .get(`http://localhost:8080/api/records/reserved?date=${selectedDate}`)
+        .get(
+          `http://192.168.0.24:8080/api/records/reserved?date=${selectedDate}`
+        )
         .then((res) => setReservations(res.data))
         .catch((err) => {
           console.error("❌ 예약 환자 조회 실패:", err);
@@ -155,7 +157,7 @@ export default function MedicalRecordPage() {
       // 상태 변경
       if (resv.reservationStatus === "WAIT") {
         await axios.put(
-          `http://localhost:8080/api/reservation/${resv.reservationId}/status`,
+          `http://192.168.0.24:8080/api/reservation/${resv.reservationId}/status`,
           null,
           { params: { status: "CONSULT" } }
         );
@@ -957,7 +959,7 @@ export default function MedicalRecordPage() {
                                   console.error("💉 주사 상세조회 실패:", err);
                                 }
                               }}
-                              className={`px-2 py-1  cursor-pointer text-sm 
+                              className={`px-2 py-1  cursor-pointer text-sm
                                 ${
                                   drug.quantity <= 0
                                     ? "text-gray-400 cursor-not-allowed"

@@ -27,7 +27,7 @@ export default function ModalProvider({ children }) {
   };
 
   const handleLogout = async () => {
-    const LOGOUT_API_URL = "http://localhost:8080/api/users/logout";
+    const LOGOUT_API_URL = "http://192.168.0.24:8080/api/users/logout";
     console.log("로그아웃 요청 중...");
 
     try {

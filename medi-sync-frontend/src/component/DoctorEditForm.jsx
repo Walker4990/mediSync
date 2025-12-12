@@ -4,8 +4,8 @@ import { format } from "date-fns";
 import { ChevronDown, Loader2 } from "lucide-react";
 
 // API 기본 URL
-const API_BASE_URL = "http://localhost:8080/api/admins/doctors";
-const DEPT_API_URL = "http://localhost:8080/api/departments";
+const API_BASE_URL = "http://192.168.0.24:8080/api/admins/doctors";
+const DEPT_API_URL = "http://192.168.0.24:8080/api/departments";
 
 // 재직 상태(Status) 옵션
 const STATUS_OPTIONS = [

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { ClipboardList, User, AlertTriangle, CheckSquare } from "lucide-react";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import axios from "axios";
+import { toast } from "react-toastify";
 import { jwtDecode } from "jwt-decode";
 
 export default function PreExamForm() {
@@ -15,7 +16,7 @@ export default function PreExamForm() {
   // 예약 정보가 없으면(잘못된 접근) 뒤로 가기
   useEffect(() => {
     if (!reservationPayload) {
-      alert("잘못된 접근입니다. 예약 정보를 선택해주세요.");
+      toast.error("잘못된 접근입니다. 예약 정보를 선택해주세요.");
       navigate(-1);
     }
   }, [reservationPayload, navigate]);
@@ -30,25 +31,55 @@ export default function PreExamForm() {
     allergyDetails: "",
     smokingStatus: "",
     alcoholStatus: "",
-    isPregnant: "no",
+    isPregnant: "",
+    checkup: "",
     consent: false,
   });
+
+  // 상세 입력란 표시 상태 업데이트
+  useEffect(() => {
+    setShowMedicationInput(formData.medicationStatus === "yes");
+    setShowAllergyInput(formData.allergyStatus === "yes");
+  }, [formData.medicationStatus, formData.allergyStatus]);
 
   // 폼 입력 변경
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
 
     if (type === "checkbox") {
-      // multi-check
       if (name === "medicalHistory") {
-        setFormData((prev) => ({
-          ...prev,
-          medicalHistory: checked
-            ? [...prev.medicalHistory, value]
-            : prev.medicalHistory.filter((item) => item !== value),
-        }));
+        setFormData((prev) => {
+          let newMedicalHistory = [...prev.medicalHistory];
+
+          if (value === "없음") {
+            // '없음' 선택
+            if (checked) {
+              // '없음'을 추가하고 나머지 항목은 모두 제거
+              newMedicalHistory = ["없음"];
+            } else {
+              // '없음' 체크를 해제했을 때: 빈 배열로 초기화
+              newMedicalHistory = [];
+            }
+          } else {
+            // '없음' 외의 항목을 선택
+            if (checked) {
+              // 해당 항목을 추가하고, '없음' 항목이 있다면 제거
+              newMedicalHistory = [
+                ...newMedicalHistory.filter((item) => item !== "없음"),
+                value,
+              ];
+            } else {
+              // 해당 항목 제거
+              newMedicalHistory = newMedicalHistory.filter(
+                (item) => item !== value
+              );
+            }
+          }
+
+          return { ...prev, medicalHistory: newMedicalHistory };
+        });
       } else {
-        // single-check
+        // single-check (consent)
         setFormData((prev) => ({ ...prev, [name]: checked }));
       }
     } else {
@@ -61,10 +92,74 @@ export default function PreExamForm() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!formData.consent) {
-      alert("정보 제공 동의에 체크해주세요.");
+    // 1. 필수 텍스트/영역 검사
+    if (!formData.mainSymptom.trim()) {
+      toast.error("⚠️ 1. 주요 증상을 입력해 주세요.");
       return;
     }
+    if (!formData.symptomStartDate.trim()) {
+      toast.error("⚠️ 2. 증상 시작일을 입력해 주세요.");
+      return;
+    }
+
+    // 2. 과거 병력 검사 (최소 하나 선택)
+    if (formData.medicalHistory.length === 0) {
+      toast.error(
+        "⚠️ 3. 과거 진단받은 질환을 하나 이상 선택해 주세요. (없음 포함)"
+      );
+      return;
+    }
+
+    // 3. 복용 중인 약 검사
+    if (!formData.medicationStatus) {
+      toast.error("⚠️ 4. 현재 복용 중인 약 여부를 선택해 주세요.");
+      return;
+    }
+    if (
+      formData.medicationStatus === "yes" &&
+      !formData.medicationDetails.trim()
+    ) {
+      toast.error("⚠️ 4. 복용 중인 약의 상세 내용을 입력해 주세요.");
+      return;
+    }
+
+    // 4. 알레르기 검사
+    if (!formData.allergyStatus) {
+      toast.error("⚠️ 5. 약물/음식 알레르기 여부를 선택해 주세요.");
+      return;
+    }
+    if (formData.allergyStatus === "yes" && !formData.allergyDetails.trim()) {
+      toast.error("⚠️ 5. 알레르기 상세 내용을 입력해 주세요.");
+      return;
+    }
+
+    // 5. 흡연/음주/임신/건강검진 상태 검사 (라디오)
+    if (!formData.smokingStatus) {
+      toast.error("⚠️ 6. 현재 흡연 여부를 선택해 주세요.");
+      return;
+    }
+    if (!formData.alcoholStatus) {
+      toast.error("⚠️ 7. 평소 음주 여부를 선택해 주세요.");
+      return;
+    }
+    if (!formData.isPregnant) {
+      toast.error("⚠️ 8. 임신/수유 여부를 선택해 주세요.");
+      return;
+    }
+    if (!formData.checkup) {
+      toast.error("⚠️ 9. 최근 1년 이내 건강검진 여부를 선택해 주세요.");
+      return;
+    }
+
+    // 6. 정보 제공 동의 검사
+    if (!formData.consent) {
+      toast.error("⚠️ 정보 제공 동의에 체크해야 문진표를 제출할 수 있습니다.");
+      return;
+    }
+
+    // ------------------------------------
+    // API 통신 시작
+    // ------------------------------------
 
     const token = localStorage.getItem("token");
     if (!token) {
@@ -90,8 +185,9 @@ export default function PreExamForm() {
         userId: userId, // 추출한 userId 추가
       };
 
+      // 1. 예약 정보 제출
       const reservationRes = await axios.post(
-        "http://localhost:8080/api/reservation/addReservation",
+        "http://192.168.0.24:8080/api/reservation/addReservation",
         finalReservationPayload,
         {
           headers: {
@@ -107,15 +203,19 @@ export default function PreExamForm() {
         throw new Error("예약 생성에 실패했습니다. (ID 없음)");
       }
 
-      // 문진표 데이터에 userId 및 reservationId 포함
+      // 2. 문진표 데이터 제출
       const surveyPayload = {
         reservation_id: newReservationId,
         user_id: userId, // 여기서 추출한 userId 명시적 전달
-        survey_data: formData,
+        survey_data: {
+          ...formData,
+          // medicalHistory 배열은 그대로 전송
+          // medicationDetails, allergyDetails는 'no'일 경우 빈 문자열로 전송됨
+        },
       };
 
       await axios.post(
-        "http://localhost:8080/api/questionnaire/submit",
+        "http://192.168.0.24:8080/api/questionnaire/submit",
         surveyPayload,
         {
           headers: {
@@ -125,11 +225,16 @@ export default function PreExamForm() {
         }
       );
 
-      alert("예약 및 문진표 제출이 완료되었습니다!");
+      toast.success(
+        "예약 및 문진표 제출이 완료되었습니다! 상담 페이지로 이동합니다."
+      );
       window.location.href = "/user/consult";
     } catch (error) {
       console.error("처리 중 오류 발생:", error);
-      alert("오류가 발생했습니다: " + (error.response?.data || error.message));
+      alert(
+        "오류가 발생했습니다: " +
+          (error.response?.data?.message || error.message)
+      );
     }
   };
 
@@ -147,6 +252,8 @@ export default function PreExamForm() {
     radioLabel: "flex items-center space-x-2 text-gray-700 cursor-pointer",
     // 라디오/체크박스 인풋
     radioInput: "w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500",
+    // 오류 메시지 스타일
+    errorText: "text-red-500 text-sm mt-1 ml-1",
   };
 
   return (
@@ -167,7 +274,8 @@ export default function PreExamForm() {
           {/* 주요 증상 */}
           <div className={styles.section}>
             <label htmlFor="mainSymptom" className={styles.label}>
-              1. 현재 가장 불편한 증상이 무엇인가요?
+              1. 현재 가장 불편한 증상이 무엇인가요?{" "}
+              <span className="text-red-500">*</span>
             </label>
             <textarea
               id="mainSymptom"
@@ -183,7 +291,8 @@ export default function PreExamForm() {
           {/* 증상 시작일 */}
           <div className={styles.section}>
             <label htmlFor="symptomStartDate" className={styles.label}>
-              2. 증상이 언제부터 시작되었나요?
+              2. 증상이 언제부터 시작되었나요?{" "}
+              <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
@@ -199,22 +308,45 @@ export default function PreExamForm() {
           {/* 과거 병력 (다중 선택) */}
           <div className={styles.section}>
             <label className={styles.label}>
-              3. 과거에 진단받은 질환이 있나요? (모두 선택)
+              3. 과거에 진단받은 질환이 있나요? (모두 선택){" "}
+              <span className="text-red-500">*</span>
             </label>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               {["고혈압", "당뇨", "천식", "심장질환", "간질환", "없음"].map(
-                (disease) => (
-                  <label key={disease} className={styles.radioLabel}>
-                    <input
-                      type="checkbox"
-                      name="medicalHistory"
-                      value={disease}
-                      className={styles.radioInput}
-                      onChange={handleChange}
-                    />
-                    <span>{disease}</span>
-                  </label>
-                )
+                (disease) => {
+                  // '없음' 외의 항목일 때, '없음'이 선택되어 있으면 비활성화
+                  const isOtherItemDisabled =
+                    disease !== "없음" &&
+                    formData.medicalHistory.includes("없음");
+
+                  // '없음' 항목일 때, 다른 항목이 선택되어 있으면 비활성화
+                  const isNoneItemDisabled =
+                    disease === "없음" &&
+                    formData.medicalHistory.length > 0 &&
+                    !formData.medicalHistory.includes("없음");
+
+                  const isDisabled = isOtherItemDisabled || isNoneItemDisabled;
+
+                  return (
+                    <label
+                      key={disease}
+                      className={`${styles.radioLabel} ${
+                        isDisabled ? "opacity-50 cursor-not-allowed" : ""
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        name="medicalHistory"
+                        value={disease}
+                        className={styles.radioInput}
+                        onChange={handleChange}
+                        checked={formData.medicalHistory.includes(disease)}
+                        disabled={isDisabled}
+                      />
+                      <span>{disease}</span>
+                    </label>
+                  );
+                }
               )}
             </div>
           </div>
@@ -222,7 +354,8 @@ export default function PreExamForm() {
           {/* 복용 중인 약 */}
           <div className={styles.section}>
             <label className={styles.label}>
-              4. 현재 복용 중인 약이 있나요?
+              4. 현재 복용 중인 약이 있나요?{" "}
+              <span className="text-red-500">*</span>
             </label>
             <div className={styles.radioGroup}>
               <label className={styles.radioLabel}>
@@ -231,10 +364,8 @@ export default function PreExamForm() {
                   name="medicationStatus"
                   value="yes"
                   className={styles.radioInput}
-                  onChange={(e) => {
-                    handleChange(e);
-                    setShowMedicationInput(true);
-                  }}
+                  onChange={handleChange}
+                  checked={formData.medicationStatus === "yes"}
                 />
                 <span>예</span>
               </label>
@@ -244,17 +375,14 @@ export default function PreExamForm() {
                   name="medicationStatus"
                   value="no"
                   className={styles.radioInput}
-                  onChange={(e) => {
-                    handleChange(e);
-                    setShowMedicationInput(false);
-                  }}
-                  defaultChecked
+                  onChange={handleChange}
+                  checked={formData.medicationStatus === "no"}
                 />
                 <span>아니오</span>
               </label>
             </div>
             {/* '예' 선택 시 표시 */}
-            {showMedicationInput && (
+            {formData.medicationStatus === "yes" && (
               <textarea
                 name="medicationDetails"
                 rows={3}
@@ -269,7 +397,8 @@ export default function PreExamForm() {
           {/* 알레르기 */}
           <div className={styles.section}>
             <label className={styles.label}>
-              5. 약물이나 음식에 알레르기가 있나요?
+              5. 약물이나 음식에 알레르기가 있나요?{" "}
+              <span className="text-red-500">*</span>
             </label>
             <div className={styles.radioGroup}>
               <label className={styles.radioLabel}>
@@ -278,10 +407,8 @@ export default function PreExamForm() {
                   name="allergyStatus"
                   value="yes"
                   className={styles.radioInput}
-                  onChange={(e) => {
-                    handleChange(e);
-                    setShowAllergyInput(true);
-                  }}
+                  onChange={handleChange}
+                  checked={formData.allergyStatus === "yes"}
                 />
                 <span>예</span>
               </label>
@@ -291,17 +418,14 @@ export default function PreExamForm() {
                   name="allergyStatus"
                   value="no"
                   className={styles.radioInput}
-                  onChange={(e) => {
-                    handleChange(e);
-                    setShowAllergyInput(false);
-                  }}
-                  defaultChecked
+                  onChange={handleChange}
+                  checked={formData.allergyStatus === "no"}
                 />
                 <span>아니오</span>
               </label>
             </div>
             {/* '예' 선택 시 표시 */}
-            {showAllergyInput && (
+            {formData.allergyStatus === "yes" && (
               <textarea
                 name="allergyDetails"
                 rows={3}
@@ -315,7 +439,9 @@ export default function PreExamForm() {
 
           {/* 흡연 */}
           <div className={styles.section}>
-            <label className={styles.label}>6. 현재 흡연 중이신가요?</label>
+            <label className={styles.label}>
+              6. 현재 흡연 중이신가요? <span className="text-red-500">*</span>
+            </label>
             <div className={styles.radioGroup}>
               {["비흡연", "과거 흡연 (현재 중단)", "현재 흡연"].map(
                 (status) => (
@@ -326,6 +452,7 @@ export default function PreExamForm() {
                       value={status}
                       className={styles.radioInput}
                       onChange={handleChange}
+                      checked={formData.smokingStatus === status}
                     />
                     <span>{status}</span>
                   </label>
@@ -336,7 +463,9 @@ export default function PreExamForm() {
 
           {/* 음주 */}
           <div className={styles.section}>
-            <label className={styles.label}>7. 평소 음주를 하시나요?</label>
+            <label className={styles.label}>
+              7. 평소 음주를 하시나요? <span className="text-red-500">*</span>
+            </label>
             <div className={styles.radioGroup}>
               {["안 함", "월 1~2회", "주 1~2회", "주 3회 이상"].map(
                 (status) => (
@@ -347,6 +476,7 @@ export default function PreExamForm() {
                       value={status}
                       className={styles.radioInput}
                       onChange={handleChange}
+                      checked={formData.alcoholStatus === status}
                     />
                     <span>{status}</span>
                   </label>
@@ -358,7 +488,8 @@ export default function PreExamForm() {
           {/* 임신/출산 */}
           <div className={styles.section}>
             <label className={styles.label}>
-              8. (여성만 해당) 현재 임신 또는 수유 중이신가요?
+              8. (여성만 해당) 현재 임신 또는 수유 중이신가요?{" "}
+              <span className="text-red-500">*</span>
             </label>
             <div className={styles.radioGroup}>
               {["예", "아니오", "해당 없음"].map((status) => (
@@ -369,6 +500,7 @@ export default function PreExamForm() {
                     value={status}
                     className={styles.radioInput}
                     onChange={handleChange}
+                    checked={formData.isPregnant === status}
                   />
                   <span>{status}</span>
                 </label>
@@ -379,29 +511,23 @@ export default function PreExamForm() {
           {/* 건강검진 */}
           <div className={styles.section}>
             <label className={styles.label}>
-              9. 최근 1년 이내 건강검진을 받으신 적이 있나요?
+              9. 최근 1년 이내 건강검진을 받으신 적이 있나요?{" "}
+              <span className="text-red-500">*</span>
             </label>
             <div className={styles.radioGroup}>
-              <label className={styles.radioLabel}>
-                <input
-                  type="radio"
-                  name="checkup"
-                  value="yes"
-                  className={styles.radioInput}
-                  onChange={handleChange}
-                />
-                <span>예</span>
-              </label>
-              <label className={styles.radioLabel}>
-                <input
-                  type="radio"
-                  name="checkup"
-                  value="no"
-                  className={styles.radioInput}
-                  onChange={handleChange}
-                />
-                <span>아니오</span>
-              </label>
+              {["예", "아니오"].map((status) => (
+                <label key={status} className={styles.radioLabel}>
+                  <input
+                    type="radio"
+                    name="checkup"
+                    value={status.toLowerCase()} // 'yes'/'no'로 저장되도록
+                    className={styles.radioInput}
+                    onChange={handleChange}
+                    checked={formData.checkup === status.toLowerCase()}
+                  />
+                  <span>{status}</span>
+                </label>
+              ))}
             </div>
           </div>
 
@@ -411,7 +537,7 @@ export default function PreExamForm() {
               <CheckSquare size={20} className="text-blue-700 mt-1" />
               <div>
                 <h3 className="text-lg font-semibold text-blue-800">
-                  정보 제공 동의
+                  정보 제공 동의 <span className="text-red-500">*</span>
                 </h3>
                 <p className="text-gray-700 mt-1 mb-3">
                   작성된 모든 내용은 의료법에 따라 안전하게 처리되며, 진료

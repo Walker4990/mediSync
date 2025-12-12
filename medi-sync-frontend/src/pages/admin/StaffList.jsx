@@ -20,7 +20,7 @@ import StaffForm, {
 } from "../../component/StaffEditForm";
 
 // API 기본 URL
-const API_BASE_URL = "http://localhost:8080/api/admins/staffs";
+const API_BASE_URL = "http://192.168.0.24:8080/api/admins/staffs";
 
 // 입사일 포맷 함수 (날짜만)
 const formatDateOnly = (dateString) => {

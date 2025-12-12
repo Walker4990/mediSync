@@ -424,7 +424,7 @@ const MyPage = () => {
     setLoading(true); // 업데이트 시에도 로딩 표시
 
     axios
-      .get("http://localhost:8080/api/users/mypage", {
+      .get("http://192.168.0.24:8080/api/users/mypage", {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then((res) => {

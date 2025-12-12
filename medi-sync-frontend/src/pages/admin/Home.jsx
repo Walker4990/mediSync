@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
-const LOGIN_API_URL = "http://localhost:8080/api/admins/login";
+const LOGIN_API_URL = "http://192.168.0.24:8080/api/admins/login";
 
 const LoginForm = ({ onLoginSuccess }) => {
   const [empId, setEmpId] = useState("");

@@ -18,10 +18,10 @@ import {
 } from "lucide-react";
 
 // API endpoints
-const API_URL = "http://localhost:8080/api/admins";
-const UPLOAD_API_URL = "http://localhost:8080/api/uploads/profile";
-const DEPT_API_URL = "http://localhost:8080/api/departments";
-const CHECK_ID_API = "http://localhost:8080/api/admins/check-empid";
+const API_URL = "http://192.168.0.24:8080/api/admins";
+const UPLOAD_API_URL = "http://192.168.0.24:8080/api/uploads/profile";
+const DEPT_API_URL = "http://192.168.0.24:8080/api/departments";
+const CHECK_ID_API = "http://192.168.0.24:8080/api/admins/check-empid";
 
 // safe converter to avoid rendering objects in JSX
 const safe = (v) => (v === null || v === undefined ? "" : v);
@@ -149,7 +149,6 @@ const AccountRegiForm = () => {
     { value: "ADMIN", label: "시스템 관리자" },
   ];
 
-  // Load departments and coerce to string values
   useEffect(() => {
     let mounted = true;
     const load = async () => {
@@ -213,7 +212,6 @@ const AccountRegiForm = () => {
     }
   };
 
-  // File/select handlers
   const handleFileChange = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -255,7 +253,6 @@ const AccountRegiForm = () => {
     }
   };
 
-  // Submit handler (ID check removed)
   const handleRegister = async (e) => {
     e.preventDefault();
 
@@ -295,7 +292,6 @@ const AccountRegiForm = () => {
       setMessage("✅ 새 계정이 성공적으로 등록되었습니다!");
       setMessageType("success");
 
-      // reset form
       setFormData({
         empId: "",
         password: "",
@@ -334,7 +330,6 @@ const AccountRegiForm = () => {
             <UserPlus className="w-7 h-7 mr-3 text-blue-600" /> 새 계정 등록
           </h1>
 
-          {/* global message */}
           {message && (
             <div
               className={`p-4 mb-6 rounded-lg ${
@@ -351,7 +346,6 @@ const AccountRegiForm = () => {
 
           <form onSubmit={handleRegister} className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* left: core fields */}
               {/* ✅ 사원 ID + 중복확인 버튼 */}
               <section className="space-y-4">
                 <label className="text-sm font-medium text-gray-600 flex items-center">
@@ -449,7 +443,6 @@ const AccountRegiForm = () => {
                 />
               </section>
 
-              {/* right: extra info & image */}
               <section className="space-y-4">
                 <h2 className="text-xl font-bold text-gray-700 border-l-4 border-blue-500 pl-3 mb-4">
                   추가 정보 및 이미지
@@ -554,10 +547,9 @@ const AccountRegiForm = () => {
               </section>
             </div>
 
-            {/* footer buttons */}
             <footer className="pt-4 border-t border-gray-200 mt-8 flex justify-end space-x-4">
               <Link
-                to="/admin/staff" //acclist
+                to="/admin/staff"
                 className="px-6 py-2 bg-gray-200 text-gray-700 font-semibold rounded-lg shadow-md hover:bg-gray-300 transition duration-150"
               >
                 목록으로

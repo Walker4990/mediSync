@@ -40,9 +40,9 @@ const AdminDetailModal = ({ isOpen, onClose, adminId }) => {
   const [loading, setLoading] = useState(true);
   const [departmentOptions, setDepartmentOptions] = useState([]);
 
-  const API_URL = "http://localhost:8080/api/admins";
-  const DEPT_API_URL = "http://localhost:8080/api/departments";
-  const BASE_URL = "http://localhost:8080";
+  const API_URL = "http://192.168.0.24:8080/api/admins";
+  const DEPT_API_URL = "http://192.168.0.24:8080/api/departments";
+  const BASE_URL = "http://192.168.0.24:8080";
 
   // 모달이 열릴 때 데이터 로드
   useEffect(() => {

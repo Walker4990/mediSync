@@ -191,7 +191,7 @@ const UserInfoEdit = ({ currentUser, onUserUpdate }) => {
       };
 
       const response = await axios.patch(
-        `http://localhost:8080/api/users/${currentUser.userId}/edit`,
+        `http://192.168.0.24:8080/api/users/${currentUser.userId}/edit`,
         updatePayload,
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -283,7 +283,7 @@ const UserInfoEdit = ({ currentUser, onUserUpdate }) => {
             currentPassword: currentPassword,
           };
           const response = await axios.patch(
-            `http://localhost:8080/api/users/${currentUser.userId}/pass`,
+            `http://192.168.0.24:8080/api/users/${currentUser.userId}/pass`,
             passwordUpdatePayload,
             {
               headers: { Authorization: `Bearer ${token}` },

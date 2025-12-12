@@ -24,7 +24,7 @@ export default function LoginModal() {
   const [isSubmitting, setIsSubmitting] = useState(false); // 중복 요청 방지
   const navigate = useNavigate();
 
-  const API_URI = "http://localhost:8080/api/users/login";
+  const API_URI = "http://192.168.0.24:8080/api/users/login";
 
   // isOpen 상태가 변경될 때마다 실행되며 인풋값을 초기화
   useEffect(() => {
@@ -72,12 +72,12 @@ export default function LoginModal() {
     if (provider == "naver") {
       // 로그인 요청
       const clientId = "W8L6n2yDe6eGoosEf7AD"; // naver 클라이언트 ID
-      const redirectUri = "http://localhost:8080/api/users/naver/callback"; // 네이버에 등록한 URL
+      const redirectUri = "http://192.168.0.24:8080/api/users/naver/callback"; // 네이버에 등록한 URL
       const naverLoginUrl = `https://nid.naver.com/oauth2.0/authorize?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&state=${state}`;
       window.location.href = naverLoginUrl;
     } else if (provider == "kakao") {
       const kakaoApiKey = "995feac82707da5c2f69f2b81614024d";
-      const redirectLoginUri = "http://localhost:3000/authLoginKakao";
+      const redirectLoginUri = "http://192.168.0.24:3000/authLoginKakao";
       window.location.href = `https://kauth.kakao.com/oauth/authorize?client_id=${kakaoApiKey}&redirect_uri=${redirectLoginUri}&response_type=code`;
     }
   };
